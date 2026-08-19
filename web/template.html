@@ -4237,7 +4237,7 @@
     try {
       var deps = (JSON.parse(text) || {}).dependencies;
       return deps && typeof deps === "object" ? Object.keys(deps) : [];
-    } catch (e) { return []; }
+    } catch (e) { return null; }  // unreadable -- not the same as declaring none
   }
   function parseGoMod(text) {
     // scripts/29: non-`// indirect` require lines, both the single-line and
@@ -4336,7 +4336,7 @@
     var out = [];
     try {
       var doc = new DOMParser().parseFromString(text, "text/xml");
-      if (doc.querySelector("parsererror")) return [];
+      if (doc.querySelector("parsererror")) return null;
       Array.prototype.forEach.call(doc.getElementsByTagName("dependency"), function (dep) {
         function child(tag) {
           var el = dep.getElementsByTagName(tag)[0];
@@ -4347,7 +4347,7 @@
         if (group.indexOf("${") !== -1 || artifact.indexOf("${") !== -1) return;
         out.push(group + ":" + artifact);
       });
-    } catch (e) { return []; }
+    } catch (e) { return null; }
     return out;
   }
   // scripts/41: .gitmodules is the dominant C/C++ signal and needs no
@@ -4404,7 +4404,7 @@
       }
       // vcpkg-* are build-system ports, not upstream projects.
       return names.filter(function (n) { return n.indexOf("vcpkg-") !== 0; });
-    } catch (e) { return []; }
+    } catch (e) { return null; }
   }
   function parseConanfile(text) {
     var out = [];
@@ -4553,9 +4553,14 @@
   // those get fetched -- the same trick scripts/40 uses to turn a blind
   // 4-probes-per-repo sweep into one call plus the hits. Under a 60/hour
   // unauthenticated cap that difference is the feature being usable at all.
+  //
+  // Every outcome is reported separately -- present-and-read, present-but-
+  // unreadable, absent -- because the panel has to be able to say "could not
+  // check" instead of asserting "no manifests". A body fetch that fails must
+  // never read back as a repo that declares nothing.
   function fetchManifests(slug, listing) {
     return listing.then(function (entries) {
-      if (!Array.isArray(entries)) return [];
+      if (!Array.isArray(entries)) throw new Error("unexpected root listing");
       var present = {};
       entries.forEach(function (e) {
         if (e && e.type === "file" && e.name) present[e.name.toLowerCase()] = e.name;
@@ -4567,10 +4572,13 @@
         var name = present[m.file.toLowerCase()];
         return fetch(GITHUB_API + "/repos/" + encodePath(slug) + "/contents/" + encodeURIComponent(name),
                      { headers: { Accept: "application/vnd.github.raw" } })
-          .then(function (res) { return res.ok ? res.text() : null; })
+          .then(function (res) {
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            return res.text();
+          })
           .catch(function () { return null; })
-          .then(function (text) { return text == null ? null : { manifest: m, text: text }; });
-      })).then(function (found) { return found.filter(Boolean); });
+          .then(function (text) { return { manifest: m, name: name, text: text }; });
+      }));
     });
   }
 
@@ -4580,7 +4588,13 @@
     var card = {
       slug: slug, state: "loading", repo: null, topics: [],
       position: null, trophic: null, dependencies: [], semantic: [],
-      manifests: [], resolvedCount: 0, unresolved: 0, error: null
+      manifests: [], resolvedCount: 0, unresolved: 0, error: null,
+      // Manifest bookkeeping, kept as four distinct outcomes so the panel
+      // can never turn "the request did not complete" into "this repo has
+      // no dependencies". `manifests` stays the subset that actually
+      // yielded coordinates, which is what the "real, from ..." line names.
+      manifestsChecked: false, manifestError: null,
+      manifestsRead: [], manifestsUnread: [], manifestsUnparsed: []
     };
     // The root listing does not depend on the repo response, so both go out
     // at once instead of one after the other. That matters more here than
@@ -4597,12 +4611,28 @@
         card.topics = repo.topics || [];
         card.position = vanityTopicPosition(card.topics);
         card.semantic = vanitySemanticEdges(VANITY_ID_PREFIX + slug, card.topics);
-        return fetchManifests(slug, listing).catch(function () { return []; });
+        // Caught rather than rethrown: the topic axis, position and
+        // shared-tag edges above are already computed and real, and losing
+        // them because the contents listing 403'd would be a worse answer
+        // than a card that places the repo and says the manifests were not
+        // checked. `manifestsChecked` is what keeps the two apart.
+        return fetchManifests(slug, listing).catch(function (err) {
+          card.manifestError = err && (err.status === 403 || err.status === 429)
+            ? "GitHub API rate limit reached"
+            : err && err.status
+              ? "GitHub API " + err.status
+              : (err && err.message) || "the request did not complete";
+          return null;
+        });
       })
       .then(function (found) {
+        card.manifestsChecked = found != null;
         var byTarget = {};
-        found.forEach(function (f) {
+        (found || []).forEach(function (f) {
+          if (f.text == null) { card.manifestsUnread.push(f.name); return; }
           var coords = f.manifest.parse(f.text, slug);
+          if (coords == null) { card.manifestsUnparsed.push(f.name); return; }
+          card.manifestsRead.push({ file: f.name, count: coords.length });
           if (!coords.length) return;
           card.manifests.push({ file: f.manifest.file, count: coords.length });
           coords.forEach(function (coord) {
@@ -4764,9 +4794,30 @@
           (card.unresolved === 1 ? "dependency does" : "dependencies do") +
           ' not resolve to a repo in this cohort at all';
       }
+    } else if (!card.manifestsChecked) {
+      // Not "no dependencies" -- the check itself did not finish. Under a
+      // 60-request/hour unauthenticated cap this is a routine outcome, and
+      // reporting it as an absence would be a lie the reader cannot detect.
+      html += 'its manifests could not be checked — ' + escapeHtml(card.manifestError || 'the request did not complete') +
+        ' — so this is “not checked”, not “declares nothing”';
     } else if (card.manifests.length) {
       html += 'read ' + escapeHtml(card.manifests.map(function (m) { return m.file; }).join(", ")) +
         ', but none of its ' + card.unresolved + ' declared dependencies resolve to a repo in this cohort';
+    } else if (card.manifestsUnread.length) {
+      html += 'found ' + escapeHtml(card.manifestsUnread.join(", ")) + ' at the repo root but could not read ' +
+        (card.manifestsUnread.length === 1 ? 'it' : 'them') + ' — again, not checked rather than empty';
+    } else if (card.manifestsUnparsed.length) {
+      html += 'read ' + escapeHtml(card.manifestsUnparsed.join(", ")) + ', but ' +
+        (card.manifestsUnparsed.length === 1 ? 'it is' : 'they are') + ' not valid enough to parse';
+    } else if (card.manifestsRead.length) {
+      // The common honest zero: a monorepo root whose package.json carries
+      // only devDependencies, for instance. The file is there and was read
+      // -- it simply declares no runtime dependency, which is a fact about
+      // the repo and not a gap in the lookup.
+      html += 'read ' + escapeHtml(card.manifestsRead.map(function (m) { return m.file; }).join(", ")) +
+        ', but ' + (card.manifestsRead.length === 1 ? 'it declares' : 'they declare') +
+        ' no runtime dependencies — this reads `dependencies` only, never devDependencies (build and ' +
+        'test tooling), peerDependencies, or test-scoped Maven dependencies, the same as for cohort repos';
     } else {
       html += 'no package.json / go.mod / Cargo.toml / pyproject.toml / requirements.txt / pom.xml / ' +
         '.gitmodules / vcpkg.json / conanfile at the repo root, so there is nothing to derive them from';
