@@ -28,6 +28,10 @@ and topic edges are on by default; the rest you switch on in the legend.
 
 ## Things to try
 
+- **Filter by position.** Two sliders in the sidebar: a linear one for the
+  depth band (how far up the dependency stack) and a dial for the angle band
+  (a wedge of the topic circle, which may wrap through 0°). Nothing moves —
+  the filter only changes what's drawn, so the axes still mean what they did.
 - **Search any repo** — including ones not in the set. Type `owner/name` and
   it's fetched from GitHub and positioned live, on the same axes, by the same
   formulas as everything else.

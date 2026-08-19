@@ -3871,3 +3871,42 @@ One caveat on every absolute number in this section: they come from headless
 SwiftShader, where rasterisation is on the CPU and dominates. Ratios between
 builds measured back-to-back are meaningful; the milliseconds are not what
 real hardware sees.
+
+## Band filters (depth and angle)
+
+Two knobs on a linear track for the trophic-height band, two on a dial for the
+topic-angle band. Both are hand-built: `<input type="range">` has exactly one
+knob, and the angle band is circular and wraps through 0°, which no native
+control expresses.
+
+Deliberately a visibility gate only. `tick()`'s forces and every node's
+`WORLD_POS` are untouched, so narrowing a band never reflows the graph — the
+axes only mean something if a repo stays where it was while you filter around
+it.
+
+**A repo with no measured value on a filtered axis is hidden, not matched.**
+1975 of the 7051 repos have no solved trophic height and sit at y=0.5 by
+convention; 2455 have no topic signal and sit on the central axis with
+theta=0. Those are placeholders, not positions, so once a band is narrowed
+they drop out rather than being tested against a coordinate nothing
+established. The panel prints both counts whenever the corresponding band is
+active, so the omission is stated rather than silent.
+
+A cluster meta-node passes when *any* of its members does, not when its own
+averaged target does — a cluster spanning the whole stack averages to the
+middle, which would hide clusters full of matches and show ones with none.
+Height coverage is an exact [min,max] interval per cluster; angle coverage is
+a 32-bucket (11.25°) occupancy mask, which can only over-include at the edges.
+That is the safe direction for a stand-in whose real members are one click
+away.
+
+Counts verified against `data/processed/` directly rather than trusted from
+the page: height 0.60–0.90 gives 1539, the wrapping wedge 300°–60° gives 383,
+and the two together (0.55–0.85 with 90°–200°) give 17 — each matching the
+page's badge exactly.
+
+Cost: at the default view (386 materialized nodes) the per-frame pass that
+stamps every node with its band membership is below timer resolution; with
+every cluster force-expanded to the full 7051 nodes — more than any real view
+reaches — it is 0.5 ms. With no band narrowed the whole thing is one
+short-circuited boolean per edge.

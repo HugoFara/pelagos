@@ -596,6 +596,63 @@
   .cluster-hub { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
   .cluster-members { font-size: 11px; color: var(--text-secondary); line-height: 1.45; }
 
+  /* ---- Band filters: a two-knob linear slider for the trophic-height band
+     and a two-knob dial for the topic-angle band. Both are hand-built:
+     <input type=range> has exactly one knob, and the angle band is
+     circular and wraps through 0deg, which no native control expresses. */
+  .filter-badge { font-weight: 500; text-transform: none; letter-spacing: normal; color: var(--n-repository); font-size: 10.5px; }
+  .filter-block { margin-bottom: 16px; }
+  .filter-block:last-child { margin-bottom: 0; }
+  .filter-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+    font-size: 11.5px; font-weight: 600; color: var(--text-secondary); margin-bottom: 10px;
+  }
+  .filter-head .axis-unit { font-weight: 500; color: var(--text-muted); }
+  .filter-reset {
+    background: none; border: none; padding: 0; cursor: pointer;
+    font: inherit; font-size: 10.5px; font-weight: 500;
+    color: var(--text-muted); text-decoration: underline; text-underline-offset: 2px;
+  }
+  .filter-reset:hover { color: var(--text-primary); }
+  .filter-reset[disabled] { opacity: 0.4; cursor: default; text-decoration: none; }
+
+  .dual-range { position: relative; height: 22px; margin: 0 9px 6px; touch-action: none; }
+  .dual-track {
+    position: absolute; left: -9px; right: -9px; top: 9px; height: 4px;
+    border-radius: 2px; background: var(--gridline);
+  }
+  .dual-fill { position: absolute; top: 9px; height: 4px; border-radius: 2px; background: var(--n-repository); }
+  .dual-knob {
+    position: absolute; top: 3px; width: 15px; height: 15px; margin-left: -7.5px;
+    border-radius: 50%; background: var(--surface-panel);
+    border: 2px solid var(--n-repository); cursor: grab; box-sizing: border-box;
+  }
+  .dual-knob:active { cursor: grabbing; }
+  .dual-knob:focus-visible { outline: 2px solid var(--path-highlight); outline-offset: 2px; }
+  .dual-ends {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: var(--text-muted); margin: 0 0 8px;
+  }
+
+  .dial-wrap { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+  .angle-dial { width: 108px; height: 108px; flex-shrink: 0; touch-action: none; }
+  .angle-dial .dial-ring { fill: none; stroke: var(--gridline); stroke-width: 5; }
+  /* No wedge selected means the whole circle is selected, so the ring shows
+     as the band rather than as an empty track -- otherwise the two knobs
+     sitting on top of each other at 0deg read as "nothing is chosen". */
+  .angle-dial.full .dial-ring { stroke: var(--n-semantic); }
+  .angle-dial .dial-arc { fill: none; stroke: var(--n-semantic); stroke-width: 5; stroke-linecap: butt; }
+  .angle-dial .dial-tick { stroke: var(--border-strong); stroke-width: 1; }
+  .angle-dial .dial-tick-label { fill: var(--text-muted); font-size: 7px; text-anchor: middle; dominant-baseline: middle; }
+  .angle-dial .dial-knob { fill: var(--surface-panel); stroke: var(--n-semantic); stroke-width: 2; cursor: grab; }
+  .angle-dial .dial-knob:active { cursor: grabbing; }
+  .angle-dial .dial-knob:focus-visible { outline: 2px solid var(--path-highlight); }
+
+  .filter-readout { font-size: 12px; color: var(--text-primary); font-weight: 600; }
+  .filter-note { font-size: 10.5px; color: var(--text-muted); line-height: 1.5; margin-top: 4px; }
+  .filter-count { font-size: 11px; color: var(--text-secondary); line-height: 1.5; margin-top: 10px; }
+  .filter-count b { color: var(--text-primary); font-weight: 650; }
+
   @media (max-width: 760px) {
     .workspace { flex-direction: column; }
     .sidebar { width: 100%; }
@@ -642,7 +699,7 @@
       <canvas id="graph"></canvas>
       <canvas id="overlay2d"></canvas>
       <div class="legend" id="legend"></div>
-      <div class="zoom-hint">drag to pan · scroll to zoom · drag a node to move it · click a dashed-ring repo to expand/collapse · check a type/edge below to reveal it · hover or click a repo or issue for its live GitHub description/title · press / to search repos, or type any owner/repo to look it up live · a selected repo can open its README in a reader over the graph · "copy link" shares this exact view</div>
+      <div class="zoom-hint">drag to pan · scroll to zoom · drag a node to move it · click a dashed-ring repo to expand/collapse · check a type/edge below to reveal it · hover or click a repo or issue for its live GitHub description/title · press / to search repos, or type any owner/repo to look it up live · "Filter by position" in the sidebar narrows the view to a height band and a wedge of the topic circle · a selected repo can open its README in a reader over the graph · "copy link" shares this exact view</div>
       <div class="tooltip" id="tooltip"></div>
       <div class="readme-overlay" id="readmeOverlay" hidden>
         <div class="readme-modal" role="dialog" aria-modal="true" aria-labelledby="readmeTitle">
@@ -657,6 +714,53 @@
     </div>
 
     <div class="sidebar">
+      <!-- Placed first in the sidebar: a filter nobody finds is a filter
+           nobody uses, and this one changes what the whole scene shows.
+           Still collapsed by default like every panel but Clusters -- the
+           <h2> carries a badge whenever a band is actually narrowed, so an
+           active filter is never invisible behind a folded header. -->
+      <div class="panel" data-panel="filters">
+        <h2>Filter by position <span class="filter-badge" id="filterBadge"></span></h2>
+        <div class="filter-block">
+          <div class="filter-head">
+            <span>Depth band <span class="axis-unit">trophic height, y</span></span>
+            <button type="button" class="filter-reset" id="btnResetDepth" disabled>reset</button>
+          </div>
+          <div class="dual-range" id="depthRange">
+            <div class="dual-track"></div>
+            <div class="dual-fill" id="depthFill"></div>
+            <div class="dual-knob" id="depthKnobLo" data-knob="lo" tabindex="0" role="slider"
+                 aria-label="lowest trophic height shown" aria-valuemin="0" aria-valuemax="1"></div>
+            <div class="dual-knob" id="depthKnobHi" data-knob="hi" tabindex="0" role="slider"
+                 aria-label="highest trophic height shown" aria-valuemin="0" aria-valuemax="1"></div>
+          </div>
+          <div class="dual-ends"><span>0.00 &middot; dependencies</span><span>consumers &middot; 1.00</span></div>
+          <div class="filter-readout tab-nums" id="depthReadout">0.00 &ndash; 1.00</div>
+          <div class="filter-note" id="depthNote">The full stack, bottom to top.</div>
+        </div>
+        <div class="filter-block">
+          <div class="filter-head">
+            <span>Angle band <span class="axis-unit">topic circle, &theta;</span></span>
+            <button type="button" class="filter-reset" id="btnResetAngle" disabled>reset</button>
+          </div>
+          <div class="dial-wrap">
+            <svg class="angle-dial" id="angleDial" viewBox="-9 -9 138 138" role="group" aria-label="topic angle band">
+              <circle class="dial-ring" cx="60" cy="60" r="44"></circle>
+              <path class="dial-arc" id="dialArc" d=""></path>
+              <g id="dialTicks"></g>
+              <circle class="dial-knob" id="angleKnobLo" r="6" tabindex="0" role="slider"
+                      aria-label="band start angle" aria-valuemin="0" aria-valuemax="360"></circle>
+              <circle class="dial-knob" id="angleKnobHi" r="6" tabindex="0" role="slider"
+                      aria-label="band end angle" aria-valuemin="0" aria-valuemax="360"></circle>
+            </svg>
+            <div>
+              <div class="filter-readout tab-nums" id="angleReadout">0&deg; &ndash; 360&deg;</div>
+              <div class="filter-note" id="angleNote">The whole topic circle.</div>
+            </div>
+          </div>
+        </div>
+        <div class="filter-count" id="filterCount"></div>
+      </div>
       <div class="panel" data-panel="path">
         <h2>Path finder</h2>
         <div class="path-examples">Try a real cross-tier chain &mdash; not a single-relation edge:
@@ -1373,6 +1477,14 @@
   var initialFrom = null, initialTo = null;
   var initialCmpA = null, initialCmpB = null;
   var initialLookup = null;
+  var initialBand = null, initialArc = null;
+  function parsePair(raw, lo, hi) {
+    if (!raw) return null;
+    var parts = raw.split(",").map(parseFloat);
+    if (parts.length !== 2 || !isFinite(parts[0]) || !isFinite(parts[1])) return null;
+    if (parts[0] < lo || parts[1] > hi) return null;
+    return parts;
+  }
   (function applyHashToggles() {
     if (!location.hash) return;
     var params = new URLSearchParams(location.hash.slice(1));
@@ -1382,6 +1494,10 @@
     initialCmpA = params.get("cmpA");
     initialCmpB = params.get("cmpB");
     initialLookup = params.get("lookup");
+    initialBand = parsePair(params.get("band"), 0, 1);
+    // The angle band is allowed to be "inverted" (start > end): on a circle
+    // that is a wrap through 0deg, not a mistake, so it is not rejected.
+    initialArc = parsePair(params.get("arc"), 0, 360);
     // Only dependency/semantic are real legend toggles now (see edgeVisible
     // above) -- stargazer/contributor/issueAuthor are permanently true and
     // excluded from this reset-then-restore so an old or new permalink that
@@ -1572,6 +1688,134 @@
     return target;
   }
   Object.keys(CLUSTERS).forEach(clusterLayoutTargetFor);
+
+  // ---- Band filters: which slice of the two measured axes is on screen.
+  //
+  // Purely a visibility gate -- tick()'s forces and every node's WORLD_POS
+  // are untouched, so narrowing a band never reflows the graph. That is the
+  // whole point: the axes only mean something if a repo stays where it was
+  // while you filter around it.
+  //
+  // The measured-signal rule from the rest of the project applies here too.
+  // A repo with no trophic height sits at y=0.5 and one with no topic
+  // signal sits at theta=0 by *convention*, not measurement -- so once a
+  // band is narrowed, those repos are hidden rather than matched against a
+  // coordinate nothing established. The panel says how many that is.
+  var BAND_BUCKETS = 32;  // 11.25deg per bucket; only used for cluster coverage
+  function thetaBucket(theta) {
+    var frac = ((theta / (Math.PI * 2)) % 1 + 1) % 1;
+    var b = Math.floor(frac * BAND_BUCKETS);
+    return b === BAND_BUCKETS ? 0 : b;
+  }
+
+  // A cluster meta-node stands in for its members, so it passes a band when
+  // *any* member does -- filtering it by its own averaged target would hide
+  // clusters that genuinely contain matches (a cluster spanning the whole
+  // stack averages to the middle) and show ones that contain none. Height
+  // is an exact [min,max] interval; angle is a 32-bucket occupancy mask,
+  // which can only ever over-include at the edges -- the safe direction for
+  // a stand-in whose members are one click away.
+  var CLUSTER_BAND = {};
+  function bandCoverFor(id) {
+    var c = CLUSTERS[id];
+    if (!c) {
+      var y = TROPHIC_LEVELS[id], tc = TOPIC_CIRCULAR[id];
+      var hasT = !!(tc && tc.theta != null);
+      return {
+        yMin: y == null ? 1 : y, yMax: y == null ? 0 : y, yN: y == null ? 0 : 1,
+        tMask: hasT ? (1 << thetaBucket(tc.theta)) : 0, tN: hasT ? 1 : 0
+      };
+    }
+    if (CLUSTER_BAND[id]) return CLUSTER_BAND[id];
+    var acc = { yMin: 1, yMax: 0, yN: 0, tMask: 0, tN: 0 };
+    c.children.forEach(function (childId) {
+      var b = bandCoverFor(childId);
+      if (b.yN) {
+        if (b.yMin < acc.yMin) acc.yMin = b.yMin;
+        if (b.yMax > acc.yMax) acc.yMax = b.yMax;
+        acc.yN += b.yN;
+      }
+      acc.tMask |= b.tMask;
+      acc.tN += b.tN;
+    });
+    CLUSTER_BAND[id] = acc;
+    return acc;
+  }
+  Object.keys(CLUSTERS).forEach(bandCoverFor);
+
+  var bandFilter = {
+    yLo: 0, yHi: 1,        // trophic height, 0..1
+    aLo: 0, aHi: 360,      // topic angle in degrees; aLo > aHi means the
+                           // band wraps through 0, which is a real and
+                           // ordinary selection on a circle
+    yOn: false, aOn: false
+  };
+  var bandActive = false;  // either band narrowed -- cached, read every frame
+  var bandControlsReady = false;
+
+  // Bucket mask for the currently selected arc, rebuilt only when the arc
+  // moves. A bucket counts as inside if any part of it overlaps the band.
+  var bandArcMask = -1;
+  function rebuildArcMask() {
+    if (!bandFilter.aOn) { bandArcMask = -1; return; }
+    var mask = 0, step = 360 / BAND_BUCKETS;
+    for (var b = 0; b < BAND_BUCKETS; b++) {
+      var lo = b * step, hi = (b + 1) * step;
+      if (angleSpanOverlaps(lo, hi)) mask |= (1 << b);
+    }
+    bandArcMask = mask;
+  }
+  function angleInBand(deg) {
+    var d = ((deg % 360) + 360) % 360;
+    return bandFilter.aLo <= bandFilter.aHi
+      ? (d >= bandFilter.aLo && d <= bandFilter.aHi)
+      : (d >= bandFilter.aLo || d <= bandFilter.aHi);
+  }
+  function angleSpanOverlaps(lo, hi) {
+    // A bucket [lo,hi) overlaps the band if either endpoint is inside it,
+    // or the band's own start falls within the bucket (the case where the
+    // band is narrower than one bucket and sits entirely inside it).
+    return angleInBand(lo) || angleInBand(hi - 1e-6) ||
+      (bandFilter.aLo >= lo && bandFilter.aLo < hi);
+  }
+
+  function degOf(theta) { return ((theta * 180 / Math.PI) % 360 + 360) % 360; }
+
+  // Selection and hover deliberately bypass both bands: searching for a
+  // repo, walking a path or clicking a cluster row must never look like it
+  // did nothing because the result sits outside the current filter.
+  function nodeInBands(n) {
+    if (!bandActive) return true;
+    if (n === selectedNode || n === hoveredNode) return true;
+    if (n.type === "repository") {
+      if (bandFilter.yOn) {
+        var y = TROPHIC_LEVELS[n.id];
+        if (y == null || y < bandFilter.yLo || y > bandFilter.yHi) return false;
+      }
+      if (bandFilter.aOn) {
+        var tc = TOPIC_CIRCULAR[n.id];
+        if (!tc || tc.theta == null || !angleInBand(degOf(tc.theta))) return false;
+      }
+      return true;
+    }
+    if (n.type === "cluster") {
+      var cov = bandCoverFor(n.id);
+      if (bandFilter.yOn && (!cov.yN || cov.yMax < bandFilter.yLo || cov.yMin > bandFilter.yHi)) return false;
+      if (bandFilter.aOn && !(cov.tMask & bandArcMask)) return false;
+      return true;
+    }
+    // Person/issue/fork/contributor-ref samples have no axis position of
+    // their own (layoutTargetForNode returns null): they ride with whatever
+    // repo they were expanded from rather than being filtered on a
+    // coordinate they do not have.
+    var parentKeys = n.parents ? Object.keys(n.parents) : null;
+    if (!parentKeys || !parentKeys.length) return true;
+    for (var i = 0; i < parentKeys.length; i++) {
+      var p = nodeById[parentKeys[i]];
+      if (p && nodeInBands(p)) return true;
+    }
+    return false;
+  }
 
   // Shared by initial placement and tick()'s soft target force: world-space
   // (x, y) for a (theta, r, y) triple, and the lookup that finds one for a
@@ -2801,6 +3045,223 @@
     });
   });
 
+  // ---- Band filter controls (see bandFilter above for the semantics).
+  (function wireBandFilters() {
+    var DIAL_CX = 60, DIAL_CY = 60, DIAL_R = 44;
+    var MIN_ARC_DEG = 2;   // a zero-width arc would select nothing at all
+    var MIN_Y_SPAN = 0.01;
+    var depthRange = document.getElementById("depthRange");
+    var depthFill = document.getElementById("depthFill");
+    var depthKnobs = { lo: document.getElementById("depthKnobLo"), hi: document.getElementById("depthKnobHi") };
+    var depthReadout = document.getElementById("depthReadout");
+    var depthNote = document.getElementById("depthNote");
+    var dial = document.getElementById("angleDial");
+    var dialArc = document.getElementById("dialArc");
+    var angleKnobs = { lo: document.getElementById("angleKnobLo"), hi: document.getElementById("angleKnobHi") };
+    var angleReadout = document.getElementById("angleReadout");
+    var angleNote = document.getElementById("angleNote");
+    var filterBadge = document.getElementById("filterBadge");
+    var filterCount = document.getElementById("filterCount");
+    var btnResetDepth = document.getElementById("btnResetDepth");
+    var btnResetAngle = document.getElementById("btnResetAngle");
+
+    (function drawTicks() {
+      var g = document.getElementById("dialTicks"), svgNS = "http://www.w3.org/2000/svg";
+      [0, 90, 180, 270].forEach(function (deg) {
+        var rad = deg * Math.PI / 180, cos = Math.cos(rad), sin = Math.sin(rad);
+        var line = document.createElementNS(svgNS, "line");
+        line.setAttribute("class", "dial-tick");
+        line.setAttribute("x1", DIAL_CX + (DIAL_R - 7) * cos); line.setAttribute("y1", DIAL_CY - (DIAL_R - 7) * sin);
+        line.setAttribute("x2", DIAL_CX + (DIAL_R + 7) * cos); line.setAttribute("y2", DIAL_CY - (DIAL_R + 7) * sin);
+        g.appendChild(line);
+        var label = document.createElementNS(svgNS, "text");
+        label.setAttribute("class", "dial-tick-label");
+        label.setAttribute("x", DIAL_CX + (DIAL_R + 13) * cos);
+        label.setAttribute("y", DIAL_CY - (DIAL_R + 13) * sin);
+        label.textContent = deg + "\u00b0";
+        g.appendChild(label);
+      });
+    })();
+
+    function dialPoint(deg) {
+      var rad = deg * Math.PI / 180;
+      return { x: DIAL_CX + DIAL_R * Math.cos(rad), y: DIAL_CY - DIAL_R * Math.sin(rad) };
+    }
+    function arcSpan() { return ((bandFilter.aHi - bandFilter.aLo) % 360 + 360) % 360; }
+
+    // Counted over the whole cohort, not over the currently materialized
+    // nodes: "how much of the dataset is in this band" is the question the
+    // number is answering, and the materialized frontier changes with zoom.
+    function bandCounts() {
+      var ids = Object.keys(AGGREGATES);
+      var shown = 0, noHeight = 0, noTopic = 0;
+      ids.forEach(function (id) {
+        var ok = true;
+        if (bandFilter.yOn) {
+          var y = TROPHIC_LEVELS[id];
+          if (y == null) { noHeight++; ok = false; }
+          else if (y < bandFilter.yLo || y > bandFilter.yHi) ok = false;
+        }
+        if (bandFilter.aOn) {
+          var tc = TOPIC_CIRCULAR[id];
+          if (!tc || tc.theta == null) { noTopic++; ok = false; }
+          else if (!angleInBand(degOf(tc.theta))) ok = false;
+        }
+        if (ok) shown++;
+      });
+      return { total: ids.length, shown: shown, noHeight: noHeight, noTopic: noTopic };
+    }
+
+    function render() {
+      bandFilter.yOn = bandFilter.yLo > 0.0005 || bandFilter.yHi < 0.9995;
+      bandActive = bandFilter.yOn || bandFilter.aOn;
+      rebuildArcMask();
+
+      var loPct = bandFilter.yLo * 100, hiPct = bandFilter.yHi * 100;
+      depthFill.style.left = loPct + "%";
+      depthFill.style.width = (hiPct - loPct) + "%";
+      depthKnobs.lo.style.left = loPct + "%";
+      depthKnobs.hi.style.left = hiPct + "%";
+      depthKnobs.lo.setAttribute("aria-valuenow", bandFilter.yLo.toFixed(2));
+      depthKnobs.hi.setAttribute("aria-valuenow", bandFilter.yHi.toFixed(2));
+      depthReadout.textContent = bandFilter.yLo.toFixed(2) + " \u2013 " + bandFilter.yHi.toFixed(2);
+      depthNote.textContent = bandFilter.yOn
+        ? "Only repos whose solved trophic height falls in this slice of the stack."
+        : "The full stack, bottom to top.";
+      btnResetDepth.disabled = !bandFilter.yOn;
+
+      var p0 = dialPoint(bandFilter.aLo), p1 = dialPoint(bandFilter.aHi);
+      // sweep-flag 0 is counter-clockwise on screen, which is the direction
+      // theta increases in (layoutWorldPos puts x=r*cos, z=r*sin, and the
+      // dial negates y so the dial reads the same way the topic plane does).
+      dialArc.setAttribute("d", bandFilter.aOn
+        ? "M " + p0.x.toFixed(2) + " " + p0.y.toFixed(2) +
+          " A " + DIAL_R + " " + DIAL_R + " 0 " + (arcSpan() > 180 ? 1 : 0) + " 0 " +
+          p1.x.toFixed(2) + " " + p1.y.toFixed(2)
+        : "");
+      angleKnobs.lo.setAttribute("cx", p0.x); angleKnobs.lo.setAttribute("cy", p0.y);
+      angleKnobs.hi.setAttribute("cx", p1.x); angleKnobs.hi.setAttribute("cy", p1.y);
+      angleKnobs.lo.setAttribute("aria-valuenow", Math.round(bandFilter.aLo));
+      angleKnobs.hi.setAttribute("aria-valuenow", Math.round(bandFilter.aHi));
+      angleReadout.textContent = bandFilter.aOn
+        ? Math.round(bandFilter.aLo) + "\u00b0 \u2013 " + Math.round(bandFilter.aHi) + "\u00b0"
+        : "0\u00b0 \u2013 360\u00b0";
+      dial.classList.toggle("full", !bandFilter.aOn);
+      angleNote.textContent = bandFilter.aOn
+        ? "A " + Math.round(arcSpan()) + "\u00b0 wedge of the topic circle" +
+          (bandFilter.aLo > bandFilter.aHi ? ", wrapping through 0\u00b0." : ".")
+        : "The whole topic circle \u2014 drag a knob off 0\u00b0 to cut a wedge.";
+      btnResetAngle.disabled = !bandFilter.aOn;
+
+      if (!bandActive) {
+        filterBadge.textContent = "";
+        filterCount.textContent = "";
+      } else {
+        var c = bandCounts();
+        filterBadge.textContent = fmt(c.shown) + " of " + fmt(c.total) + " repos";
+        var html = "<b>" + fmt(c.shown) + "</b> of " + fmt(c.total) + " repos are inside " +
+          (bandFilter.yOn && bandFilter.aOn ? "both bands" : "this band") + ".";
+        // The honest footnote: a repo with no measured value on a filtered
+        // axis is hidden, not silently matched against its placeholder
+        // position. Same rule as everywhere else -- real signal or none.
+        var missing = [];
+        if (bandFilter.yOn && c.noHeight) missing.push(fmt(c.noHeight) + " have no solved trophic height");
+        if (bandFilter.aOn && c.noTopic) missing.push(fmt(c.noTopic) + " have no topic signal");
+        if (missing.length) {
+          html += " " + missing.join(" and ") + " \u2014 they sit at the default position by convention, " +
+            "not measurement, so a narrowed band hides them rather than counting them in.";
+        }
+        filterCount.innerHTML = html;
+      }
+      if (bandControlsReady) updateHash();
+    }
+
+    // ---- Dragging.
+    function clamp01(v) { return v < 0 ? 0 : v > 1 ? 1 : v; }
+    function setDepth(which, v) {
+      v = clamp01(v);
+      if (which === "lo") bandFilter.yLo = Math.min(v, bandFilter.yHi - MIN_Y_SPAN);
+      else bandFilter.yHi = Math.max(v, bandFilter.yLo + MIN_Y_SPAN);
+      render();
+    }
+    function setAngle(which, deg) {
+      deg = ((deg % 360) + 360) % 360;
+      var other = which === "lo" ? bandFilter.aHi : bandFilter.aLo;
+      // Refuse to close the wedge to nothing, from either side.
+      var gapA = ((deg - other) % 360 + 360) % 360;
+      var gapB = 360 - gapA;
+      if (which === "lo" && gapB < MIN_ARC_DEG) deg = other - MIN_ARC_DEG;
+      if (which === "hi" && gapA < MIN_ARC_DEG) deg = other + MIN_ARC_DEG;
+      deg = ((deg % 360) + 360) % 360;
+      if (which === "lo") bandFilter.aLo = deg; else bandFilter.aHi = deg;
+      bandFilter.aOn = true;
+      render();
+    }
+    function dragify(el, onMove) {
+      el.addEventListener("pointerdown", function (ev) {
+        ev.preventDefault();
+        el.setPointerCapture(ev.pointerId);
+        function move(e) { onMove(e); }
+        function up(e) {
+          el.releasePointerCapture(ev.pointerId);
+          el.removeEventListener("pointermove", move);
+          el.removeEventListener("pointerup", up);
+          el.removeEventListener("pointercancel", up);
+        }
+        el.addEventListener("pointermove", move);
+        el.addEventListener("pointerup", up);
+        el.addEventListener("pointercancel", up);
+        onMove(ev);
+      });
+    }
+    ["lo", "hi"].forEach(function (which) {
+      dragify(depthKnobs[which], function (ev) {
+        var r = depthRange.getBoundingClientRect();
+        setDepth(which, r.width ? (ev.clientX - r.left) / r.width : 0);
+      });
+      depthKnobs[which].addEventListener("keydown", function (ev) {
+        var step = ev.shiftKey ? 0.1 : 0.01;
+        if (ev.key === "ArrowLeft" || ev.key === "ArrowDown") { setDepth(which, (which === "lo" ? bandFilter.yLo : bandFilter.yHi) - step); ev.preventDefault(); }
+        if (ev.key === "ArrowRight" || ev.key === "ArrowUp") { setDepth(which, (which === "lo" ? bandFilter.yLo : bandFilter.yHi) + step); ev.preventDefault(); }
+      });
+      dragify(angleKnobs[which], function (ev) {
+        var r = dial.getBoundingClientRect();
+        // The SVG is a square 120x120 viewBox, so screen -> viewBox is one
+        // uniform scale; the centre is all the angle actually needs.
+        var dx = (ev.clientX - (r.left + r.width / 2));
+        var dy = (ev.clientY - (r.top + r.height / 2));
+        setAngle(which, Math.atan2(-dy, dx) * 180 / Math.PI);
+      });
+      angleKnobs[which].addEventListener("keydown", function (ev) {
+        var step = ev.shiftKey ? 15 : 3;
+        var cur = which === "lo" ? bandFilter.aLo : bandFilter.aHi;
+        if (ev.key === "ArrowLeft" || ev.key === "ArrowDown") { setAngle(which, cur - step); ev.preventDefault(); }
+        if (ev.key === "ArrowRight" || ev.key === "ArrowUp") { setAngle(which, cur + step); ev.preventDefault(); }
+      });
+    });
+    btnResetDepth.addEventListener("click", function () {
+      bandFilter.yLo = 0; bandFilter.yHi = 1; render();
+    });
+    btnResetAngle.addEventListener("click", function () {
+      bandFilter.aLo = 0; bandFilter.aHi = 360; bandFilter.aOn = false; render();
+    });
+
+    if (initialBand) {
+      bandFilter.yLo = clamp01(initialBand[0]);
+      bandFilter.yHi = Math.max(bandFilter.yLo + MIN_Y_SPAN, clamp01(initialBand[1]));
+    }
+    if (initialArc) {
+      bandFilter.aLo = ((initialArc[0] % 360) + 360) % 360;
+      bandFilter.aHi = ((initialArc[1] % 360) + 360) % 360;
+      bandFilter.aOn = true;
+    }
+    render();
+    // Only now: render() runs once during boot, before selection/path/
+    // compare state exists, and an updateHash() at that point would rewrite
+    // the incoming permalink down to just the band parameters.
+    bandControlsReady = true;
+  })();
+
   // Selecting a node turns the sidebar into an inspector for that one node:
   // "Selected node" opens and everything else folds shut. Expanding it alone
   // wasn't enough -- it's the fourth of six panels, so with Clusters (open by
@@ -3377,8 +3838,16 @@
   // already in screen pixels (via Scene3D.projectToScreen(), which is
   // perspective-aware), so unlike the old world-space version, nothing
   // here needs to divide by a zoom factor to stay screen-constant.
+  // An edge is drawn only if both of its endpoints are. Stamped once per
+  // frame onto the nodes rather than recomputed per edge: the dependency
+  // tier alone is 18669 edges, and nodeInBands walks a cluster's coverage.
+  function bandEdgePass(e) {
+    return !bandActive || (e.source._inBand && e.target._inBand);
+  }
+
   function draw() {
     clearCentroidMemo();  // see clusterCentroidNow: valid for one frame only
+    if (bandActive) nodes.forEach(function (n) { n._inBand = nodeInBands(n); });
     var rect = pane.getBoundingClientRect();
     ctx.clearRect(0, 0, rect.width, rect.height);
 
@@ -3420,6 +3889,7 @@
     var repoTierEdges = [], childTierEdges = [];
     edges.forEach(function (e) {
       var dim, active;
+      if (!bandEdgePass(e)) return;
       if (e.tier === "repo") {
         if (!edgeInFocus(e)) return;
         dim = selectedNode && e.source !== selectedNode && e.target !== selectedNode;
@@ -3441,7 +3911,7 @@
 
     var contribTierEdges = [];
     contribEdges.forEach(function (e) {
-      if (!edgeInFocus(e)) return;
+      if (!edgeInFocus(e) || !bandEdgePass(e)) return;
       var dim = selectedNode && e.source !== selectedNode && e.target !== selectedNode;
       var hot = e === hoveredEdge;
       e._color = palette.edgeContrib;
@@ -3452,7 +3922,7 @@
 
     var issueAuthorTierEdges = [];
     issueAuthorEdges.forEach(function (e) {
-      if (!edgeInFocus(e)) return;
+      if (!edgeInFocus(e) || !bandEdgePass(e)) return;
       var dim = selectedNode && e.source !== selectedNode && e.target !== selectedNode;
       var hot = e === hoveredEdge;
       e._color = palette.edgeIssueAuthor;
@@ -3464,6 +3934,7 @@
     var dependencyTierEdges = [];
     if (edgeVisible.dependency) {
       dependencyEdges.forEach(function (e) {
+        if (!bandEdgePass(e)) return;
         var dim = selectedNode && e.source !== selectedNode && e.target !== selectedNode;
         var hot = e === hoveredEdge;
         e._color = palette.edgeDependency;
@@ -3477,6 +3948,7 @@
     var semanticTierEdges = [];
     if (edgeVisible.semantic) {
       semanticEdges.forEach(function (e) {
+        if (!bandEdgePass(e)) return;
         var dim = selectedNode && e.source !== selectedNode && e.target !== selectedNode;
         var hot = e === hoveredEdge;
         e._color = palette.edgeSemantic;
@@ -3500,7 +3972,7 @@
       });
     }
 
-    var visibleNodes = nodes.filter(function (n) { return isTypeVisible(n.type); });
+    var visibleNodes = nodes.filter(function (n) { return isTypeVisible(n.type) && (!bandActive || n._inBand); });
     visibleNodes.forEach(function (n) {
       n._dim = pathNodeIds ? !pathNodeIds[n.id] : (compareNodeIds ? !compareNodeIds[n.id] : (selectedNode && n !== selectedNode && !(neighborIds && neighborIds[n.id])));
       // Repos only get a tint under the opt-in "color by cluster" toggle
@@ -3545,7 +4017,15 @@
     // aggregate target, then its position at the moment it expanded, if no
     // child is currently materialized to average -- e.g. every direct child
     // is itself an expanded sub-cluster).
-    var haloRenderNodes = Object.keys(clusterHalos).map(function (cid) {
+    var haloRenderNodes = Object.keys(clusterHalos).filter(function (cid) {
+      // A halo is the footprint of an expanded cluster, so it follows the
+      // same coverage rule its collapsed meta-node would have.
+      if (!bandActive) return true;
+      var cov = bandCoverFor(cid);
+      if (bandFilter.yOn && (!cov.yN || cov.yMax < bandFilter.yLo || cov.yMin > bandFilter.yHi)) return false;
+      if (bandFilter.aOn && !(cov.tMask & bandArcMask)) return false;
+      return true;
+    }).map(function (cid) {
       var halo = clusterHalos[cid];
       var centroid = clusterCentroidNow(cid) || WORLD_POS[cid] || halo._fallbackPos;
       return {
@@ -3834,6 +4314,8 @@
     var typesOn = Object.keys(typeVisible).filter(function (k) { return typeVisible[k]; });
     if (typesOn.length) params.set("types", typesOn.join(","));
     if (edgeForceStrength > 0) params.set("force", edgeForceStrength);
+    if (bandFilter.yOn) params.set("band", bandFilter.yLo.toFixed(3) + "," + bandFilter.yHi.toFixed(3));
+    if (bandFilter.aOn) params.set("arc", Math.round(bandFilter.aLo) + "," + Math.round(bandFilter.aHi));
     var qs = params.toString();
     var url = location.pathname + location.search + (qs ? "#" + qs : "");
     history.replaceState(null, "", url);
