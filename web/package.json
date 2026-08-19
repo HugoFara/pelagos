@@ -1,0 +1,22 @@
+{
+  "name": "pelagos-web",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "3D scene renderer for the Pelagos graph explorer (web/template.html).",
+  "scripts": {
+    "build": "esbuild src/scene3d.js --bundle --minify --format=iife --global-name=Scene3D --outfile=scene3d.bundle.js && cp node_modules/fix-webm-duration/fix-webm-duration.js fix-webm-duration.js",
+    "watch": "esbuild src/scene3d.js --bundle --format=iife --global-name=Scene3D --outfile=scene3d.bundle.js --watch",
+    "dev": "node tools/dev-server.mjs",
+    "test": "node --test src/*.test.mjs",
+    "screenshot": "node tools/screenshot.mjs"
+  },
+  "dependencies": {
+    "fix-webm-duration": "1.0.6",
+    "three": "0.169.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.1",
+    "playwright": "1.61.1"
+  }
+}

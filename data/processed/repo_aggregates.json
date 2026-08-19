@@ -1,0 +1,410 @@
+{
+"2noise/chattts": {
+"title": "chattts",
+"stargazers": 10000,
+"forks": 694,
+"openIssues": 61,
+"watchers": 191,
+"contributors": 52
+},
+"aigc-audio/audiogpt": {
+"title": "audiogpt",
+"stargazers": 10000,
+"forks": 270,
+"openIssues": 41,
+"watchers": 134,
+"contributors": 11
+},
+"AliaksandrSiarohin/first-order-model": {
+"title": "first-order-model",
+"stargazers": 10000,
+"forks": 1013,
+"openIssues": 307,
+"watchers": 352,
+"contributors": 21
+},
+"apple/ml-stable-diffusion": {
+"title": "ml-stable-diffusion",
+"stargazers": 10000,
+"forks": 612,
+"openIssues": 165,
+"watchers": 141,
+"contributors": 37
+},
+"Avik-Jain/100-Days-Of-ML-Code": {
+"title": "100-Days-Of-ML-Code",
+"stargazers": 10000,
+"forks": 1072,
+"openIssues": null,
+"watchers": 2450,
+"contributors": 6
+},
+"bradyfu/awesome-multimodal-large-language-models": {
+"title": "awesome-multimodal-large-language-models",
+"stargazers": 10000,
+"forks": 207,
+"openIssues": 34,
+"watchers": 268,
+"contributors": 11
+},
+"compvis/latent-diffusion": {
+"title": "latent-diffusion",
+"stargazers": 10000,
+"forks": 1008,
+"openIssues": 266,
+"watchers": 98,
+"contributors": 4
+},
+"d2l-ai/d2l-en": {
+"title": "d2l-en",
+"stargazers": 10000,
+"forks": 1021,
+"openIssues": 101,
+"watchers": 421,
+"contributors": 297
+},
+"deepinsight/insightface": {
+"title": "insightface",
+"stargazers": 10000,
+"forks": 1053,
+"openIssues": 1146,
+"watchers": 519,
+"contributors": 57
+},
+"dmlc/dgl": {
+"title": "dgl",
+"stargazers": 10000,
+"forks": 1010,
+"openIssues": 432,
+"watchers": 173,
+"contributors": 288
+},
+"facebookresearch/animateddrawings": {
+"title": "animateddrawings",
+"stargazers": 10000,
+"forks": 534,
+"openIssues": 15,
+"watchers": 95,
+"contributors": 17
+},
+"facebookresearch/faiss": {
+"title": "faiss",
+"stargazers": 10000,
+"forks": 1081,
+"openIssues": 225,
+"watchers": 480,
+"contributors": 169
+},
+"facebookresearch/seamless_communication": {
+"title": "seamless_communication",
+"stargazers": 10000,
+"forks": 279,
+"openIssues": 218,
+"watchers": 145,
+"contributors": 36
+},
+"flagalpha/llama2-chinese": {
+"title": "llama2-chinese",
+"stargazers": 10000,
+"forks": 263,
+"openIssues": 194,
+"watchers": 147,
+"contributors": 15
+},
+"google-ai-edge/mediapipe": {
+"title": "mediapipe",
+"stargazers": 10000,
+"forks": 1039,
+"openIssues": 373,
+"watchers": 519,
+"contributors": 80
+},
+"google/sentencepiece": {
+"title": "sentencepiece",
+"stargazers": 10000,
+"forks": 970,
+"openIssues": 38,
+"watchers": 128,
+"contributors": 85
+},
+"h2oai/h2ogpt": {
+"title": "h2ogpt",
+"stargazers": 10000,
+"forks": 433,
+"openIssues": 280,
+"watchers": 156,
+"contributors": 69
+},
+"hpcaitech/colossalai": {
+"title": "colossalai",
+"stargazers": 10000,
+"forks": 1005,
+"openIssues": 400,
+"watchers": 385,
+"contributors": 188
+},
+"hwchase17/langchain": {
+"title": "langchain",
+"stargazers": 10000,
+"forks": 1015,
+"openIssues": 356,
+"watchers": 711,
+"contributors": 481
+},
+"isl-org/open3d": {
+"title": "open3d",
+"stargazers": 10000,
+"forks": 1042,
+"openIssues": 1217,
+"watchers": 197,
+"contributors": 216
+},
+"jetbrains/intellij-community": {
+"title": "intellij-community",
+"stargazers": 10000,
+"forks": 1068,
+"openIssues": null,
+"watchers": 541,
+"contributors": 273
+},
+"kanaries/pygwalker": {
+"title": "pygwalker",
+"stargazers": 10000,
+"forks": 290,
+"openIssues": 57,
+"watchers": 82,
+"contributors": 22
+},
+"labmlai/annotated_deep_learning_paper_implementations": {
+"title": "annotated_deep_learning_paper_implementations",
+"stargazers": 10000,
+"forks": 1057,
+"openIssues": 29,
+"watchers": 465,
+"contributors": 37
+},
+"lllyasviel/controlnet": {
+"title": "controlnet",
+"stargazers": 10000,
+"forks": 1026,
+"openIssues": 426,
+"watchers": 219,
+"contributors": 6
+},
+"ludwig-ai/ludwig": {
+"title": "ludwig",
+"stargazers": 10000,
+"forks": 1030,
+"openIssues": 38,
+"watchers": 193,
+"contributors": 148
+},
+"microsoft/airsim": {
+"title": "airsim",
+"stargazers": 10000,
+"forks": 1016,
+"openIssues": 660,
+"watchers": 592,
+"contributors": 198
+},
+"microsoft/guidance": {
+"title": "guidance",
+"stargazers": 10000,
+"forks": 499,
+"openIssues": 249,
+"watchers": 120,
+"contributors": 74
+},
+"microsoft/swin-transformer": {
+"title": "swin-transformer",
+"stargazers": 10000,
+"forks": 1032,
+"openIssues": 180,
+"watchers": 126,
+"contributors": 14
+},
+"mlc-ai/web-llm": {
+"title": "web-llm",
+"stargazers": 10000,
+"forks": 368,
+"openIssues": 84,
+"watchers": 132,
+"contributors": 45
+},
+"myshell-ai/openvoice": {
+"title": "openvoice",
+"stargazers": 10000,
+"forks": 643,
+"openIssues": 213,
+"watchers": 229,
+"contributors": 13
+},
+"nvidia/deeplearningexamples": {
+"title": "deeplearningexamples",
+"stargazers": 10000,
+"forks": 1035,
+"openIssues": 280,
+"watchers": 297,
+"contributors": 102
+},
+"nvlabs/stylegan2": {
+"title": "stylegan2",
+"stargazers": 10000,
+"forks": 1067,
+"openIssues": null,
+"watchers": 370,
+"contributors": 3
+},
+"openai/gpt-3": {
+"title": "gpt-3",
+"stargazers": 10000,
+"forks": 1069,
+"openIssues": 3,
+"watchers": 893,
+"contributors": 3
+},
+"openbmb/chatdev": {
+"title": "chatdev",
+"stargazers": 10000,
+"forks": 934,
+"openIssues": 23,
+"watchers": 316,
+"contributors": 56
+},
+"openmoss/moss": {
+"title": "moss",
+"stargazers": 10000,
+"forks": 1065,
+"openIssues": 234,
+"watchers": 121,
+"contributors": 16
+},
+"PaddlePaddle/PaddleDetection": {
+"title": "PaddleDetection",
+"stargazers": 10000,
+"forks": 1023,
+"openIssues": 1215,
+"watchers": 198,
+"contributors": 174
+},
+"phillipi/pix2pix": {
+"title": "pix2pix",
+"stargazers": 10000,
+"forks": 1012,
+"openIssues": 89,
+"watchers": 321,
+"contributors": 13
+},
+"pytorch/examples": {
+"title": "examples",
+"stargazers": 10000,
+"forks": 1052,
+"openIssues": 187,
+"watchers": 395,
+"contributors": 238
+},
+"pytorch/pytorch": {
+"title": "pytorch",
+"stargazers": 10000,
+"forks": 1013,
+"openIssues": 6819,
+"watchers": 1764,
+"contributors": 332
+},
+"qwenlm/qwen1.5": {
+"title": "qwen1.5",
+"stargazers": 10000,
+"forks": 189,
+"openIssues": 28,
+"watchers": 96,
+"contributors": 34
+},
+"ray-project/ray": {
+"title": "ray",
+"stargazers": 10000,
+"forks": 1009,
+"openIssues": 3719,
+"watchers": 482,
+"contributors": 411
+},
+"rwightman/pytorch-image-models": {
+"title": "pytorch-image-models",
+"stargazers": 10000,
+"forks": 1094,
+"openIssues": 46,
+"watchers": 319,
+"contributors": 146
+},
+"seemoo-lab/openhaystack": {
+"title": "openhaystack",
+"stargazers": 10000,
+"forks": 348,
+"openIssues": 119,
+"watchers": 134,
+"contributors": 13
+},
+"slundberg/shap": {
+"title": "shap",
+"stargazers": 10000,
+"forks": 1089,
+"openIssues": 694,
+"watchers": 245,
+"contributors": 209
+},
+"state-spaces/mamba": {
+"title": "mamba",
+"stargazers": 10000,
+"forks": 355,
+"openIssues": 408,
+"watchers": 104,
+"contributors": 35
+},
+"tensorflow/magenta": {
+"title": "magenta",
+"stargazers": 10000,
+"forks": 1035,
+"openIssues": 374,
+"watchers": 749,
+"contributors": 144
+},
+"thudm/chatglm-6b": {
+"title": "chatglm-6b",
+"stargazers": 10000,
+"forks": 1071,
+"openIssues": 556,
+"watchers": 394,
+"contributors": 46
+},
+"torvalds/linux": {
+"title": "linux",
+"stargazers": 10000,
+"forks": 1004,
+"openIssues": null,
+"watchers": 7795,
+"contributors": null
+},
+"ultralytics/ultralytics": {
+"title": "ultralytics",
+"stargazers": 10000,
+"forks": 1021,
+"openIssues": 745,
+"watchers": 187,
+"contributors": 225
+},
+"vision-cair/minigpt-4": {
+"title": "minigpt-4",
+"stargazers": 10000,
+"forks": 1061,
+"openIssues": 349,
+"watchers": 216,
+"contributors": 13
+},
+"ymcui/chinese-llama-alpaca": {
+"title": "chinese-llama-alpaca",
+"stargazers": 10000,
+"forks": 837,
+"openIssues": 1,
+"watchers": 183,
+"contributors": 10
+}
+}

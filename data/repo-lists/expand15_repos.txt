@@ -1,0 +1,15 @@
+ray-project/ray
+pytorch/pytorch
+torvalds/linux
+openai/gpt-3
+tensorflow/magenta
+facebookresearch/faiss
+hwchase17/langchain
+ultralytics/ultralytics
+compvis/stable-diffusion
+deepinsight/insightface
+microsoft/swin-transformer
+nvidia/deeplearningexamples
+jetbrains/intellij-community
+isl-org/open3d
+dmlc/dgl

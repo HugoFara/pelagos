@@ -1,0 +1,53 @@
+19573559 https://semrepo.org/property/hasStargazer
+7784692 http://purl.org/spar/fabio/hasUrl
+4961167 http://purl.org/dc/terms/created
+4190040 https://semrepo.org/property/hasPersonType
+3126466 http://www.w3.org/1999/02/22-rdf-syntax-ns#type
+2806736 http://purl.org/dc/terms/title
+2621999 http://xmlns.com/foaf/0.1/accountName
+2609017 https://semrepo.org/property/hasIssue
+2608994 https://semrepo.org/property/issueState
+2605173 https://semrepo.org/property/hasIssueAuthor
+2468175 https://semrepo.org/property/forkedAs
+2438124 https://semrepo.org/property/hasTotalWatchers
+2416507 https://semrepo.org/property/hasTotalStargazers
+2359021 https://semrepo.org/property/hasTotalForks
+2342623 https://semrepo.org/property/hasTotalOpenIssues
+2246480 https://semrepo.org/property/forkedBy
+2027128 https://semrepo.org/property/hasTotalComments
+1663664 https://semrepo.org/property/hasIssueLabelReference
+1663642 https://semrepo.org/property/hasIssueLabelName
+1663577 https://semrepo.org/property/hasIssueLabelDescription
+1027760 https://semrepo.org/property/hasWatcher
+ 782473 http://purl.org/spar/fabio/accountName
+ 605460 https://semrepo.org/property/hasContributor
+ 605440 https://semrepo.org/property/hasContributorReference
+ 605421 https://semrepo.org/property/hasCommits
+ 387195 https://semrepo.org/property/hasLanguageUsage
+ 387191 https://semrepo.org/property/hasLanguageName
+ 387188 https://semrepo.org/property/hasLanguageReference
+ 345685 http://www.w3.org/2002/07/owl#sameAs
+ 272328 http://xmlns.com/foaf/0.1/topic
+ 197536 http://purl.org/spar/fabio/hasURL
+ 197531 http://purl.org/dc/terms/creator
+ 197521 https://semrepo.org/property/hasLpwcUrl
+ 194737 https://semrepo.org/property/hasReadMeContent
+ 191941 https://semrepo.org/property/hasTopContributor
+ 191938 https://semrepo.org/property/hasTotalContributor
+ 187654 https://semrepo.org/property/hasPrimaryProgrammingLanguage
+ 148159 https://semrepo.org/property/hasMlseaUrl
+ 146101 http://purl.org/dc/terms/abstract
+ 108283 https://semrepo.org/property/hasPublicRepository
+ 105679 http://xmlns.com/foaf/0.1/name
+ 104764 https://semrepo.org/property/hasFollowers
+  96142 https://semrepo.org/property/hasTotalIssues
+  96134 https://semrepo.org/property/hasTotalClosedIssues
+  95487 https://semrepo.org/property/usedPackage
+  47114 https://semrepo.org/property/hasLocation
+  45296 http://xmlns.com/foaf/0.1/description
+  41013 https://semrepo.org/property/hasBlog
+  36202 http://xmlns.com/foaf/0.1/affiliation
+  27081 http://xmlns.com/foaf/0.1/mbox
+  11865 https://semrepo.org/property/hasSoaUrl
+  11710 https://semrepo.org/property/hasTwitterAccount
+     36 https://semrepo.org/property/hasBotType

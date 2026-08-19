@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.venv/
+
+# Raw grep/awk output cached from the source .nt file -- large, and fully
+# regenerable via scripts/ + SEMREPO_NT. Only data/processed/ is committed.
+data/raw
+
+# web/'s three.js build tooling -- reinstalled via `npm install` in web/;
+# web/scene3d.bundle.js (the build output) IS committed, same as web/index.html.
+node_modules/
+
+# npm run dev's unminified, unbundled-into-git dev build (web/tools/dev-server.mjs) --
+# never overwrite the committed, minified web/scene3d.bundle.js with it.
+web/scene3d.dev.bundle.js
