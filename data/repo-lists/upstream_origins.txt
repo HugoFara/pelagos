@@ -1,0 +1,111 @@
+# Candidate non-GitHub origins for cohort repos, for scripts/44_repo_identity.py.
+#
+# This file is a CANDIDATE GENERATOR, never evidence. Every line is verified
+# by intrinsic ref overlap (git ls-remote, the same rule that merges any two
+# origins) before it is recorded, and a line that fails is printed as a
+# rejection rather than silently kept. A wrong guess here cannot produce a
+# wrong merge.
+#
+# It exists because `git ls-remote` can verify an origin but cannot discover
+# one, and Software Heritage's public REST API -- the natural place to ask
+# "what else serves this revision" -- does not expose that query. Only a
+# substring search over origin URLs, which does not surface
+# git.kernel.org/.../linux.git for the query "linux" at all. Doing discovery
+# properly means the SWH graph dataset on AWS Open Data, a separate project.
+#
+# Format: <github owner/name><TAB><candidate upstream URL>
+# Lines starting with # are comments. Blank lines are ignored.
+
+# Projects whose real home is a forge this cohort does not otherwise reach:
+# the kernel, GNU, the BSDs, freedesktop-adjacent desktops, and the
+# self-hosted C projects. These are exactly the repos the trophic axis puts
+# at the bottom, where a mirror standing in for its origin does the most damage.
+torvalds/linux	https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
+git/git	https://git.kernel.org/pub/scm/git/git.git
+postgres/postgres	https://git.postgresql.org/git/postgresql.git
+gcc-mirror/gcc	https://gcc.gnu.org/git/gcc.git
+qemu/qemu	https://gitlab.com/qemu-project/qemu.git
+videolan/vlc	https://code.videolan.org/videolan/vlc.git
+FFmpeg/FFmpeg	https://git.ffmpeg.org/ffmpeg.git
+coreutils/coreutils	https://git.savannah.gnu.org/git/coreutils.git
+GNOME/gimp	https://gitlab.gnome.org/GNOME/gimp.git
+KDE/kdenlive	https://invent.kde.org/multimedia/kdenlive.git
+KDE/krita	https://invent.kde.org/graphics/krita.git
+freebsd/freebsd-src	https://git.freebsd.org/src.git
+golang/go	https://go.googlesource.com/go
+haproxy/haproxy	https://git.haproxy.org/git/haproxy.git
+nginx/nginx	https://hg.nginx.org/nginx
+sqlite/sqlite	https://sqlite.org/src
+
+# Apache projects dual-hosted on the ASF's own gitbox. Generated from the
+# cohort's apache/* repos by the standard asf path; the ones whose gitbox
+# name differs from their GitHub name simply fail verification and are
+# reported.
+apache/answer	https://gitbox.apache.org/repos/asf/answer.git
+apache/arrow	https://gitbox.apache.org/repos/asf/arrow.git
+apache/arrow-rs	https://gitbox.apache.org/repos/asf/arrow-rs.git
+apache/beam	https://gitbox.apache.org/repos/asf/beam.git
+apache/brpc	https://gitbox.apache.org/repos/asf/brpc.git
+apache/calcite	https://gitbox.apache.org/repos/asf/calcite.git
+apache/camel	https://gitbox.apache.org/repos/asf/camel.git
+apache/casbin	https://gitbox.apache.org/repos/asf/casbin.git
+apache/cassandra	https://gitbox.apache.org/repos/asf/cassandra.git
+apache/datafusion	https://gitbox.apache.org/repos/asf/datafusion.git
+apache/datafusion-sqlparser-rs	https://gitbox.apache.org/repos/asf/datafusion-sqlparser-rs.git
+apache/dolphinscheduler	https://gitbox.apache.org/repos/asf/dolphinscheduler.git
+apache/doris	https://gitbox.apache.org/repos/asf/doris.git
+apache/druid	https://gitbox.apache.org/repos/asf/druid.git
+apache/dubbo	https://gitbox.apache.org/repos/asf/dubbo.git
+apache/dubbo-go	https://gitbox.apache.org/repos/asf/dubbo-go.git
+apache/dubbo-spring-boot-project	https://gitbox.apache.org/repos/asf/dubbo-spring-boot-project.git
+apache/echarts	https://gitbox.apache.org/repos/asf/echarts.git
+apache/fesod	https://gitbox.apache.org/repos/asf/fesod.git
+apache/flink	https://gitbox.apache.org/repos/asf/flink.git
+apache/flink-cdc	https://gitbox.apache.org/repos/asf/flink-cdc.git
+apache/fory	https://gitbox.apache.org/repos/asf/fory.git
+apache/groovy	https://gitbox.apache.org/repos/asf/groovy.git
+apache/hadoop	https://gitbox.apache.org/repos/asf/hadoop.git
+apache/hbase	https://gitbox.apache.org/repos/asf/hbase.git
+apache/hertzbeat	https://gitbox.apache.org/repos/asf/hertzbeat.git
+apache/hive	https://gitbox.apache.org/repos/asf/hive.git
+apache/horaedb	https://gitbox.apache.org/repos/asf/horaedb.git
+apache/hudi	https://gitbox.apache.org/repos/asf/hudi.git
+apache/iceberg	https://gitbox.apache.org/repos/asf/iceberg.git
+apache/iggy	https://gitbox.apache.org/repos/asf/iggy.git
+apache/ignite	https://gitbox.apache.org/repos/asf/ignite.git
+apache/incubator-heron	https://gitbox.apache.org/repos/asf/incubator-heron.git
+apache/incubator-kie-drools	https://gitbox.apache.org/repos/asf/incubator-kie-drools.git
+apache/incubator-kie-optaplanner	https://gitbox.apache.org/repos/asf/incubator-kie-optaplanner.git
+apache/incubator-seata	https://gitbox.apache.org/repos/asf/incubator-seata.git
+apache/incubator-weex	https://gitbox.apache.org/repos/asf/incubator-weex.git
+apache/iotdb	https://gitbox.apache.org/repos/asf/iotdb.git
+apache/jmeter	https://gitbox.apache.org/repos/asf/jmeter.git
+apache/kafka	https://gitbox.apache.org/repos/asf/kafka.git
+apache/kylin	https://gitbox.apache.org/repos/asf/kylin.git
+apache/logging-log4j2	https://gitbox.apache.org/repos/asf/logging-log4j2.git
+apache/lucene	https://gitbox.apache.org/repos/asf/lucene.git
+apache/maven	https://gitbox.apache.org/repos/asf/maven.git
+apache/mesos	https://gitbox.apache.org/repos/asf/mesos.git
+apache/mxnet	https://gitbox.apache.org/repos/asf/mxnet.git
+apache/nifi	https://gitbox.apache.org/repos/asf/nifi.git
+apache/opendal	https://gitbox.apache.org/repos/asf/opendal.git
+apache/pinot	https://gitbox.apache.org/repos/asf/pinot.git
+apache/pouchdb	https://gitbox.apache.org/repos/asf/pouchdb.git
+apache/pulsar	https://gitbox.apache.org/repos/asf/pulsar.git
+apache/rocketmq	https://gitbox.apache.org/repos/asf/rocketmq.git
+apache/rocketmq-externals	https://gitbox.apache.org/repos/asf/rocketmq-externals.git
+apache/seatunnel	https://gitbox.apache.org/repos/asf/seatunnel.git
+apache/shardingsphere	https://gitbox.apache.org/repos/asf/shardingsphere.git
+apache/shardingsphere-elasticjob	https://gitbox.apache.org/repos/asf/shardingsphere-elasticjob.git
+apache/shenyu	https://gitbox.apache.org/repos/asf/shenyu.git
+apache/shiro	https://gitbox.apache.org/repos/asf/shiro.git
+apache/skywalking	https://gitbox.apache.org/repos/asf/skywalking.git
+apache/storm	https://gitbox.apache.org/repos/asf/storm.git
+apache/streampark	https://gitbox.apache.org/repos/asf/streampark.git
+apache/superset	https://gitbox.apache.org/repos/asf/superset.git
+apache/thrift	https://gitbox.apache.org/repos/asf/thrift.git
+apache/tika	https://gitbox.apache.org/repos/asf/tika.git
+apache/tomcat	https://gitbox.apache.org/repos/asf/tomcat.git
+apache/tvm	https://gitbox.apache.org/repos/asf/tvm.git
+apache/zeppelin	https://gitbox.apache.org/repos/asf/zeppelin.git
+apache/zookeeper	https://gitbox.apache.org/repos/asf/zookeeper.git

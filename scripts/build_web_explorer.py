@@ -72,6 +72,20 @@ def main(processed_dir="data/processed", template_path="web/template.html", out_
     # y-axis) and circular topic embedding (16_topic_circular_embedding.py,
     # the theta-axis + free coherence radius) -- replaces the fully free
     # force-directed layout with a constrained one. See ROADMAP.md.
+    # Repo identity (44_repo_identity.py): which duplicate slugs each node
+    # absorbed, and which non-GitHub origins serve it. Only the records that
+    # actually have something to say are shipped -- a repo with one GitHub
+    # origin and no aliases would be pure weight in a file that is already
+    # mostly edge tuples. Optional, like every other post-Phase-7 input, so an
+    # older checkout still builds.
+    identity_path = processed_dir / "repo_identity.json"
+    repo_identity = {}
+    if identity_path.exists():
+        for repo, record in json.loads(identity_path.read_text())["repos"].items():
+            elsewhere = [o for o in record.get("origins", []) if o.get("forge") != "github"]
+            if record.get("aliases") or elsewhere:
+                repo_identity[repo] = {"aliases": record.get("aliases", []), "origins": elsewhere}
+
     trophic_levels = json.loads((processed_dir / "repo_trophic_levels.json").read_text())
     topic_circular = json.loads((processed_dir / "repo_topic_circular.json").read_text())
 
@@ -184,6 +198,7 @@ def main(processed_dir="data/processed", template_path="web/template.html", out_
            .replace("__EXPANDABLE_COUNT__", str(len(expandable)))
            .replace("__AGGREGATES_JSON__", json.dumps(aggregates, separators=(",", ":")))
            .replace("__REPO_IDS_JSON__", json.dumps(list(aggregates), separators=(",", ":")))
+           .replace("__REPO_IDENTITY_JSON__", json.dumps(repo_identity, separators=(",", ":")))
            .replace("__EDGES_JSON__", json.dumps(intern_edges(edges), separators=(",", ":")))
            .replace("__CONTRIB_EDGES_JSON__", json.dumps(intern_edges(contrib_edges), separators=(",", ":")))
            .replace("__DEPENDENCY_EDGES_JSON__", json.dumps(intern_edges(dependency_edges), separators=(",", ":")))

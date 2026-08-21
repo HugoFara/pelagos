@@ -898,6 +898,11 @@
   // Non-numeric endpoints are left alone, so an id the build script couldn't
   // intern still works.
   var REPO_IDS = __REPO_IDS_JSON__;
+  // Which slugs each node absorbed, and which non-GitHub origins serve it
+  // (scripts/44_repo_identity.py). Only the merged/mirrored repos are shipped
+  // -- a node with a single GitHub origin and no aliases has nothing to say
+  // and no entry here.
+  var REPO_IDENTITY = __REPO_IDENTITY_JSON__;
   function rehydrateEdges(list) {
     for (var i = 0; i < list.length; i++) {
       var e = list[i];
@@ -5472,6 +5477,37 @@
     if (n) focusNode(n, { fromPanel: "clusters" });
   });
 
+  // A node is a repository, not a GitHub slug (scripts/44_repo_identity.py).
+  // Where those two differ the panel says so, because both halves change what
+  // the reader should conclude: the other slugs are duplicates that would
+  // otherwise have been separate nodes, and a non-GitHub origin means the
+  // GitHub URL on screen is a mirror of somewhere else -- which matters most
+  // for exactly the low-trophic system projects this axis puts at the bottom.
+  function repoIdentityHtml(id) {
+    var record = REPO_IDENTITY[id];
+    if (!record) return "";
+    var html = "";
+    var aliases = record.aliases || [];
+    if (aliases.length) {
+      html += '<div class="detail-row"><span class="k">Also known as</span><span class="v" style="text-align:left">' +
+        aliases.map(function (slug) {
+          return '<a href="https://github.com/' + encodePath(slug) + '" target="_blank" rel="noopener">' +
+            escapeHtml(slug) + '</a>';
+        }).join(", ") + '</span></div>';
+    }
+    var elsewhere = (record.origins || []).filter(function (o) { return o.forge !== "github"; });
+    if (elsewhere.length) {
+      html += '<div class="detail-row"><span class="k">Also served from</span><span class="v" style="text-align:left">' +
+        elsewhere.map(function (o) {
+          return '<a href="' + escapeHtml(o.url) + '" target="_blank" rel="noopener">' +
+            escapeHtml(o.url.replace(/^https?:\/\//, "")) + '</a>' +
+            '<span class="detail-axis-note"> ' + fmt(o.shared_refs) +
+            ' identical git object ids, ' + Math.round(o.containment * 100) + '% of that origin\'s refs</span>';
+        }).join("<br>") + '</span></div>';
+    }
+    return html;
+  }
+
   function showDetail(n, fromPanel) {
     var body = document.getElementById("detailBody");
     // The reader is pinned to one repo, so a different selection would leave
@@ -5519,6 +5555,7 @@
       html += '<div class="detail-row"><span class="k">Individual sample</span><span class="v">' +
         (expandableSet[n.id] ? (n.expanded ? "expanded — click to collapse" : "click node to expand") : "not sampled") +
         '</span></div>';
+      html += repoIdentityHtml(n.id);
     } else {
       var parentKeys = n.parents ? Object.keys(n.parents) : [];
       if (parentKeys.length) {
