@@ -12,12 +12,12 @@
   `null` for a given repo even in the "famous repo" cohort (e.g.
   `torvalds/linux` has no `hasTotalContributor` triple at all, `Avik-Jain/100-Days-Of-ML-Code`
   has no `hasTotalOpenIssues`). Treat missing as missing, not zero.
-- `expand15_repos.txt` / `repo_expansions.json` include `compvis/stable-diffusion`,
-  which is a different repo from `compvis/latent-diffusion` in the 51-repo
-  `top50_repos.txt` cohort -- so 14, not 15, of the expansions actually line
-  up with an aggregate node. `scripts/build_web_explorer.py` drops the
-  mismatched one rather than rendering an expandable node with no aggregate
-  stats.
+- `expand15_repos.txt` / `repo_expansions.json` include
+  `compvis/stable-diffusion`, which is a different repo from
+  `compvis/latent-diffusion` in the 51-repo `top50_repos.txt` cohort -- so
+  14, not 15, of the expansions actually line up with an aggregate node.
+  `scripts/build/web_explorer.py` drops the mismatched one rather than
+  rendering an expandable node with no aggregate stats.
 
 ## Two cohorts that do not overlap
 
@@ -54,24 +54,24 @@ language. Two options surfaced so far:
    legible subject matter, but actually answers the clustering critique
    instead of just inheriting it.
 
-**Update:** added a third option that sidesteps the cohort-mismatch problem in
-option 2 entirely. Contributors hang off a per-repo
-`contributorreference/{owner}/{repo}/{n}` node (`hasContributorReference` from
-the repo, `hasContributor` -> `person/{username}` from the reference node) --
-`person/{username}` is the *same* identity space `hasStargazer` uses, so
-cross-repo contributor overlap is directly computable **for the same 51-repo
-cohort**, no need to switch to the disjoint `usedPackage` population. This is
-a genuine technical/organizational-coupling signal (shared maintainers/
-contributors), not an audience proxy. Computed via
-`scripts/07_shared_contributors.sh` (a grep + subject rewrite, since the
-contributor-reference URI already embeds the owning repo, no join needed)
-piped into the existing generic `compute_shared_edges.py` (min 2 shared,
-top-4 per node -> 59 edges over 50 of the 51 repos; `torvalds/linux` has zero
-individual-level contributor data in this dump, consistent with its missing
-`hasTotalContributor` aggregate noted above). Sample edges found:
-`pytorch/examples` <-> `pytorch/pytorch` (44 shared), `dmlc/dgl` <-> `d2l-ai/d2l-en`
-(9), `facebookresearch/faiss` <-> `pytorch/pytorch` (7) -- these read as real
-maintainer/org coupling, not fandom overlap.
+**Update:** added a third option that sidesteps the cohort-mismatch problem
+in option 2 entirely. Contributors hang off a per-repo
+`contributorreference/{owner}/{repo}/{n}` node (`hasContributorReference`
+from the repo, `hasContributor` -> `person/{username}` from the reference
+node) -- `person/{username}` is the *same* identity space `hasStargazer`
+uses, so cross-repo contributor overlap is directly computable **for the
+same 51-repo cohort**, no need to switch to the disjoint `usedPackage`
+population. This is a genuine technical/organizational-coupling signal
+(shared maintainers/ contributors), not an audience proxy. Computed via
+`scripts/extract/shared_contributors.sh` (a grep + subject rewrite, since
+the contributor-reference URI already embeds the owning repo, no join
+needed) piped into the existing generic `scripts/lib/shared_edges.py` (min 2
+shared, top-4 per node -> 59 edges over 50 of the 51 repos; `torvalds/linux`
+has zero individual-level contributor data in this dump, consistent with its
+missing `hasTotalContributor` aggregate noted above). Sample edges found:
+`pytorch/examples` <-> `pytorch/pytorch` (44 shared), `dmlc/dgl` <->
+`d2l-ai/d2l-en` (9), `facebookresearch/faiss` <-> `pytorch/pytorch` (7) --
+these read as real maintainer/org coupling, not fandom overlap.
 
 Resolved (for now): both as switchable, equally-real lenses on the same
 explorer, alongside the real dependency edges added later (see below).
@@ -92,19 +92,19 @@ about.
 `usedPackage` triples don't point at another repo, they point at a PyPI
 *package name* -- but only 186 distinct package names back all 95,505
 triples, and resolving each one to the GitHub repo that publishes it
-(`scripts/09_resolve_packages.py`, PyPI's JSON API, cached to
+(`scripts/edges/resolve_pypi_packages.py`, PyPI's JSON API, cached to
 `data/raw/pypi_cache/`) turns `repo --uses--> package` into a real, directed
 `repo --depends on--> repo` edge. A lot of those resolved repos are already
 famous enough to be in the 51 (`torch` -> `pytorch/pytorch`, `sentencepiece`
 -> `google/sentencepiece`), and the rest (`transformers`, `spacy`, `jax`,
 `fastapi`, `optuna`, ...) are genuinely well-known libraries worth being
-cohort members in their own right -- `scripts/10_fetch_new_repo_stats.py`
+cohort members in their own right -- `scripts/cohort/dependency_repos.py`
 adds them (168 new "library" nodes), plus a curated top-100 slice of the
 dependency-cohort repos themselves, ranked by distinct-resolved-package
 count (a real "how plugged into this ecosystem is it" signal) since the
 other ~21,000 have zero aggregate stats in the dump and adding all of them
 would both need thousands of live GitHub calls and wreck the graph's
-legibility. `scripts/11_dependency_edges.py` builds the edges; unlike the
+legibility. `scripts/edges/dependency_edges.py` builds the edges; unlike the
 other two tiers, every edge here has weight 1 (each package resolves to
 exactly one specific repo -- `torch` and `torchvision` are different repos),
 so the usual weight-based top-4 pruning doesn't apply -- pruned instead by
@@ -113,17 +113,18 @@ derived number, never guessed.
 
 **Data quirk found along the way:** dependency-cohort repo ids
 (`data/processed/dependency_cohort_repos.txt`) are inconsistently ordered.
-`ntparse.py` assumes `repository/owner/name` and the 51-cohort respects
-that, but dependency-cohort ids are sometimes backwards -- e.g. the id
-`kvquant/squeezeailab` 404s on GitHub, `SqueezeAILab/KVQuant` (reversed) is
-the real repo. Resolving every source-repo id by trying both orderings
+`scripts/lib/ntparse.py` assumes `repository/owner/name` and the 51-cohort
+respects that, but dependency-cohort ids are sometimes backwards -- e.g. the
+id `kvquant/squeezeailab` 404s on GitHub, `SqueezeAILab/KVQuant` (reversed)
+is the real repo. Resolving every source-repo id by trying both orderings
 against the GitHub API (and keeping whichever exists) also caught cases
 where a "new" source repo was actually already one of the 51 under its
 backwards raw id -- `dgl/dmlc`, `colossalai/hpcaitech`, `h2ogpt/h2oai`, and
-`intellij-community/jetbrains` are really `dmlc/dgl`, `hpcaitech/ColossalAI`,
-`h2oai/h2ogpt`, and `JetBrains/intellij-community`, all already in the
-cohort -- so those four picked up real outgoing dependency edges (e.g.
-`dmlc/dgl` -> `RDFLib/rdflib`) instead of spawning duplicate nodes.
+`intellij-community/jetbrains` are really `dmlc/dgl`,
+`hpcaitech/ColossalAI`, `h2oai/h2ogpt`, and `JetBrains/intellij-community`,
+all already in the cohort -- so those four picked up real outgoing
+dependency edges (e.g. `dmlc/dgl` -> `RDFLib/rdflib`) instead of spawning
+duplicate nodes.
 
 ## A fourth edge type: shared tags (semantic, crude version)
 
@@ -142,12 +143,12 @@ Two possible sources for tags, checked directly:
   grepping the dump for the cohort's repo URIs and filtering to that
   predicate).
 - The GitHub API's `topics` field, already present in every cached
-  `data/raw/github_cache/{owner}__{repo}.json` response from scripts 10-12
-  (fetched for other reasons — new-repo stats and description caching) —
+  `data/raw/github_cache/{owner}__{repo}.json` response from the cohort/fetch
+  stages (fetched for other reasons — new-repo stats and description caching) —
   covers **184/319**, with zero new network calls needed.
 
-Used the second source. `scripts/13_semantic_edges.py` builds a repo->set(tags)
-bipartite map from the cache files and reuses `compute_shared_edges.py`'s
+Used the second source. `scripts/edges/topic_edges.py` builds a repo->set(tags)
+bipartite map from the cache files and reuses `scripts/lib/shared_edges.py`'s
 generic `build_edges()` core (factored out of that script for this — it
 was already parsing a different bipartite shape from N-triples for the
 stargazer/contributor tiers, so the actual overlap+top-K-pruning logic is
@@ -178,7 +179,7 @@ becomes visually unreadable, and `tick()`'s repulsion force is an all-pairs
 O(n²) loop with no spatial index (no quadtree/Barnes-Hut anywhere in the
 file) — fine at 319 nodes (~50k pair-checks/frame), not fine at a few
 thousand. Both are fixed by the same mechanism: never materialize more nodes
-than are currently relevant. `scripts/14_cluster_hierarchy.py` precomputes a
+than are currently relevant. `scripts/clusters/hierarchy.py` precomputes a
 multi-level cluster hierarchy; the frontend renders/simulates only the
 top-level cluster meta-nodes by default, lazily expanding one into its real
 children on click or zoom-in (`expandCluster`/`collapseCluster`, generalized
@@ -194,7 +195,7 @@ stays alone), and this cohort had a lot of them: 82 of 134 clusters,
 24 of the 28 *top-level* ones -- meaning 24 of the 28 things the app
 showed you before you'd clicked anything were a pointless click-through to
 a single repo, not a real cluster. `collapse_singletons()` in
-`scripts/14_cluster_hierarchy.py` now removes every memberCount == 1
+`scripts/clusters/hierarchy.py` now removes every memberCount == 1
 cluster after the hierarchy is built, promoting each one's single
 descendant repo (walking through however many levels of
 singleton-wrapping-a-singleton it takes -- a high-degree hub can fail to
@@ -328,7 +329,7 @@ Laplacian solve to `numpy.linalg.lstsq` instead of hand-rolling Gaussian
 elimination was that judgment call going the other way this time.
 
 **Trophic level sign convention, derived and checked, not assumed.**
-`scripts/15_trophic_levels.py` minimizes, over every dependency edge `a ->
+`scripts/layout/trophic_levels.py` minimizes, over every dependency edge `a ->
 b` ("a depends on b"), `(h_a - h_b - 1)^2` -- wanting every consumer one
 level above what it depends on. Taking the gradient and setting it to zero
 gives `Λh = v` with `v_k = outdeg(k) - indeg(k)`, derived directly from
@@ -413,7 +414,7 @@ internally disconnected -- a correctness issue, not a style nit, so it
 overrides the LOD-phase note above about hand-rolling Louvain rather than
 taking a dependency. Leiden's refinement step guarantees every community
 it produces is connected. `leiden_communities()` in
-`scripts/14_cluster_hierarchy.py` swaps in for `louvain_communities()`
+`scripts/clusters/hierarchy.py` swaps in for `louvain_communities()`
 with the exact same `(ids, weighted_edges, resolution) -> {id: label}`
 contract, so Phase 10's coarsen-and-repeat scaffold (`build_hierarchy`)
 needed no other changes -- this is "recursive Leiden", one of the two
@@ -433,10 +434,10 @@ computes, so "meta-edges = summed crossing dependencies" from the Phase
 **Co-star and topic PMI, not raw overlap counts.** Both computed with the
 same generic positive-PMI formula (`pmi_edges()`), just with documents and
 items swapped between the two calls: co-star PMI treats each *stargazer*
-as the document and repos as items (mirrors `compute_shared_edges.py`'s
+as the document and repos as items (mirrors `scripts/lib/shared_edges.py`'s
 bipartite, but PMI-weighted instead of raw intersection size); topic PMI
 treats each *topic tag* as the document and repos as items -- the exact
-transpose of `scripts/16_topic_circular_embedding.py`'s topic-topic PMI,
+transpose of `scripts/layout/topic_theta.py`'s topic-topic PMI,
 which treats each *repo* as the document and topics as items. Both
 normalized (min-max) and summed into one similarity graph before
 clustering, same reasoning as the old four-tier union: PMI values on
@@ -541,28 +542,28 @@ removing genuinely-dead code wasn't part of what was asked.
 ## Co-star/contributor data backfill: the top-50 scoping was a bug, not a data limit
 
 Immediately after Phase 13 shipped, re-examined the "raw co-star bipartite
-only covers the original top-50 cohort" finding above and it didn't hold
-up as a *data* limitation -- it was a *query* limitation.
-`scripts/05_shared_stargazers.sh`/`07_shared_contributors.sh` had only
-ever been invoked with `data/repo-lists/top50_repos.txt` as the repo list
-(chronologically unavoidable at the time: the dependency-expansion cohort
-in `dependency_extra_repos.txt` didn't exist yet when those two scripts
-first ran, back before Phase 7). Nothing about the underlying SemRepo dump
-actually restricts hasStargazer/hasContributor coverage to those 51 repos
--- re-running both scripts against the full 319-repo cohort (`cat
-top50_repos.txt dependency_extra_repos.txt | sort -u`) against the local
-12.8 GB dump took ~17s and ~13s respectively (`grep -a -F -f` over 319
-patterns, not slow) and recovered real triples for 37 more repos
-(stargazer: 51 -> 88) and a comparable jump for contributors (-> 89).
-Re-running `compute_shared_edges.py` on the enriched raw files and then
-`scripts/14_cluster_hierarchy.py` shrank the zero-signal population from
-166 to 155 repos and grew the real-cluster count from 12 to 14 (still
+only covers the original top-50 cohort" finding above and it didn't hold up
+as a *data* limitation -- it was a *query* limitation.
+`scripts/extract/shared_stargazers.sh`/`scripts/extract/shared_contributors.sh`
+had only ever been invoked with `data/repo-lists/top50_repos.txt` as the
+repo list (chronologically unavoidable at the time: the dependency-expansion
+cohort in `dependency_extra_repos.txt` didn't exist yet when those two
+scripts first ran, back before Phase 7). Nothing about the underlying
+SemRepo dump actually restricts hasStargazer/hasContributor coverage to
+those 51 repos -- re-running both scripts against the full 319-repo cohort
+(`cat top50_repos.txt dependency_extra_repos.txt | sort -u`) against the
+local 12.8 GB dump took ~17s and ~13s respectively (`grep -a -F -f` over 319
+patterns, not slow) and recovered real triples for 37 more repos (stargazer:
+51 -> 88) and a comparable jump for contributors (-> 89). Re-running
+`scripts/lib/shared_edges.py` on the enriched raw files and then
+`scripts/clusters/hierarchy.py` shrank the zero-signal population from 166
+to 155 repos and grew the real-cluster count from 12 to 14 (still
 resolution=2.0 -- re-checked with a fresh 1.0-3.0 sweep on the enriched
-graph, 2.0 was still the point of no dominant blob). One cluster that
-didn't separate out before now does cleanly: `catboost/catboost`,
-`dmlc/xgboost`, `lightgbm-org/LightGBM`, `facebook/prophet` -- the
-gradient-boosting sub-theme was previously absorbed into the larger
-classic-ML cluster for lack of enough co-star signal to pull it apart.
+graph, 2.0 was still the point of no dominant blob). One cluster that didn't
+separate out before now does cleanly: `catboost/catboost`, `dmlc/xgboost`,
+`lightgbm-org/LightGBM`, `facebook/prophet` -- the gradient-boosting
+sub-theme was previously absorbed into the larger classic-ML cluster for
+lack of enough co-star signal to pull it apart.
 
 **This also broke Phase 11's two seeded path-finder examples**, discovered
 by re-checking them after the backfill out of general caution (any time
@@ -613,7 +614,7 @@ itself named (bge-small/e5-small). Embedding 317 repos after the model's
 loaded takes under a second -- the entire cost here is the one-time model
 download, not runtime.
 
-**README fetch, real coverage.** `scripts/17_fetch_readmes.py` -- 319/319
+**README fetch, real coverage.** `scripts/fetch/repo_readmes.py` -- 319/319
 cohort repos queried via authenticated `gh api repos/{owner}/{repo}/readme`
 (base64-decoded, cached raw to `data/raw/readme_cache/`), 318 have one.
 Authenticated GitHub API (5000 req/hour) makes this a non-issue compared to
@@ -653,7 +654,7 @@ short text lengths these blurbs run.
 
 Two fixes, in order of how much they actually helped:
 1. **Boilerplate stripping** (`strip_paper_boilerplate()` in
-   `scripts/18_text_embeddings.py`): ~9 regexes matching the common
+   `scripts/layout/text_embeddings.py`): ~9 regexes matching the common
    "official code / this repo contains / code for the paper" openers,
    applied to both description and README paragraph, not anchored to
    start-of-string (a setext-style README heading glued directly to the
@@ -668,7 +669,7 @@ Two fixes, in order of how much they actually helped:
    155-repo gap in the first place), whatever weight text gets is 100% of
    what determines its cluster regardless of the number.
 2. **Text-tier-specific mutual-kNN, applied before fusion, not just
-   after** (`TEXT_MUTUAL_KNN_K = 4` in `scripts/14_cluster_hierarchy.py`,
+   after** (`TEXT_MUTUAL_KNN_K = 4` in `scripts/clusters/hierarchy.py`,
    distinct from the `MUTUAL_KNN_K = 20` that sparsifies the *combined*
    graph). This is what actually worked: capping each repo to its 4
    strongest text matches converts text-embedding from "a dense
@@ -705,8 +706,8 @@ above). Testing this needed three things that didn't exist yet: a co-star-
 driven theta to compare against, a concrete metric for "better" (not a
 vibe check), and ground truth to measure against.
 
-**`scripts/19_costar_circular_embedding.py`**: spectral-embeds the co-star
-PMI repo-repo graph directly (`scripts/14_cluster_hierarchy.py`'s
+**`scripts/layout/costar_theta.py`**: spectral-embeds the co-star
+PMI repo-repo graph directly (`scripts/clusters/hierarchy.py`'s
 `build_costar_pmi_edges`) -- no aggregation step needed here, unlike the
 topic version, since co-star PMI is already repo-to-repo, not repo-to-
 topic. Verified single connected component first (79/79 touched repos,
@@ -716,7 +717,7 @@ eigenvectors; `r` = the point's own distance from the origin, normalized
 -- not a circular-mean resultant length like the topic version (there's
 nothing being averaged; each repo gets exactly one embedding point here).
 
-**`scripts/20_compare_theta_sources.py`**: the actual metric.
+**`scripts/layout/compare_theta_sources.py`**: the actual metric.
 Within-cluster circular concentration (resultant length R of member
 thetas) against Phase 14's real fused-similarity Leiden clusters as ground
 truth -- the best available stand-in for "these repos are genuinely
@@ -749,8 +750,8 @@ Leiden: cluster ids reshuffle on any data refresh that changes Leiden's
 internal community ordering, and cluster labels were never anything but
 the highest-degree member's own name.
 
-**Id stability (`scripts/21_stabilize_cluster_ids.py`).** `scripts/
-14_cluster_hierarchy.py` mints `cluster/{level}/{idx}` positionally, where
+**Id stability (`scripts/clusters/stabilize_ids.py`).** `scripts/
+scripts/clusters/hierarchy.py` mints `cluster/{level}/{idx}` positionally, where
 `idx` is a rank in that run's `group_items` sort. Leiden itself is seeded
 (`seed=1`), so re-running on *literally unchanged* data reproduces the
 same ids -- but the whole point of this pipeline is to be re-run on
@@ -799,7 +800,7 @@ this script started producing it. Worth revisiting once a few real
 refreshes accumulate and `repo_cluster_hierarchy_prev.json`'s git history
 actually has something to check the threshold against.
 
-**Real labels (`scripts/22_label_clusters.py`), and a real tension with
+**Real labels (`scripts/clusters/labels.py`), and a real tension with
 an earlier decision.** `web/template.html` has carried this comment since
 Phase 10: "Labeled by each cluster's highest (weighted-)degree member
 rather than an invented name -- everything shown in this app is a real,
@@ -816,7 +817,7 @@ This phase overturns the "not a guessed one" stance but tries to keep
 faith with the *reasoning* behind it rather than discard it outright: the
 label is never invented from nothing. Pipeline: pool every member's real
 description + topics + cleaned README paragraph (reusing `scripts/
-18_text_embeddings.py`'s `build_embedding_text()` directly -- the same
+scripts/layout/text_embeddings.py`'s `build_embedding_text()` directly -- the same
 cleaned text that already drives the text-embedding similarity signal),
 tokenize, and reduce to each cluster's most *distinctive* terms via
 c-TF-IDF (Grootendorst 2022, the BERTopic paper's term-weighting scheme:
@@ -846,13 +847,13 @@ hard-failing when the CLI is unavailable or misbehaves.
 
 Labels are cached permanently, keyed by cluster id + a signature of that
 cluster's exact flattened member set (`data/processed/cluster_labels.json`,
-committed) -- this only works because ids are now stable (this script
-runs strictly after `scripts/21`), otherwise every refresh would look
-like 20 brand-new clusters and burn 20 fresh LLM calls regardless of
-whether anything actually changed. Confirmed directly: after
-deliberately invalidating 2 of the 20 cache entries, a rerun reused the
-other 18 untouched and only recomputed the 2, finishing in 18s versus the
-first full run's 5m17s.
+committed) -- this only works because ids are now stable (this script runs
+strictly after `scripts/clusters/stabilize_ids.py`), otherwise every refresh
+would look like 20 brand-new clusters and burn 20 fresh LLM calls regardless
+of whether anything actually changed. Confirmed directly: after deliberately
+invalidating 2 of the 20 cache entries, a rerun reused the other 18
+untouched and only recomputed the 2, finishing in 18s versus the first full
+run's 5m17s.
 
 Full label set (level 1, current data):
 
@@ -1026,7 +1027,7 @@ project's previous zero-dependency page). Exposes `init`, `sync`,
 `cameraForwardVector`, `frameNodes`, `focusNode` as a browser global
 (`Scene3D`, IIFE build -- not ES modules, since `<script type="module">`'s
 own module-graph fetches hit the same `file://` CORS restriction
-`build_web_explorer.py`'s docstring already documents for `fetch()`).
+`scripts/build/web_explorer.py`'s docstring already documents for `fetch()`).
 
 Tried to verify this the same way as everything else in this file --
 headless, no browser -- and hit a real wall worth recording: `headless-gl`
@@ -1235,7 +1236,7 @@ Migration complete: `ROADMAP.md` gained a Phase 18 entry (real 3D view,
 explicitly reconciled against Phase 17's scale trigger so a future reader
 doesn't conflate the two) and `README.md`'s Layout/Status sections now
 describe the WebGL renderer and its separate `npm run build` step
-alongside the existing `build_web_explorer.py` one.
+alongside the existing `scripts/build/web_explorer.py` one.
 
 ## Hierarchical edge bundling (ROADMAP.md Phase 16)
 
@@ -1352,23 +1353,24 @@ pointed at the dump as-is.
 **The join shape.** `hasIssueAuthor`'s subject is the *issue* URI
 (`<repository/{owner}/{repo}/issue/{n}>`), not the repo -- unlike
 `hasStargazer`/`hasContributor`, which are direct repo-to-person triples.
-`scripts/23_shared_issue_authors.py` resolves this with a two-pass grep
-(same two-stage filter-then-parse shape `09_resolve_packages.py` already
-uses, reusing `ntparse.py`'s literal/URI handling rather than hand-rolling
-NT parsing again): pass 1 walks `hasIssue` lines for the cohort, capping at
+`scripts/edges/shared_issue_authors.py` resolves this with a two-pass grep
+(same two-stage filter-then-parse shape
+`scripts/edges/resolve_pypi_packages.py` already uses, reusing
+`scripts/lib/ntparse.py`'s literal/URI handling rather than hand-rolling NT
+parsing again): pass 1 walks `hasIssue` lines for the cohort, capping at
 `max_issues_per_repo` issues per repo (first-encountered in file order,
-deterministic, same idiom `04_repo_expansions.sh` uses for its own
-individual-level issue sample) to build an issue-id allowlist; pass 2 greps
-exact-subject patterns for just that allowlist (bounded at
+deterministic, same idiom `scripts/extract/repo_expansions.sh` uses for its
+own individual-level issue sample) to build an issue-id allowlist; pass 2
+greps exact-subject patterns for just that allowlist (bounded at
 `cohort_size * cap`, so still a precise, cheap grep) and extracts
 `hasIssueAuthor`/`dc:title` triples for the sampled issues only.
 
 **The cap was measured, not guessed.** A first pass at 40 (roughly
-`04_repo_expansions.sh`'s `MAX_ISSUE=12` scaled up for a signal-detection
-input rather than a handful of display nodes) yielded exactly *one* pruned
-edge over the whole 319-repo cohort -- not useful. Rather than assume a
-slightly bigger number would fix it, 40/100/150/200/300 were each run for
-real and measured:
+`scripts/extract/repo_expansions.sh`'s `MAX_ISSUE=12` scaled up for a
+signal-detection input rather than a handful of display nodes) yielded
+exactly *one* pruned edge over the whole 319-repo cohort -- not useful.
+Rather than assume a slightly bigger number would fix it, 40/100/150/200/300
+were each run for real and measured:
 
 | cap | issues sampled | pruned edges | repos with an edge (of 74 covered) |
 |-----|----------------|--------------|-------------------------------------|
@@ -1395,26 +1397,26 @@ busy ones either way.
 
 **A real data-quality bug, caught by measuring the intermediate result
 before shipping it** (same "measure, don't assume" instinct as Phase 14's
-contrarian-claim test and Phase 16's synthetic-root fix): an early
-cap-150 run surfaced `rwightman/pytorch-image-models` sharing 2-3 "issue
-posters" with several unrelated repos purely via a shared value of
-`"ghost"` -- GitHub's placeholder for a deleted account. Since *every*
-repo with any issue from a since-deleted user gets the identical `"ghost"`
-value, counting it as a shared person fabricates an edge between
-otherwise-unrelated repos. The same pass also surfaced bot accounts stored
-as a full nested URI under `person/`
-(`<person/https://semrepo.org/bot/github-actions[bot]>`, `<.../bot/
-pytorch-bot[bot]>`) -- a real quirk specific to `hasIssueAuthor` in this
-dump, not seen in `hasStargazer`/`hasContributor` (same flavor of surprise
-as Phase 7's "some dependency-cohort repo ids are stored backwards").
-Both are filtered out in `23_shared_issue_authors.py` before an author line
-is ever written. Re-measuring after the fix confirmed it mattered: cap 150
-*before* the fix produced 95 pruned edges (partly from bogus ghost/bot
-overlap); cap 150 *after* the fix produced only 48 -- cap 300 was needed to
-reach a comparable edge count from genuinely real signal, which is the
-number actually shipped.
+contrarian-claim test and Phase 16's synthetic-root fix): an early cap-150
+run surfaced `rwightman/pytorch-image-models` sharing 2-3 "issue posters"
+with several unrelated repos purely via a shared value of `"ghost"` --
+GitHub's placeholder for a deleted account. Since *every* repo with any
+issue from a since-deleted user gets the identical `"ghost"` value, counting
+it as a shared person fabricates an edge between otherwise-unrelated repos.
+The same pass also surfaced bot accounts stored as a full nested URI under
+`person/` (`<person/https://semrepo.org/bot/github-actions[bot]>`,
+`<.../bot/ pytorch-bot[bot]>`) -- a real quirk specific to `hasIssueAuthor`
+in this dump, not seen in `hasStargazer`/`hasContributor` (same flavor of
+surprise as Phase 7's "some dependency-cohort repo ids are stored
+backwards"). Both are filtered out in
+`scripts/edges/shared_issue_authors.py` before an author line is ever
+written. Re-measuring after the fix confirmed it mattered: cap 150 *before*
+the fix produced 95 pruned edges (partly from bogus ghost/bot overlap); cap
+150 *after* the fix produced only 48 -- cap 300 was needed to reach a
+comparable edge count from genuinely real signal, which is the number
+actually shipped.
 
-**The edge tier itself.** `compute_shared_edges.py` (reused unchanged --
+**The edge tier itself.** `scripts/lib/shared_edges.py` (reused unchanged --
 same min-2-shared/top-4-pruned overlap core every repo-repo tier here
 already shares) turns the cleaned `.nt` into 137 pruned edges over 59 of
 the 74 issue-covered repos. Wired into `web/template.html` as a fifth
@@ -1456,7 +1458,7 @@ correct required constructing the condition rather than finding it
 naturally in the data.
 
 **Issue titles folded into Phase 14's text-embedding input.**
-`load_issue_titles()` in `scripts/18_text_embeddings.py` appends a capped,
+`load_issue_titles()` in `scripts/layout/text_embeddings.py` appends a capped,
 joined slice of a repo's sampled issue titles (20 titles, 400 chars) when
 `repo_issue_titles.json` has any for that repo -- capped shorter than the
 README paragraph's 600 chars deliberately, since issue titles are
@@ -1468,7 +1470,7 @@ repos; doesn't close a coverage gap the way the README paragraph did for
 Phase 14 (317/319 repos were already embeddable before this change, and
 still are after it).
 
-Re-running `scripts/18_text_embeddings.py` and measuring cosine similarity
+Re-running `scripts/layout/text_embeddings.py` and measuring cosine similarity
 against the pre-change vectors confirmed a controlled, bounded
 perturbation: exactly the 74 repos with issue titles moved (average cosine
 similarity 0.92 against their old vectors, individual repos ranging as low
@@ -1477,8 +1479,8 @@ as 0.72), and the other 243 embedded repos came back bit-for-bit identical
 re-embedding.
 
 That perturbation was real enough to ripple into reclustering, though, so
-the downstream chain (`14_cluster_hierarchy.py` → `21_stabilize_cluster_
-ids.py` → `22_label_clusters.py`) was re-run and checked rather than
+the downstream chain (`scripts/clusters/hierarchy.py` →
+`scripts/clusters/stabilize_ids.py` → `scripts/clusters/labels.py`) was re-run and checked rather than
 assumed safe. Top-level cluster count held at 20. Comparing membership by
 hub name undercounted how stable the result actually was (hub = highest-
 degree member, which can shift even when a cluster's membership barely
@@ -1493,7 +1495,7 @@ small academic diffusion/few-shot-learning repos into a more thematically
 coherent speech/LLM-chat/diffusion grouping (`2noise/chattts`,
 `myshell-ai/openvoice`, `lllyasviel/controlnet`, `NVIDIA-NeMo/Speech`,
 `PaddlePaddle/PaddleSpeech`, `mlc-ai/web-llm`, ...) -- re-labeled "Speech
-and Language AI" by `scripts/22_label_clusters.py` on the next run, which
+and Language AI" by `scripts/clusters/labels.py` on the next run, which
 reused 9 of 20 cluster labels from cache and only regenerated the 11 whose
 membership signature actually changed.
 
@@ -1751,7 +1753,7 @@ elements in the expected order; exactly 2 `input.edge-toggle` checkboxes
 exist (dependency, semantic) and none for stargazer/contributor/
 issueAuthor; a full cluster-expansion + tick/draw + type/edge-toggle
 regression pass runs clean with the new legend structure in place.
-`npm test` (13/13) and `build_web_explorer.py` (same counts) both clean.
+`npm test` (13/13) and `scripts/build/web_explorer.py` (same counts) both clean.
 
 ## Collapsible sidebar panels, collapsed by default except Clusters
 
@@ -1788,7 +1790,7 @@ Clusters; clicking a panel's `<h2>` toggles `.collapsed` on and back off;
 calling `showDetail(realNode)` auto-expands the Selected-node panel;
 calling `showDetail(null)` (clearing selection) leaves whatever collapsed
 state was already there alone rather than forcing a collapse.
-`build_web_explorer.py` re-run clean (same counts); `scene3d.js` untouched
+`scripts/build/web_explorer.py` re-run clean (same counts); `scene3d.js` untouched
 so `npm test` is an unaffected no-op re-check (13/13).
 
 ## Cylindrical-coordinate readout on hover/click, and a real sign bug found along the way
@@ -1850,7 +1852,7 @@ repos -- confirms low-`y` renders higher (`worldY=450.0`) than high-`y`
 (`worldY=-450.0`), matching the corrected comment. Full prior regression
 suite (legend sections, axis color, collapsible panels) re-run clean
 against the same rebuilt `index.html`; `npm test` (13/13, `scene3d.js`
-untouched) and `build_web_explorer.py` (same counts) both clean.
+untouched) and `scripts/build/web_explorer.py` (same counts) both clean.
 
 **Immediate correction: the "sign bug" above was diagnosed backwards --
 the real bug was in `layoutWorldPos`, not the comment.** Reported back
@@ -1891,7 +1893,7 @@ edges (not just two extremes) -- 863/863 sources (the consumer side of
 "A depends on B") render with a strictly greater `worldY` than their
 target (the dependency side), i.e. 100% agreement with the "consumers"/
 "dependencies" axis labels, zero exceptions. `npm test` (13/13,
-`scene3d.js` untouched) and `build_web_explorer.py` (same counts) both
+`scene3d.js` untouched) and `scripts/build/web_explorer.py` (same counts) both
 clean; the physics/fade/containment mechanisms from earlier sections
 were independently re-checked and are unaffected, since they only ever
 consume whatever `layoutWorldPos` returns rather than assuming a
@@ -1903,16 +1905,17 @@ Grown the cohort roughly 3.2x to exercise the pipeline (and the LOD
 clustering from an earlier section) at a materially larger scale, prompted
 directly by a quota question: `gh api rate_limit` showed the authenticated
 CLI token has the standard 5000 req/hour core budget, and every live call
-this pipeline makes (`scripts/10`/`12`/`17`, all via `gh api`, all cached
-to `data/raw/github_cache/` or `data/raw/readme_cache/` permanently) costs
-at most 1-2 requests per *new* repo, so a batch this size was cheap, not a
-quota risk.
+this pipeline makes (`scripts/cohort/dependency_repos.py`,
+`scripts/fetch/repo_descriptions.py`, `scripts/fetch/repo_readmes.py`, all
+via `gh api`, all cached to `data/raw/github_cache/` or
+`data/raw/readme_cache/` permanently) costs at most 1-2 requests per *new*
+repo, so a batch this size was cheap, not a quota risk.
 
-The only real lever for cohort size is `scripts/10_fetch_new_repo_stats.py`'s
+The only real lever for cohort size is `scripts/cohort/dependency_repos.py`'s
 `top_n_source` (a curated slice of the ~21,100-repo dependency cohort,
 ranked by distinct-resolved-package degree) -- the "library" side (repos a
 `usedPackage` triple resolves to) is effectively fixed at ~168 without
-also widening which repos `scripts/06_used_packages.sh` runs against, out
+also widening which repos `scripts/extract/used_packages.sh` runs against, out
 of scope here. Raised `top_n_source` from 100 to 800. The script's
 `CANDIDATE_POOL` used to be a flat constant (220, sized for a 100-repo
 ask); replaced it with `CANDIDATE_POOL_FACTOR = 2.2` so the raw-id pool
@@ -1927,29 +1930,31 @@ immediately after.
 
 Re-ran the full downstream pipeline against the grown cohort, in the order
 `README.md`'s Pipeline section documents: the shared-stargazer/contributor/
-issue-author backfill (`scripts/05`/`07`/`23`, each a single ~20-70s pass
-over the 12GB dump against the new 1019-repo pattern list) -- absolute
-edge/repo counts grew (676/301/215 pruned edges over 251/259/194
-participating repos, up from 151-ish/59/rare at 319) but the *coverage
-fraction* of the cohort that has any of this data at all dropped further
-below the already-low fractions the "Two cohorts that do not overlap"
-section above measured, since the growth came entirely from the
-dependency-cohort side of the dataset, which this section's earlier
-finding already flagged as sparser on stargazer/contributor/issue data
-than the original top-50 "famous repo" cohort. Real data, not a bug, but
-worth remembering when the explorer looks emptier on these tiers than the
-dependency/semantic tiers now that the cohort is 3x bigger. Dependency
-edges scaled to 3765 pruned edges over 962 nodes (was 863/319); semantic
-(shared-topic) edges to 745 over 281 nodes; 865 distinct owner avatars
-downloaded (`scripts/08`, unauthenticated `github.com/{owner}.png`, no API
-quota involved); descriptions and READMEs both >95% already cached from
-the script-10 resolution pass; text embeddings covered 1008/1019 repos;
-Leiden clustering produced 49 top-level clusters (123 total across all
-levels) covering all 1019 repos, only 5 of which matched a previous stable
-id by Jaccard similarity (expected -- the cohort nearly tripled, so most
-cluster shapes are genuinely new, not the same clusters reshuffled).
+issue-author backfill (`scripts/extract/shared_stargazers.sh`,
+`scripts/extract/shared_contributors.sh`,
+`scripts/edges/shared_issue_authors.py`, each a single ~20-70s pass over the
+12GB dump against the new 1019-repo pattern list) -- absolute edge/repo
+counts grew (676/301/215 pruned edges over 251/259/194 participating repos,
+up from 151-ish/59/rare at 319) but the *coverage fraction* of the cohort
+that has any of this data at all dropped further below the already-low
+fractions the "Two cohorts that do not overlap" section above measured,
+since the growth came entirely from the dependency-cohort side of the
+dataset, which this section's earlier finding already flagged as sparser on
+stargazer/contributor/issue data than the original top-50 "famous repo"
+cohort. Real data, not a bug, but worth remembering when the explorer looks
+emptier on these tiers than the dependency/semantic tiers now that the
+cohort is 3x bigger. Dependency edges scaled to 3765 pruned edges over 962
+nodes (was 863/319); semantic (shared-topic) edges to 745 over 281 nodes;
+865 distinct owner avatars downloaded (`scripts/fetch/repo_logos.py`,
+unauthenticated `github.com/{owner}.png`, no API quota involved);
+descriptions and READMEs both >95% already cached from the script-10
+resolution pass; text embeddings covered 1008/1019 repos; Leiden clustering
+produced 49 top-level clusters (123 total across all levels) covering all
+1019 repos, only 5 of which matched a previous stable id by Jaccard
+similarity (expected -- the cohort nearly tripled, so most cluster shapes
+are genuinely new, not the same clusters reshuffled).
 
-**Real bug found and fixed along the way, in `scripts/22_label_clusters.py`
+**Real bug found and fixed along the way, in `scripts/clusters/labels.py`
 this time, not the explorer itself.** That script labels every
 new/changed cluster with one `claude -p` subprocess call each (123 of them
 here), but only ever wrote `cluster_labels.json`/`repo_cluster_hierarchy.json`
@@ -1971,19 +1976,19 @@ run's partial progress, finishing the remaining 28 cleanly.
 has exactly 1019 entries; the LOD system still bounds the *initial*
 on-screen/simulated node count to 341 (49 real cluster meta-nodes + 292
 repos with no clustering signal shown directly -- matching
-`scripts/14`'s own build-time log line exactly), not anywhere near the
-full 1019, confirming the level-of-detail design from the earlier
-"Level-of-detail clustering" section still holds at 3x the cohort size it
-was built and measured against; `tick()` over 60 frames produces no
+`scripts/clusters/hierarchy.py`'s own build-time log line exactly), not
+anywhere near the full 1019, confirming the level-of-detail design from the
+earlier "Level-of-detail clustering" section still holds at 3x the cohort
+size it was built and measured against; `tick()` over 60 frames produces no
 non-finite positions; `draw()` doesn't throw; expanding a real 263-member
-cluster grows the materialized node set correctly (341 -> 353, i.e. by
-its 13 immediate children, not its full flattened membership -- expanding
-a cluster only ever reveals one level of the hierarchy at a time, as
+cluster grows the materialized node set correctly (341 -> 353, i.e. by its
+13 immediate children, not its full flattened membership -- expanding a
+cluster only ever reveals one level of the hierarchy at a time, as
 designed); and all 3765 dependency edges still agree with the corrected
-trophic-axis direction fixed in the section above (100%, unaffected by
-this data refresh). `npm test` (13/13, `scene3d.js` untouched) and
-`build_web_explorer.py` (1019 repos, 49 top-level/123 total clusters, same
-shape as this section's own numbers) both clean.
+trophic-axis direction fixed in the section above (100%, unaffected by this
+data refresh). `npm test` (13/13, `scene3d.js` untouched) and
+`scripts/build/web_explorer.py` (1019 repos, 49 top-level/123 total
+clusters, same shape as this section's own numbers) both clean.
 
 One harness-only mistake caught and fixed while writing this verification
 (not an app bug): the debug hook's first draft captured `nodes: nodes` --
@@ -2005,23 +2010,23 @@ standing gap in this project's jsdom-only verification ceiling.
 
 ## Cohort inflated again, 1019 to 1983 repos -- and a real GitHub rate-limit incident along the way
 
-The initial ask was 3000 repos (`top_n_source` 800 -> 2800). Before that
-run finished, `gh api rate_limit` went from 4990/5000 remaining to 0/5000
-in the space of a couple of minutes -- `scripts/10_fetch_new_repo_stats.py`'s
+The initial ask was 3000 repos (`top_n_source` 800 -> 2800). Before that run
+finished, `gh api rate_limit` went from 4990/5000 remaining to 0/5000 in the
+space of a couple of minutes -- `scripts/cohort/dependency_repos.py`'s
 `gh_api_repo()` had no delay between calls, so once the candidate loop
 walked past the ~1760 ids already cached from the previous run and started
 hitting genuinely new repos, it hammered `gh api repos/{owner}/{repo}`
 back-to-back fast enough to blow through the full core budget almost
 immediately -- confirmed directly (`X-Ratelimit-Used: 5000`, a plain probe
-call to `repos/torvalds/linux` came back 403), not inferred. Killed the
-run, waited the ~4 minutes for the window to reset, and added a fixed
+call to `repos/torvalds/linux` came back 403), not inferred. Killed the run,
+waited the ~4 minutes for the window to reset, and added a fixed
 `time.sleep(0.4)` after every real (non-cached) `gh api` call in
-`scripts/10`, and the same fix to `scripts/12_cache_repo_descriptions.py`
-and `scripts/17_fetch_readmes.py`, which make the same kind of unthrottled
-sequential call and would have hit the same wall once they ran against
-this many newly-added repos. Cache hits are unaffected -- the sleep only
-fires on an actual network round-trip -- so reruns over an unchanged
-cohort stay fast.
+`scripts/cohort/dependency_repos.py`, and the same fix to
+`scripts/fetch/repo_descriptions.py` and `scripts/fetch/repo_readmes.py`,
+which make the same kind of unthrottled sequential call and would have hit
+the same wall once they ran against this many newly-added repos. Cache hits
+are unaffected -- the sleep only fires on an actual network round-trip -- so
+reruns over an unchanged cohort stay fast.
 
 Also scaled the ask down to a more modest ~1000-repo addition
 (`top_n_source` 800 -> 1800, not 2800) rather than immediately retrying at
@@ -2033,44 +2038,46 @@ files landed in `github_cache/` -- the rest were repos already resolved
 by the previous 800-source run and served for free.
 
 Re-ran the same downstream pipeline order as the previous growth. Shared-
-person edges (`05`/`07`/`23` over the full 1983-repo list): stargazer
-928258 dump lines -> 484 repos with data, 1345 pruned edges (was 676/251);
-contributor 20706 lines -> 505 repos, 406 pruned edges (was 301/259);
-issue-author 34112 sampled issues across 366 repos, 276 pruned edges (was
-215/194). Dependency edges: 21608 raw -> 7632 pruned over 1929 nodes (was
-3765/962). Semantic (shared-topic) edges: 5982 raw -> 1331 pruned over 499
-nodes (was 745/281). 1702 new owner avatars downloaded (1738 total).
-Descriptions: 1983 total, only 12 fetched fresh (rest already cached by
-script 10's own resolution pass). READMEs: 964 fetched fresh, 13 repos
-confirmed to have none. Text embeddings covered 1965/1983 repos. Leiden
-clustering produced 86 top-level clusters (203 total across all levels),
-660 top-level entities after collapsing singletons, covering all 1983
-repos; cluster-id stabilization matched 37 to a previous stable id, minted
-166 fresh (expected -- membership shifted for nearly every cluster once
-the cohort grew). `scripts/22_label_clusters.py`'s checkpointing (added
-during the previous growth, after that run got killed mid-batch) wasn't
-actually needed this time -- the ~200-cluster labeling batch completed in
-one pass -- but running unmodified over a batch nearly twice the previous
-size without issue is itself a mild confirmation the fix didn't introduce
-new failure modes. Trophic levels: 1929/1983 repos placed, incoherence
-0.010 (same tight layering as before). Topic circular embedding: 664/1983
-repos get a real theta. Final build: 1983 repos, 1345/406/7632/1331/276
-edges across the five tiers, 86 top-level/203 total clusters.
+person edges (`scripts/extract/shared_stargazers.sh`,
+`scripts/extract/shared_contributors.sh`,
+`scripts/edges/shared_issue_authors.py` over the full 1983-repo list):
+stargazer 928258 dump lines -> 484 repos with data, 1345 pruned edges (was
+676/251); contributor 20706 lines -> 505 repos, 406 pruned edges (was
+301/259); issue-author 34112 sampled issues across 366 repos, 276 pruned
+edges (was 215/194). Dependency edges: 21608 raw -> 7632 pruned over 1929
+nodes (was 3765/962). Semantic (shared-topic) edges: 5982 raw -> 1331 pruned
+over 499 nodes (was 745/281). 1702 new owner avatars downloaded (1738
+total). Descriptions: 1983 total, only 12 fetched fresh (rest already cached
+by `scripts/cohort/dependency_repos.py`'s own resolution pass). READMEs: 964
+fetched fresh, 13 repos confirmed to have none. Text embeddings covered
+1965/1983 repos. Leiden clustering produced 86 top-level clusters (203 total
+across all levels), 660 top-level entities after collapsing singletons,
+covering all 1983 repos; cluster-id stabilization matched 37 to a previous
+stable id, minted 166 fresh (expected -- membership shifted for nearly every
+cluster once the cohort grew). `scripts/clusters/labels.py`'s checkpointing
+(added during the previous growth, after that run got killed mid-batch)
+wasn't actually needed this time -- the ~200-cluster labeling batch
+completed in one pass -- but running unmodified over a batch nearly twice
+the previous size without issue is itself a mild confirmation the fix didn't
+introduce new failure modes. Trophic levels: 1929/1983 repos placed,
+incoherence 0.010 (same tight layering as before). Topic circular embedding:
+664/1983 repos get a real theta. Final build: 1983 repos,
+1345/406/7632/1331/276 edges across the five tiers, 86 top-level/203 total
+clusters.
 
-**Verified** (same jsdom debug-hook pattern): `REPO_LAYOUT_TARGET` has
-1983 entries; the LOD system bounds the initial on-screen/simulated node
-count to 660 (matching `scripts/14`'s own "660 top-level entities" build
-log line exactly), not anywhere near the full 1983; `tick()` over 60
-frames produces no non-finite positions (max speed 2.17); `draw()`
-doesn't throw; expanding a real 428-member cluster grows the materialized
-node set from 660 to 671 (its 13 immediate children); all 7632 dependency
-edges agree with the trophic-axis direction (100%). `npm test` 13/13
-clean. The build also exercises `web/scene3d.bundle.js`'s WebGL-unavailable
-fallback path (jsdom has no real WebGL context) at this larger node count
-without throwing -- expected/designed behavior, not new evidence about
-real rendering. Actual WebGL-rendered pixel output at this scale still
-hasn't been checked in a real browser -- same standing gap as every
-other entry in this file.
+**Verified** (same jsdom debug-hook pattern): `REPO_LAYOUT_TARGET` has 1983
+entries; the LOD system bounds the initial on-screen/simulated node count to
+660 (matching `scripts/clusters/hierarchy.py`'s own "660 top-level entities"
+build log line exactly), not anywhere near the full 1983; `tick()` over 60
+frames produces no non-finite positions (max speed 2.17); `draw()` doesn't
+throw; expanding a real 428-member cluster grows the materialized node set
+from 660 to 671 (its 13 immediate children); all 7632 dependency edges agree
+with the trophic-axis direction (100%). `npm test` 13/13 clean. The build
+also exercises `web/scene3d.bundle.js`'s WebGL-unavailable fallback path
+(jsdom has no real WebGL context) at this larger node count without throwing
+-- expected/designed behavior, not new evidence about real rendering. Actual
+WebGL-rendered pixel output at this scale still hasn't been checked in a
+real browser -- same standing gap as every other entry in this file.
 
 ## The graph goes static -- an opt-in pull-force slider, fixed WORLD_POS, and real 3D cluster volumes
 
@@ -2338,26 +2345,26 @@ its x extent is left within its real ~300-unit spread. `npm test`: 20/20.
 ## A per-language quota on the "source repo" growth stream
 
 Prompted by a direct question: after three growth rounds (51 -> 319 -> 1019
--> 1983) driven entirely by `scripts/10_fetch_new_repo_stats.py`, how skewed
+-> 1983) driven entirely by `scripts/cohort/dependency_repos.py`, how skewed
 had the cohort's language mix gotten? Checked directly against
 `data/raw/github_cache`: of 5676 cached repos, 83.2% are `Python` and 12.1%
 `Jupyter Notebook` -- 95.3% Python-family. The original 51-repo seed (ranked
 by language-agnostic `hasTotalStargazers`) was only 69% Python by the same
 count, with real spread (C++, Java, TypeScript, Lua, Swift, C).
 
-The mechanism, not just the ranking cutoff, is why: the `usedPackage`
-signal this script's "source repo" stream ranks by is PyPI-only (confirmed
-in `09_resolve_packages.py`), and per the "Two cohorts that do not overlap"
-entry above, the ~21,100-repo dependency cohort it draws from already
-"looks paper/research-code linked" -- i.e. it's an ML-research corpus by
-construction, not a general GitHub sample. Raising `top_n_source` just cuts
-further down the same PyPI-dependency-degree ranking within that corpus, so
-it can only ever reinforce the skew, never correct it.
+The mechanism, not just the ranking cutoff, is why: the `usedPackage` signal
+this script's "source repo" stream ranks by is PyPI-only (confirmed in
+`scripts/edges/resolve_pypi_packages.py`), and per the "Two cohorts that do
+not overlap" entry above, the ~21,100-repo dependency cohort it draws from
+already "looks paper/research-code linked" -- i.e. it's an ML-research
+corpus by construction, not a general GitHub sample. Raising `top_n_source`
+just cuts further down the same PyPI-dependency-degree ranking within that
+corpus, so it can only ever reinforce the skew, never correct it.
 
 Fix (scope: future growth rounds only -- the existing 1983-repo cohort and
 the "library" stream, which is unconditional real dependency edges rather
 than a ranked popularity choice, were both left alone): `LANGUAGE_QUOTA_CAP`
-(0.5) in `scripts/10_fetch_new_repo_stats.py` caps any single language
+(0.5) in `scripts/cohort/dependency_repos.py` caps any single language
 bucket at 50% of a round's new source-repo slots; once a bucket is full,
 further candidates of that language are skipped (not counted toward
 `top_n_source`) and the loop keeps walking the same ranked candidate list
@@ -2822,30 +2829,30 @@ overall bounding box on its own. Kept anyway: it's strictly more correct
 the cohort grows and cluster hulls make up a larger fraction of what's
 on screen at once.
 
-**A real, honest data-completeness gap found along the way, deliberately
-not fixed here.** `scripts/24_fetch_js_ecosystem_repos.py`
-(`a34c676`, "cap PyPI-stream language dominance, add 1000 JS-ecosystem
-repos") added 1000 repos to `dependency_repo_aggregates.json`, which
-`build_web_explorer.py` merges into the graph's node set -- but that
-commit's own message says plainly it did not rerun the downstream
-pipeline (descriptions, embeddings, clustering, trophic/topic
-coordinates). Checked directly against the current build: of 2983 total
-repos in `AGGREGATES`, exactly 1000 are absent from
-`repo_cluster_hierarchy.json` entirely -- neither a cluster's child nor
-in `topLevelIds` -- and have no entry in `repo_trophic_levels.json` or
-`repo_topic_circular.json` either, since neither of those was rerun
-since the 1983-repo snapshot (`d3bf165`). These 1000 repos have real
-aggregate stats (stars/forks/language) and are addressable by id, but
-sit outside the materialized top-level node set the LOD system walks --
-in practice, invisible in the default render rather than incorrectly
-placed. Left as-is rather than guessed at (assigning them a synthetic
-trophic/topic position would violate this project's standing "everything
-shown is a real, derived value, never a guessed one" principle -- see
-Phase 10/15's own framing of the same issue for the pre-existing 574
-no-clustering-signal repos) -- the real fix is rerunning the pipeline
-steps `a34c676` already named as deferred (`scripts/12`, `17`, `18`,
-`13`, `14`, `21`, `22`, `15`, `16`), not something to patch around in the
-frontend.
+**A real, honest data-completeness gap found along the way, deliberately not
+fixed here.** `scripts/cohort/js_ecosystem.py` (`a34c676`, "cap PyPI-stream
+language dominance, add 1000 JS-ecosystem repos") added 1000 repos to
+`dependency_repo_aggregates.json`, which `scripts/build/web_explorer.py`
+merges into the graph's node set -- but that commit's own message says
+plainly it did not rerun the downstream pipeline (descriptions, embeddings,
+clustering, trophic/topic coordinates). Checked directly against the current
+build: of 2983 total repos in `AGGREGATES`, exactly 1000 are absent from
+`repo_cluster_hierarchy.json` entirely -- neither a cluster's child nor in
+`topLevelIds` -- and have no entry in `repo_trophic_levels.json` or
+`repo_topic_circular.json` either, since neither of those was rerun since
+the 1983-repo snapshot (`d3bf165`). These 1000 repos have real aggregate
+stats (stars/forks/language) and are addressable by id, but sit outside the
+materialized top-level node set the LOD system walks -- in practice,
+invisible in the default render rather than incorrectly placed. Left as-is
+rather than guessed at (assigning them a synthetic trophic/topic position
+would violate this project's standing "everything shown is a real, derived
+value, never a guessed one" principle -- see Phase 10/15's own framing of
+the same issue for the pre-existing 574 no-clustering-signal repos) -- the
+real fix is rerunning the pipeline steps `a34c676` already named as deferred
+(`scripts/fetch/repo_descriptions.py`, `repo_readmes.py`,
+`text_embeddings.py`, `topic_edges.py`, `hierarchy.py`, `stabilize_ids.py`,
+`labels.py`, `trophic_levels.py`, `topic_theta.py`), not something to patch
+around in the frontend.
 
 Full regression check: `npm test` (23/23, unchanged -- none of these
 functions are covered by the jsdom suite, which deliberately excludes
@@ -2872,7 +2879,7 @@ folded in here) to get real numbers instead of guessing from a screenshot.
 
 **Root cause, part one: 574 of 660 top-level entries are singleton repos,
 and most of them pile on top of a handful of real clusters.**
-`scripts/14_cluster_hierarchy.py` clusters on a co-star/topic/text
+`scripts/clusters/hierarchy.py` clusters on a co-star/topic/text
 similarity *graph*; a repo with no edges in that graph (no shared
 stargazers, no topic tags, no readable text signal) stays a singleton no
 matter how close it sits to other repos in the completely separate
@@ -2907,31 +2914,30 @@ bundle. Reverted in full -- the two problems (top-level dot legibility,
 real-cluster hull accuracy) need two different fixes operating on two
 different, non-overlapping populations, not one shared position tweak.
 
-**Fix, part one: declutter piles.** A new pass
-(`buildDeclutterPiles`, `web/template.html`, runs once at load right
-after `REPO_LAYOUT_TARGET` is built) grid-bins *only* the top-level
-singleton repo ids by their raw layout-target position (not the
-tie-broken `WORLD_POS` -- deliberately, so this can't leak into any real
-cluster's hull the way the reverted attempt did) into 30-world-unit
-cells, and any cell with >= 4 members becomes a synthetic pile: same
-`{id, level, parent, children, hub, label, memberCount, stargazers,
-forks}` shape `scripts/14` already produces for a real cluster, spliced
-into `CLUSTERS`/`CLUSTER_ROOTS` before the rest of the file's existing
-machinery runs. Every downstream consumer -- hull/volume rendering,
-expand/collapse, halos, color-by-cluster, the detail panel -- needed zero
-special-casing, since a pile is structurally indistinguishable from a
-real cluster to all of them. Labeled honestly by count alone ("474
-repos"), never a topic guess: unlike a real Leiden cluster, a pile's only
-claim is spatial proximity, not any actual shared signal, and implying
-otherwise would break the same "real, derived, never guessed" rule
-`scripts/22`'s LLM-generated cluster labels already follow (`hub` is
-picked the same honest way real clusters do: highest-stargazer member,
-not anything cluster-specific). Result: this cohort's 574 top-level
-singletons collapse into 4 piles (474/57/21/14 members) plus 2 repos
-too isolated to qualify, cutting default-view materialized top-level
-entities from 660 to 93. Verified live: hovering the 474-member pile
-shows "474 repos, 106,125 combined stargazers, 13,076 combined forks" --
-real aggregate stats, same tooltip a real cluster gets.
+**Fix, part one: declutter piles.** A new pass (`buildDeclutterPiles`,
+`web/template.html`, runs once at load right after `REPO_LAYOUT_TARGET` is
+built) grid-bins *only* the top-level singleton repo ids by their raw
+layout-target position (not the tie-broken `WORLD_POS` -- deliberately, so
+this can't leak into any real cluster's hull the way the reverted attempt
+did) into 30-world-unit cells, and any cell with >= 4 members becomes a
+synthetic pile: same `{id, level, parent, children, hub, label, memberCount,
+stargazers, forks}` shape `scripts/clusters/hierarchy.py` already produces
+for a real cluster, spliced into `CLUSTERS`/`CLUSTER_ROOTS` before the rest
+of the file's existing machinery runs. Every downstream consumer --
+hull/volume rendering, expand/collapse, halos, color-by-cluster, the detail
+panel -- needed zero special-casing, since a pile is structurally
+indistinguishable from a real cluster to all of them. Labeled honestly by
+count alone ("474 repos"), never a topic guess: unlike a real Leiden
+cluster, a pile's only claim is spatial proximity, not any actual shared
+signal, and implying otherwise would break the same "real, derived, never
+guessed" rule `scripts/clusters/labels.py`'s LLM-generated cluster labels
+already follow (`hub` is picked the same honest way real clusters do:
+highest-stargazer member, not anything cluster-specific). Result: this
+cohort's 574 top-level singletons collapse into 4 piles (474/57/21/14
+members) plus 2 repos too isolated to qualify, cutting default-view
+materialized top-level entities from 660 to 93. Verified live: hovering the
+474-member pile shows "474 repos, 106,125 combined stargazers, 13,076
+combined forks" -- real aggregate stats, same tooltip a real cluster gets.
 
 **Root cause, part two, and fix: the hull trim fraction was undertrimming
 exactly the clusters most in need of it.** Piling didn't fully fix the
@@ -3241,7 +3247,7 @@ stays visible beside it) at `max-width: 760px`, dismissed by Esc, the ✕, a
 backdrop click, or selecting a different node.
 
 Where the content comes from: **not** the pipeline's own README cache. That
-cache exists (`scripts/17_fetch_readmes.py`, all 7051 repos) but it's 96MB
+cache exists (`scripts/fetch/repo_readmes.py`, all 7051 repos) but it's 96MB
 of markdown -- eight times the whole page -- and it's only there as
 embedding input. So the reader fetches the one repo asked for, live, from
 the same unauthenticated GitHub API and the same 60/hour/IP budget as the
@@ -3314,7 +3320,7 @@ target in-frame, 0 given `target=_blank`, 0 leftover `user-content-` ids, 0
 scripts, 0 styles beyond the injected one); a TOC click scrolls the frame
 0 -> 3582 with zero new tabs and the frame still alive and styled; Esc,
 backdrop click, and selecting another repo all close it; reopening the same
-repo costs no second request. `npm test` 23/23, `build_web_explorer.py`
+repo costs no second request. `npm test` 23/23, `scripts/build/web_explorer.py`
 re-run clean (same counts).
 
 **Two non-issues confirmed as not ours.** A `logos/flagalpha.png` 404 fires
@@ -3338,7 +3344,7 @@ and the file still has to be saved as `flagalpha.png`, since that's the name
 the graph nodes carry.
 
 `gh api repos/flagalpha/llama2-chinese` does follow the rename and reports
-the current `owner.avatar_url`, so `08_download_repo_logos.py` now falls
+the current `owner.avatar_url`, so `scripts/fetch/repo_logos.py` now falls
 back to that on a vanity-URL failure. Resolved per repo rather than per
 owner, deliberately: only a repo id survives a rename, a bare owner name
 doesn't. Recovered the avatar for real (verified: the node renders it, and
@@ -3346,16 +3352,17 @@ a full load + 14-position hover sweep + selecting that repo produces zero
 failed requests).
 
 Then the durable half. The gap only became visible as a console 404 because
-the renderer learns a logo is missing by requesting it -- `loadAvatarTexture`
-caches the failure but the request still happens once per absent owner per
-page load. `build_web_explorer.py` now diffs the cohort's owners against
-`web/logos/*.png` at build time and ships the absent ones as
-`MISSING_LOGO_OWNERS`, handed to `Scene3D.init` as `opts.avatarlessOwners`
-and seeded straight into the same `"error"` state a failed load produces.
-Same flat-color fallback, no dead request. The list is empty today; it stops
-being empty every time the cohort grows ahead of an `08` re-run (which this
-project has done six times), and permanently for any owner whose account is
-deleted rather than renamed -- `08` can follow a rename, but a deleted
+the renderer learns a logo is missing by requesting it --
+`loadAvatarTexture` caches the failure but the request still happens once
+per absent owner per page load. `scripts/build/web_explorer.py` now diffs
+the cohort's owners against `web/logos/*.png` at build time and ships the
+absent ones as `MISSING_LOGO_OWNERS`, handed to `Scene3D.init` as
+`opts.avatarlessOwners` and seeded straight into the same `"error"` state a
+failed load produces. Same flat-color fallback, no dead request. The list is
+empty today; it stops being empty every time the cohort grows ahead of a
+`scripts/fetch/repo_logos.py` re-run (which this project has done six
+times), and permanently for any owner whose account is deleted rather than
+renamed -- `scripts/fetch/repo_logos.py` can follow a rename, but a deleted
 account has no avatar left anywhere.
 
 Unit-tested rather than spot-checked, since an empty list proves nothing
@@ -3432,15 +3439,15 @@ data, against tables the build step now ships:
 
 | axis | how | cost |
 | --- | --- | --- |
-| theta / r | the repo's GitHub topics through scripts/16's exact TF-IDF circular mean, against the shipped per-topic angles | free, topics ride along in `/repos` |
-| shared-tag edges | literal tag overlap vs. `TOPIC_REPOS`, same >=2 rule as scripts/13 | free |
-| dependency edges | its own manifests, parsed with the same direct-runtime-only rules as scripts/29/31/33/36/38/41, resolved through the shipped coordinate tables | 1 root listing + 1 per manifest present |
+| theta / r | the repo's GitHub topics through scripts/layout/topic_theta.py's exact TF-IDF circular mean, against the shipped per-topic angles | free, topics ride along in `/repos` |
+| shared-tag edges | literal tag overlap vs. `TOPIC_REPOS`, same >=2 rule as scripts/edges/topic_edges.py | free |
+| dependency edges | its own manifests, parsed with the same direct-runtime-only rules as scripts/edges/{go,js,java,rust,python,cpp}_deps.py, resolved through the shipped coordinate tables | 1 root listing + 1 per manifest present |
 | y | those dependency edges, see below | free |
 
 Four new payloads (+1.0MB, page 11.8 -> 12.8MB): per-topic angles, a
 topic -> cohort-repo index (which doubles as the TF-IDF document counts, so
 no separate counts map), the six ecosystems' coordinate->repo tables, and
-the trophic solve's raw scale. `13_semantic_edges.py` now also emits
+the trophic solve's raw scale. `scripts/edges/topic_edges.py` now also emits
 `repo_topics.json` -- `data/raw/github_cache` is gitignored, so the only
 committed record of who is tagged what was the *pruned* edge list, which
 has already dropped every tag below min-shared.
@@ -3452,17 +3459,17 @@ npm/PyPI/crates lookups added **zero**. What limits a new repo's edge count
 is that most of its dependencies simply aren't cohort repos -- not
 resolution coverage. So the card spends no requests on registries.
 
-**Trophic height is an exact solve, not an estimate.** scripts/15
-minimizes `(h_a - h_b - 1)^2` over dependency edges. Holding every cohort
-height fixed, that objective's stationary condition for one new node is
-closed-form: `h = mean over its dependencies of (h_dep + 1 level)`. So the
-height is comparable to the cohort's rather than living on its own scale.
-"One level" is 1.0 in the raw units of that solve, which is why
-`trophic_scale.json` now ships. The incoming half of the sum is
-structurally always empty and the panel says so: scripts/11 only kept edges
-whose target resolved to a cohort repo, so a repo outside the cohort can
-never be the target of one -- the card knows what it depends on and cannot
-know what depends on it.
+**Trophic height is an exact solve, not an estimate.**
+scripts/layout/trophic_levels.py minimizes `(h_a - h_b - 1)^2` over
+dependency edges. Holding every cohort height fixed, that objective's
+stationary condition for one new node is closed-form: `h = mean over its
+dependencies of (h_dep + 1 level)`. So the height is comparable to the
+cohort's rather than living on its own scale. "One level" is 1.0 in the raw
+units of that solve, which is why `trophic_scale.json` now ships. The
+incoming half of the sum is structurally always empty and the panel says so:
+scripts/edges/dependency_edges.py only kept edges whose target resolved to a
+cohort repo, so a repo outside the cohort can never be the target of one --
+the card knows what it depends on and cannot know what depends on it.
 
 The computed edges are appended to the same `DEPENDENCY_EDGES` /
 `SEMANTIC_EDGES` arrays the cohort's edges live in, not pushed in as a
@@ -3553,8 +3560,9 @@ vendored trees, and there is no manifest to read. Java's 12.3% was not.
 
 ### The diagnosis: aggregator roots
 
-Running 33's own parsers over all 811 cached root manifests, only 192 yielded
-a single dependency. The files that yielded none say why:
+Running `scripts/edges/java_deps.py`'s own parsers over all 811 cached root
+manifests, only 192 yielded a single dependency. The files that yielded none
+say why:
 
     185 of 196 zero-dependency pom.xml  contain <modules>      (aggregator POM)
     331 of 423 zero-dependency gradle   contain allprojects    (multi-project root)
@@ -3934,12 +3942,12 @@ The last row is the one that stings: those repos ship a real, declared
 dependency list and were reported as dependency-free. Biggest single miss is
 Rust repos carrying a `package.json` -- 12 of 40 sampled.
 
-One `git/trees/HEAD?recursive=1` read returns every manifest path at once, so
-the replacement costs one request per repo instead of six blind probes, and
-finds nested manifests no fixed path can reach. 240 sample trees took 19s
-threaded; the full cohort is ~1h. The blob fetch reuses the aliased-GraphQL
-batching `32_fetch_java_manifests.py` already established (50 paths per query,
-1 rate-limit point).
+One `git/trees/HEAD?recursive=1` read returns every manifest path at once,
+so the replacement costs one request per repo instead of six blind probes,
+and finds nested manifests no fixed path can reach. 240 sample trees took
+19s threaded; the full cohort is ~1h. The blob fetch reuses the
+aliased-GraphQL batching `scripts/fetch/java_manifests.py` already
+established (50 paths per query, 1 rate-limit point).
 
 ### Two things a wider net catches that you do not want
 
@@ -3967,7 +3975,7 @@ Root manifests are deliberately exempt. Ten research repos really do share one
 byte-identical root `requirements.txt` -- copied from a common ancestor, but
 each of them is genuinely declaring it as their own.
 
-Both exclusions run at **read** time (`scripts/manifests.py`), following the
+Both exclusions run at **read** time (`scripts/lib/manifests.py`), following the
 convention 32 set for `buildSrc/`: the cache records every path the tree held,
 so either rule can be re-argued and re-measured without re-fetching a file.
 
@@ -4082,31 +4090,33 @@ a transient throttle as a permanent answer, which would have silently removed
 errors, retrying with backoff, never caching a non-terminal failure, and
 authenticating through the `gh` token. Re-run: 7,050 readable, 0 deferred.
 
-**Duplicate stats overwriting real ones.** The cohort lives in two files (the
-51-repo SemRepo cohort and the dependency expansion) and `build_web_explorer.py`
-merges them with the expansion last. A rename normally leaves the old slug in
-one file and the new one in the other, so renaming an alias entry to its
-canonical id *within* one file promoted the duplicate's data over the real
-repo's: `lllyasviel/controlnet` came out with the 101 stars of
-`clintonjwang/ControlNet`, and `openbmb/chatdev` with the 4 stars and the title
-"simulation" of `sumedhrasal/simulation`. Caught by checking the merged output
-rather than the per-file counts. The two aggregate files are now merged as one
-unit, field by field: the later file's record wins and the earlier fills only
-gaps, so `langchain-ai/langchain` keeps its live 141,857 stars *and* recovers
-the 481 contributors that were sitting under `hwchase17/langchain` -- a real
-number the SemRepo side had and the GitHub side does not expose.
+**Duplicate stats overwriting real ones.** The cohort lives in two files
+(the 51-repo SemRepo cohort and the dependency expansion) and
+`scripts/build/web_explorer.py` merges them with the expansion last. A
+rename normally leaves the old slug in one file and the new one in the
+other, so renaming an alias entry to its canonical id *within* one file
+promoted the duplicate's data over the real repo's: `lllyasviel/controlnet`
+came out with the 101 stars of `clintonjwang/ControlNet`, and
+`openbmb/chatdev` with the 4 stars and the title "simulation" of
+`sumedhrasal/simulation`. Caught by checking the merged output rather than
+the per-file counts. The two aggregate files are now merged as one unit,
+field by field: the later file's record wins and the earlier fills only
+gaps, so `langchain-ai/langchain` keeps its live 141,857 stars *and*
+recovers the 481 contributors that were sitting under `hwchase17/langchain`
+-- a real number the SemRepo side had and the GitHub side does not expose.
 
 ### What the id is, and why it stayed a slug
 
-The identity is decided intrinsically; the *label* stayed `owner/name`. Every
-downstream file, avatar and shared permalink in this project is keyed by slug,
-and a content hash as the primary key would break all of them, make every data
-file unreadable by eye, and need its own cross-run stabilization pass (the
-problem `21_stabilize_cluster_ids.py` already exists to solve once). What each
-record carries instead is `anchor` -- the repository's root commit, fetched for
-merged groups only. That is the genuinely forge-independent, time-stable
-identifier: identical across every mirror, fork and rename of a repository,
-and unlike a ref-set digest it does not change when someone pushes a tag.
+The identity is decided intrinsically; the *label* stayed `owner/name`.
+Every downstream file, avatar and shared permalink in this project is keyed
+by slug, and a content hash as the primary key would break all of them, make
+every data file unreadable by eye, and need its own cross-run stabilization
+pass (the problem `scripts/clusters/stabilize_ids.py` already exists to
+solve once). What each record carries instead is `anchor` -- the
+repository's root commit, fetched for merged groups only. That is the
+genuinely forge-independent, time-stable identifier: identical across every
+mirror, fork and rename of a repository, and unlike a ref-set digest it does
+not change when someone pushes a tag.
 
 ### Phase 20 results, measured against the run it replaced
 
@@ -4130,10 +4140,10 @@ Python cohort -- `python_ecosystem_repos.txt` has 68 lines in it. 2,335 repos
 actually carry a Python manifest. The gap was never a resolution failure;
 nothing had ever looked.
 
-Java moved least (+4% edges, +17% source repos), which is the expected shape:
-Java was the one ecosystem already reading nested manifests, via 32's Java-only
-submodule sweep. What it gained is the repos whose dominant language is not
-Java.
+Java moved least (+4% edges, +17% source repos), which is the expected
+shape: Java was the one ecosystem already reading nested manifests, via
+`scripts/fetch/java_manifests.py`'s Java-only submodule sweep. What it
+gained is the repos whose dominant language is not Java.
 
 **The number the change was aimed at: cross-ecosystem dependency edges went
 from 1,368 (3.2%) to 15,038 (18.6%).** The top pairs are now `rust->js` 1,859,
@@ -4283,18 +4293,20 @@ resolves end to end: Pillow (0.4607) -> libjpeg-turbo (0.3460) -> zlib
 
 ### A regression worth recording: identity is knowledge, not a derived view
 
-Re-running 44_repo_identity.py after the cohort grew dropped the alias count
-from 25 to 2. The cause is subtle and would have shipped silently: 45 has
-already collapsed the duplicates out of the cohort, so a plain rebuild reads
-inputs that no longer contain them and "discovers" only what has appeared
-since. `hwchase17/langchain` stopped resolving to anything.
+Re-running scripts/identity/repo_identity.py after the cohort grew dropped
+the alias count from 25 to 2. The cause is subtle and would have shipped
+silently: 45 has already collapsed the duplicates out of the cohort, so a
+plain rebuild reads inputs that no longer contain them and "discovers" only
+what has appeared since. `hwchase17/langchain` stopped resolving to
+anything.
 
-That is real data loss. The alias table is the only thing still connecting an
-old slug to the repository it named -- for a shared permalink, for registry
-metadata that still points at the old name, for the explorer's "also known as"
-row. 44 now merges into whatever the file already holds rather than rebuilding
-it, and reports what it carried forward. Caught by checking the output against
-the previous run instead of reading the summary line, which said nothing wrong.
+That is real data loss. The alias table is the only thing still connecting
+an old slug to the repository it named -- for a shared permalink, for
+registry metadata that still points at the old name, for the explorer's
+"also known as" row. `scripts/identity/repo_identity.py` now merges into
+whatever the file already holds rather than rebuilding it, and reports what
+it carried forward. Caught by checking the output against the previous run
+instead of reading the summary line, which said nothing wrong.
 
 ## Phase 22: a node id that is not a GitHub slug
 
@@ -4387,11 +4399,11 @@ next person does not rediscover it as an oversight.
 ### Two small breakages worth recording
 
 Adding a third path segment to node ids broke two things that had quietly
-assumed exactly two. `43_repo_refs.py` built its cache filename with
+assumed exactly two. `scripts/identity/repo_refs.py` built its cache filename with
 `repo.split("/", 1)` and then wrote `{owner}__{name}.json`, which for
 `gitlab.freedesktop.org/xorg/lib/libx11` left real slashes in the filename and
 raised FileNotFoundError against directories that do not exist. And
-`08_download_repo_logos.py` would have asked the GitHub API for a user called
+`scripts/fetch/repo_logos.py` would have asked the GitHub API for a user called
 `gitlab.freedesktop.org`. Both now go through `is_forge_node()`.
 
 ### Still open

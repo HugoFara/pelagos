@@ -1,4 +1,4 @@
-# Candidate non-GitHub origins for cohort repos, for scripts/44_repo_identity.py.
+# Candidate non-GitHub origins for cohort repos, for scripts/identity/repo_identity.py.
 #
 # This file is a CANDIDATE GENERATOR, never evidence. Every line is verified
 # by intrinsic ref overlap (git ls-remote, the same rule that merges any two

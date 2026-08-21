@@ -318,7 +318,7 @@ test("syncClusterVolumes: a cluster missing from the next sync call gets hidden,
 });
 
 // ---- avatar loading: the "never request a logo we know isn't there" path
-// (build_web_explorer.py -> MISSING_LOGO_OWNERS -> initCore's
+// (build/web_explorer.py -> MISSING_LOGO_OWNERS -> initCore's
 // opts.avatarlessOwners -> avatarTextures seeded to "error"). Can't go
 // through initCore itself (WebGLRenderer, see the file header), so these
 // drive loadAvatarTextureCore against a hand-seeded cache and count real

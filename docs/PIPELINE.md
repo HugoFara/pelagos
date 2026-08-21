@@ -23,22 +23,23 @@ aims to be explicit about which edges are real structural relationships
 (shared stargazers/watchers) — see [`NOTES.md`](./NOTES.md) for the live
 design discussion.
 
-Nor is this redundant with [deps.dev](https://deps.dev) (Google's Open Source
-Insights), the closest prior art to this project's backend. `deps.dev`
-reconstructs the transitive *package* dependency graph straight from
-registries — its node is a package/version, and its one relation is "depends
-on." This project's node is a *repo*, and the explorer's path finder searches
-a real four-tier multigraph (dependency, shared-contributor, shared-stargazer,
-shared-topic) as a single graph, so it can answer "how are these two repos
-connected at all" in a way a single-relation graph structurally can't:
-`dmlc/xgboost` and `psf/requests` — a gradient-boosting library and the most-
-used HTTP client, nothing in common on the surface — have no direct edge in
-this dataset across *any* of the four tiers, only a real 2-hop bridge through
-`dmlc/dgl` (723 shared stargazers, and `dgl` genuinely depends on the
-`requests` package). Try it in the path finder's seeded examples. This
-also means the package→repo resolution `deps.dev`/Libraries.io do at the
-registry level has to be solved here too, just aimed at repos instead of
-packages — `scripts/09_resolve_packages.py` (PyPI-only today) is that piece.
+Nor is this redundant with [deps.dev](https://deps.dev) (Google's Open
+Source Insights), the closest prior art to this project's backend.
+`deps.dev` reconstructs the transitive *package* dependency graph straight
+from registries — its node is a package/version, and its one relation is
+"depends on." This project's node is a *repo*, and the explorer's path
+finder searches a real four-tier multigraph (dependency, shared-contributor,
+shared-stargazer, shared-topic) as a single graph, so it can answer "how are
+these two repos connected at all" in a way a single-relation graph
+structurally can't: `dmlc/xgboost` and `psf/requests` — a gradient-boosting
+library and the most-used HTTP client, nothing in common on the surface —
+have no direct edge in this dataset across *any* of the four tiers, only a
+real 2-hop bridge through `dmlc/dgl` (723 shared stargazers, and `dgl`
+genuinely depends on the `requests` package). Try it in the path finder's
+seeded examples. This also means the package→repo resolution
+`deps.dev`/Libraries.io do at the registry level has to be solved here too,
+just aimed at repos instead of packages —
+`scripts/edges/resolve_pypi_packages.py` (PyPI-only today) is that piece.
 
 ## Data source
 
@@ -75,7 +76,7 @@ shared-issue-author. Their per-edge member lists are
 **pseudonymized before anything is written to `data/processed/`** -- each
 person becomes a stable `person-<12 hex>` label derived from a salt that lives
 in gitignored `data/raw/pseudonym_salt.txt` and never ships. See
-`scripts/compute_shared_edges.py` for why the salt has to stay out of the repo
+`scripts/lib/shared_edges.py` for why the salt has to stay out of the repo
 (GitHub usernames are an enumerable public set, so an unsalted or
 salt-alongside-data hash would be trivially reversible) and for the honest
 limits of this -- it is pseudonymization, not anonymization.
@@ -87,8 +88,30 @@ displayed in edge tooltips and Compare mode.
 ## Layout
 
 ```
-scripts/    grep/awk extraction passes over the .nt file + Python parsers
-            that turn the raw triples into small JSON/CSV in data/processed/
+scripts/    the pipeline, grouped by what a stage does rather than by when
+            it was written. Every script runs from the repo root
+            (`python3 scripts/<group>/<name>.py`), reads what it needs from
+            data/ and writes back into it; run order is the *Pipeline*
+            section below, not the directory listing. Shared code is a real
+            package -- stages import it as `from lib.identity import ...`
+            after putting scripts/ on sys.path.
+  lib/        the modules stages import: N-Triples parsing, repo identity,
+              the manifest inventory, shared-person edge building
+  extract/    single-pass grep/awk passes over the .nt dump, plus the
+              parsers that turn their output into data/processed/
+  cohort/     which repositories are nodes at all -- the streams that grow
+              data/repo-lists/ and fetch each new node's aggregate row
+  fetch/      GitHub API caches under data/raw/: descriptions, READMEs,
+              owner avatars, and every ecosystem's dependency manifests
+  edges/      the edge tiers: one dependency builder per ecosystem, the
+              combined tier they all fold into, shared topics, and shared
+              issue authors
+  layout/     where a node sits: the trophic height solve, the circular
+              topic embedding, and the text-embedding signal behind it
+  clusters/   the Leiden hierarchy, ids kept stable across reruns, labels
+  identity/   one node per repository, not per GitHub slug -- read the
+              origins' git object ids, derive the identity, apply it
+  build/      renders web/index.html from web/template.html + data/processed/
 data/
   repo-lists/   the curated repo cohorts these scripts operate on
   processed/    small, committed, derived data (JSON, tables) -- the actual
@@ -109,7 +132,7 @@ web/        the interactive graph explorer -- web/index.html renders a real
             build to *use* it: just open web/index.html, it and its sibling
             web/scene3d.bundle.js are both committed, generated artifacts.
             web/index.html itself is generated from web/template.html +
-            data/processed/*.json by scripts/build_web_explorer.py, which
+            data/processed/*.json by scripts/build/web_explorer.py, which
             inlines the JSON as JS literals (file:// pages can't fetch() JSON
             due to CORS). Re-run that script after regenerating
             data/processed/ and commit the resulting web/index.html.
@@ -122,7 +145,7 @@ web/        the interactive graph explorer -- web/index.html renders a real
             count/bio/language -- that data isn't in the SemRepo dump and
             scraping it for every node up front isn't feasible, so it's
             fetched on demand instead. Cohort repos' *descriptions*
-            specifically are the exception: scripts/12_cache_repo_descriptions.py
+            specifically are the exception: scripts/fetch/repo_descriptions.py
             pre-fetches those once and ships them inline, so hovering a repo
             node shows its description immediately with no network request
             at all -- only clicking (for the fuller, genuinely-live stats)
@@ -131,12 +154,12 @@ web/        the interactive graph explorer -- web/index.html renders a real
             unauthenticated requests at 60/hour per IP, surfaced in the panel
             as an error with a retry link if hit.
   web/logos/  one small PNG per repo owner (their GitHub avatar), downloaded
-            once via scripts/08_download_repo_logos.py and committed --
+            once via scripts/fetch/repo_logos.py and committed --
             drawn clipped into each repository node's WebGL sprite. Every
             cohort owner has one today; the one that didn't turned out to be
-            a renamed org, which 08 now recovers via the API (a *deleted*
+            a renamed org, which repo_logos.py now recovers via the API (a *deleted*
             account still can't be). An owner with no logo file falls back to
-            the flat node color, and build_web_explorer.py ships that list so
+            the flat node color, and scripts/build/web_explorer.py ships that list so
             the renderer skips the request instead of 404ing for it.
 ```
 
@@ -169,10 +192,10 @@ list), by reading each repo's full git tree:
 The largest single miss was Rust repos carrying a `package.json` — 12 of the
 40 sampled.
 
-`scripts/42_scan_repo_manifests.py` replaces the six root probes with one
+`scripts/fetch/repo_manifests.py` replaces the six root probes with one
 `git/trees/HEAD?recursive=1` read per repo, which returns every manifest path
 in the repo at once, and then fetches the blobs through aliased GraphQL.
-`scripts/manifests.py` is the read side that the six `*_dependency_edges.py`
+`scripts/lib/manifests.py` is the read side that the six `*_dependency_edges.py`
 scripts now share.
 
 **Two things a wider net catches that you do not want.** A manifest under
@@ -190,9 +213,9 @@ manifests are exempt: ten research repos really do share one byte-identical
 root `requirements.txt`, and it is each of their own declaration.
 
 Both exclusions happen at **read** time, following the convention
-`32_fetch_java_manifests.py` set for `buildSrc/`: the cache records every path
-the tree contained, so either rule can be re-measured and changed without
-re-fetching anything.
+`scripts/fetch/java_manifests.py` set for `buildSrc/`: the cache records
+every path the tree contained, so either rule can be re-measured and changed
+without re-fetching anything.
 
 ## One repository, many origins
 
@@ -228,10 +251,10 @@ It is also why Software Heritage is not in this path. SWH's `swh:1:rev:` /
 `swh:1:rel:` ids *are* the git object ids — verified directly against the
 kernel.org Linux origin, where all 940 of its `ls-remote` tag ids matched
 SWH's snapshot targets exactly. So `git ls-remote` yields the same intrinsic
-identifiers for any forge, with no crawl-coverage dependency and no rate limit
-(SWH's anonymous quota is 700 requests/hour, roughly 20 hours for this
-cohort). `scripts/43_repo_refs.py` reads them; `scripts/44_repo_identity.py`
-groups on them.
+identifiers for any forge, with no crawl-coverage dependency and no rate
+limit (SWH's anonymous quota is 700 requests/hour, roughly 20 hours for this
+cohort). `scripts/identity/repo_refs.py` reads them;
+`scripts/identity/repo_identity.py` groups on them.
 
 Merging uses **containment**, not Jaccard, and the Linux pair shows why:
 
@@ -284,7 +307,7 @@ trophic axis wrong: `python-pillow/Pillow` had a dependency in-degree of 1,239
 while `madler/zlib`, which it genuinely depends on, had effectively none.
 
 A distribution is the one thing that has to resolve those edges, so it is the
-one place they exist. `scripts/46_debian_dependency_edges.py` reads Debian's
+one place they exist. `scripts/edges/debian_deps.py` reads Debian's
 binary `Depends` field — 68,750 binary packages and 37,588 source packages,
 two static `.xz` files behind no auth — and emits repo→repo edges into the
 same tier as every other ecosystem.
@@ -354,7 +377,7 @@ A forge node's id is `host/path` —
 segment containing a dot means a forge host, which is unambiguous rather than
 conventional: GitHub owner names are `[A-Za-z0-9-]+` and cannot contain a dot,
 checked against every node in the cohort before the scheme was chosen.
-`scripts/identity.py`'s `is_forge_node()` is the shared predicate, and the
+`scripts/lib/identity.py`'s `is_forge_node()` is the shared predicate, and the
 scripts that talk to the GitHub API use it to skip the nodes that API could
 only 404 on.
 
@@ -364,7 +387,7 @@ generalising it meant passing a URL where a slug had been passed. That is the
 payoff of building the check on intrinsic git data rather than on a GitHub
 API: it generalises to other forges for free.
 
-`scripts/48_fetch_forge_repo_stats.py` fills in what can be filled. GitLab
+`scripts/cohort/forge_repo_stats.py` fills in what can be filled. GitLab
 instances expose a public REST API, so 42 of 43 nodes get a real description,
 star count and fork count; `sourceware.org/elfutils` (cgit, no API) keeps
 nulls — null rather than 0, since 0 is a real value that would place it at the
@@ -397,60 +420,60 @@ export SEMREPO_NT=data/raw/SemRepo_2025-05-11.nt
 # Export it before running anything below, and re-export it in any new shell.
 # The dump-scanning scripts guard with `: "${SEMREPO_NT:?}"`, but that fires
 # only after the shell has already truncated the target of a `>` redirect --
-# so `scripts/05_shared_stargazers.sh "$COHORT" > data/raw/repo_stargazers_full.nt`
+# so `scripts/extract/shared_stargazers.sh "$COHORT" > data/raw/repo_stargazers_full.nt`
 # with SEMREPO_NT unset destroys the existing file and writes nothing. Redirect
 # to a .tmp and `mv` it into place after checking it's non-empty if you're
 # re-running these against an already-populated data/raw/.
 
 # schema overview (53 predicates, exact counts over all 82M triples)
-scripts/01_predicate_counts.sh > data/processed/predicate_counts.txt
+scripts/extract/predicate_counts.sh > data/processed/predicate_counts.txt
 
 # candidate repo cohort: ranked by real hasTotalStargazers (capped at 10000
 # in this dump -- see NOTES.md)
-scripts/02_top_repos_by_stargazers.sh 300 > data/raw/top_repos_by_stargazers_capped.txt
+scripts/extract/top_repos_by_stargazers.sh 300 > data/raw/top_repos_by_stargazers_capped.txt
 
 # aggregate stats (real hasTotalForks/hasTotalOpenIssues/hasTotalWatchers/
 # hasTotalContributor/title) for the curated cohort in data/repo-lists/top50_repos.txt
-scripts/03_repo_aggregates.sh data/repo-lists/top50_repos.txt > data/raw/repo_aggregates.nt
-python3 scripts/build_repo_aggregates.py data/repo-lists/top50_repos.txt \
+scripts/extract/repo_aggregates.sh data/repo-lists/top50_repos.txt > data/raw/repo_aggregates.nt
+python3 scripts/extract/parse_repo_aggregates.py data/repo-lists/top50_repos.txt \
   data/raw/repo_aggregates.nt data/processed/repo_aggregates.json
 
 # capped individual-level neighbor sample (issues/stargazers/watchers/fork/
 # contributor-ref) for the subset in data/repo-lists/expand15_repos.txt
-scripts/04_repo_expansions.sh data/repo-lists/expand15_repos.txt > data/raw/repo_expansions.nt
-python3 scripts/build_repo_expansions.py data/raw/repo_expansions.nt data/processed/repo_expansions.json
+scripts/extract/repo_expansions.sh data/repo-lists/expand15_repos.txt > data/raw/repo_expansions.nt
+python3 scripts/extract/parse_repo_expansions.py data/raw/repo_expansions.nt data/processed/repo_expansions.json
 
 # real repo-repo edges from full (uncapped) shared-stargazer overlap --
 # top50 only at this point in the pipeline (the dependency-expansion cohort
 # below doesn't exist yet on a from-scratch run); re-run against the full
 # cohort once it does, see the backfill step near the end of this list
-scripts/05_shared_stargazers.sh data/repo-lists/top50_repos.txt > data/raw/repo_stargazers_full.nt
-python3 scripts/compute_shared_edges.py data/raw/repo_stargazers_full.nt \
+scripts/extract/shared_stargazers.sh data/repo-lists/top50_repos.txt > data/raw/repo_stargazers_full.nt
+python3 scripts/lib/shared_edges.py data/raw/repo_stargazers_full.nt \
   data/processed/repo_shared_edges.json data/processed/repo_shared_edges_pruned.json
 
 # which repos have real usedPackage dependency data (a disjoint cohort --
 # see NOTES.md)
-scripts/find_repos_with_packages.sh > data/processed/dependency_cohort_repos.txt
+scripts/extract/repos_with_packages.sh > data/processed/dependency_cohort_repos.txt
 
 # real repo-repo edges from full shared-contributor overlap (technical/
 # organizational coupling, not an audience proxy -- see NOTES.md); reuses
-# compute_shared_edges.py since both are repo<->person bipartite graphs.
+# scripts/lib/shared_edges.py since both are repo<->person bipartite graphs.
 # The trailing "1" embeds the actual shared usernames per edge (contributor
 # overlaps top out around a few dozen, unlike shared-stargazers, so this is
 # small enough to ship to the browser) -- shown on edge hover in the explorer.
-scripts/07_shared_contributors.sh data/repo-lists/top50_repos.txt > data/raw/repo_contributors_full.nt
-python3 scripts/compute_shared_edges.py data/raw/repo_contributors_full.nt \
+scripts/extract/shared_contributors.sh data/repo-lists/top50_repos.txt > data/raw/repo_contributors_full.nt
+python3 scripts/lib/shared_edges.py data/raw/repo_contributors_full.nt \
   data/processed/repo_shared_contributor_edges.json \
   data/processed/repo_shared_contributor_edges_pruned.json 2 4 1 1
 
 # one avatar PNG per repo owner, for the explorer to draw on repo nodes
 # (see web/logos/ above)
-python3 scripts/08_download_repo_logos.py data/repo-lists/top50_repos.txt web/logos
+python3 scripts/fetch/repo_logos.py data/repo-lists/top50_repos.txt web/logos
 
 # real repo-repo dependency edges: resolve each of the 186 distinct
 # usedPackage package names to the GitHub repo that publishes it (PyPI's
 # JSON API, cached to data/raw/pypi_cache/)
-python3 scripts/09_resolve_packages.py
+python3 scripts/edges/resolve_pypi_packages.py
 
 # grow the cohort with the resolved "library" repos plus a top-N slice of
 # the dependency cohort itself (ranked by distinct-dependency count, capped
@@ -458,7 +481,7 @@ python3 scripts/09_resolve_packages.py
 # most-Python(/notebook) candidates -- see LANGUAGE_QUOTA_CAP in the script);
 # tries the dump first, falls back to `gh api` for the rest, caching every
 # response to data/raw/github_cache/
-python3 scripts/10_fetch_new_repo_stats.py
+python3 scripts/cohort/dependency_repos.py
 
 # grow the cohort per language, then give each language real dependency
 # edges from its own manifest. The SemRepo dump's usedPackage predicate is
@@ -466,30 +489,30 @@ python3 scripts/10_fetch_new_repo_stats.py
 # non-Python repo above arrives edge-less; each pair below closes that for
 # one ecosystem by fetching the real manifest and resolving each declared
 # coordinate to a GitHub repo through that language's registry. All of them
-# feed 11_dependency_edges.py's *single* combined prune (see its docstring)
+# feed scripts/edges/dependency_edges.py's *single* combined prune (see its docstring)
 # rather than pruning separately.
 #
 # Each fetch script is idempotent and cached, so re-running is cheap; each
 # edge script leaves genuinely unresolvable coordinates edge-less rather
 # than guessing a repo for them.
-python3 scripts/24_fetch_js_ecosystem_repos.py       # JS/TS repos
-python3 scripts/25_fetch_java_ecosystem_repos.py     # Java repos
-python3 scripts/26_fetch_python_ecosystem_repos.py   # Python repos
-python3 scripts/27_fetch_go_ecosystem_repos.py       # Go repos
-python3 scripts/34_fetch_rust_ecosystem_repos.py     # Rust repos
-python3 scripts/39_fetch_cpp_ecosystem_repos.py      # C/C++ repos
+python3 scripts/cohort/js_ecosystem.py       # JS/TS repos
+python3 scripts/cohort/java_ecosystem.py     # Java repos
+python3 scripts/cohort/python_ecosystem.py   # Python repos
+python3 scripts/cohort/go_ecosystem.py       # Go repos
+python3 scripts/cohort/rust_ecosystem.py     # Rust repos
+python3 scripts/cohort/cpp_ecosystem.py      # C/C++ repos
 
-python3 scripts/28_fetch_go_mod.py         && python3 scripts/29_go_dependency_edges.py
-python3 scripts/30_fetch_package_json.py   && python3 scripts/31_js_dependency_edges.py
-python3 scripts/32_fetch_java_manifests.py && python3 scripts/33_java_dependency_edges.py
+python3 scripts/fetch/go_mod.py         && python3 scripts/edges/go_deps.py
+python3 scripts/fetch/package_json.py   && python3 scripts/edges/js_deps.py
+python3 scripts/fetch/java_manifests.py && python3 scripts/edges/java_deps.py
   # ^ Java also sweeps every repo's *submodules*: a Maven/Gradle root file
   #   usually lists children rather than dependencies, so root-only reading
   #   left 619 of 811 Java repos with a manifest and no edges. ~2k GitHub
   #   requests (threaded, ~15min) + ~8.8k Maven Central lookups (~30min),
   #   both fully cached -- see NOTES.md
-python3 scripts/35_fetch_cargo_toml.py     && python3 scripts/36_rust_dependency_edges.py
-python3 scripts/37_fetch_python_manifests.py && python3 scripts/38_python_dependency_edges.py
-python3 scripts/40_fetch_cpp_manifests.py  && python3 scripts/41_cpp_dependency_edges.py
+python3 scripts/fetch/cargo_toml.py     && python3 scripts/edges/rust_deps.py
+python3 scripts/fetch/python_manifests.py && python3 scripts/edges/python_deps.py
+python3 scripts/fetch/cpp_manifests.py  && python3 scripts/edges/cpp_deps.py
 
 # One repo, several ecosystems. Everything above pairs one language list with
 # one fixed manifest path at repo root, which ties two facts together that
@@ -501,7 +524,7 @@ python3 scripts/40_fetch_cpp_manifests.py  && python3 scripts/41_cpp_dependency_
 # This sweeps every cohort repo's git tree for every ecosystem's manifests at
 # any depth -- one `git/trees/HEAD?recursive=1` read per repo, then aliased
 # GraphQL for the blobs (50 paths per query, 1 rate-limit point, the same
-# mechanics 32's Java-only submodule pass already used). Measured on a random
+# mechanics java_manifests.py's Java-only submodule pass already used). Measured on a random
 # 240-repo sample before it was written: 20% of repos carry a ROOT manifest
 # for an ecosystem other than their own, 41% carry one at some depth, 11%
 # have their own ecosystem's manifest only nested, and 10% have no root
@@ -509,17 +532,18 @@ python3 scripts/40_fetch_cpp_manifests.py  && python3 scripts/41_cpp_dependency_
 # now. Idempotent and resumable; a full cohort sweep is ~1h.
 #
 # After this, each *_dependency_edges.py script above reads
-# scripts/manifests.py instead of its own language list, which also drops
+# scripts/lib/manifests.py instead of its own language list, which also drops
 # vendored trees (node_modules/, third_party/) and manifests that are
 # byte-identical copies of another repo's file -- someone else's dependency
 # list, not this repo's own declaration. Re-run the six edge scripts (they
 # need no fetch step of their own any more) and then 11 to recombine.
-python3 scripts/42_scan_repo_manifests.py
+python3 scripts/fetch/repo_manifests.py
 for s in 29_go 31_js 33_java 36_rust 38_python 41_cpp; do
   python3 scripts/${s}_dependency_edges.py
 done
 
-# A node is a repository, not a GitHub slug. 43 reads every cohort origin's
+# A node is a repository, not a GitHub slug. repo_refs.py reads every cohort
+# origin's
 # intrinsic git object ids (`git ls-remote`; an object id is a hash of the
 # object's content, so two origins serving the same repository publish
 # byte-identical ids for every ref they share), and 44 turns that plus
@@ -544,9 +568,9 @@ done
 # dependency and no 700-request/hour quota. What SWH could add is
 # *discovery* of sibling origins, which its public REST API does not expose;
 # that needs the SWH graph dataset on AWS Open Data.
-python3 scripts/43_repo_refs.py
-python3 scripts/44_repo_identity.py
-python3 scripts/45_apply_identity.py
+python3 scripts/identity/repo_refs.py
+python3 scripts/identity/repo_identity.py
+python3 scripts/identity/apply_identity.py
 
 # Cross-language edges from Debian's package graph -- the only source here
 # that crosses a language boundary, since no language registry packages C
@@ -554,11 +578,11 @@ python3 scripts/45_apply_identity.py
 # what corroborates them. 46 also writes the list of repos it wants added;
 # 47 fetches their GitHub stats and merges them into the cohort, after which
 # 46 is re-run so its edges land on nodes that now exist.
-python3 scripts/46_debian_dependency_edges.py
-python3 scripts/47_fetch_distro_repo_stats.py
-python3 scripts/46_debian_dependency_edges.py   # again: the new repos are nodes now
-python3 scripts/48_fetch_forge_repo_stats.py    # metadata for the non-GitHub forge nodes
-python3 scripts/11_dependency_edges.py          # fold the Debian tier into the shared prune
+python3 scripts/edges/debian_deps.py
+python3 scripts/cohort/distro_repo_stats.py
+python3 scripts/edges/debian_deps.py   # again: the new repos are nodes now
+python3 scripts/cohort/forge_repo_stats.py    # metadata for the non-GitHub forge nodes
+python3 scripts/edges/dependency_edges.py          # fold the Debian tier into the shared prune
 
 # backfill: now that the full cohort (top50 + dependency-expansion repos)
 # is known, re-run the shared-stargazer/shared-contributor extraction above
@@ -571,11 +595,11 @@ python3 scripts/11_dependency_edges.py          # fold the Debian tier into the 
 # diff/append.
 FULL_COHORT=$(mktemp)
 cat data/repo-lists/top50_repos.txt data/repo-lists/dependency_extra_repos.txt | sort -u > "$FULL_COHORT"
-scripts/05_shared_stargazers.sh "$FULL_COHORT" > data/raw/repo_stargazers_full.nt
-python3 scripts/compute_shared_edges.py data/raw/repo_stargazers_full.nt \
+scripts/extract/shared_stargazers.sh "$FULL_COHORT" > data/raw/repo_stargazers_full.nt
+python3 scripts/lib/shared_edges.py data/raw/repo_stargazers_full.nt \
   data/processed/repo_shared_edges.json data/processed/repo_shared_edges_pruned.json
-scripts/07_shared_contributors.sh "$FULL_COHORT" > data/raw/repo_contributors_full.nt
-python3 scripts/compute_shared_edges.py data/raw/repo_contributors_full.nt \
+scripts/extract/shared_contributors.sh "$FULL_COHORT" > data/raw/repo_contributors_full.nt
+python3 scripts/lib/shared_edges.py data/raw/repo_contributors_full.nt \
   data/processed/repo_shared_contributor_edges.json \
   data/processed/repo_shared_contributor_edges_pruned.json 2 4 1 1
 rm -f "$FULL_COHORT"
@@ -583,21 +607,21 @@ rm -f "$FULL_COHORT"
 # build the directed edges themselves + prune (top-4-per-node by degree,
 # since every edge here has weight 1 -- see NOTES.md), then fetch owner
 # avatars for the newly-added repos
-python3 scripts/11_dependency_edges.py
-python3 scripts/08_download_repo_logos.py data/repo-lists/dependency_extra_repos.txt web/logos
+python3 scripts/edges/dependency_edges.py
+python3 scripts/fetch/repo_logos.py data/repo-lists/dependency_extra_repos.txt web/logos
 
 # pre-fetch each cohort repo's live GitHub description once, cached to
-# data/raw/github_cache/ like scripts 10/11 above, so hovering a repo node
+# data/raw/github_cache/ like the two stages above, so hovering a repo node
 # in the explorer doesn't have to spend part of the unauthenticated
 # 60-req/hour GitHub API budget on every node the mouse passes over
-python3 scripts/12_cache_repo_descriptions.py
+python3 scripts/fetch/repo_descriptions.py
 
 # a fourth repo-repo edge type: two repos sharing GitHub topic tags (a
 # first, crude cut at a semantic/subject-matter relationship). Reuses the
 # `topics` field already sitting in the github_cache/ responses fetched
-# above -- no new network calls -- and compute_shared_edges.py's overlap +
+# above -- no new network calls -- and scripts/lib/shared_edges.py's overlap +
 # top-K-pruning core (min 2 shared, top-4 per node)
-python3 scripts/13_semantic_edges.py
+python3 scripts/edges/topic_edges.py
 
 # Phase 19: a fifth repo-repo edge tier -- shared issue posters, same
 # "linked by a common person" family as shared-stargazer/shared-contributor
@@ -607,13 +631,13 @@ python3 scripts/13_semantic_edges.py
 # measuring, not guessing; see ROADMAP.md) so the join's working set stays
 # small even though hasIssue is 2.6M triples dump-wide. Also writes each
 # repo's sampled issue titles to repo_issue_titles.json, folded into the
-# text-embedding signal by scripts/18 below.
+# text-embedding signal by scripts/layout/text_embeddings.py below.
 FULL_COHORT=$(mktemp)
 cat data/repo-lists/top50_repos.txt data/repo-lists/dependency_extra_repos.txt | sort -u > "$FULL_COHORT"
-python3 scripts/23_shared_issue_authors.py "$FULL_COHORT" data/raw/repo_issue_authors_full.nt \
+python3 scripts/edges/shared_issue_authors.py "$FULL_COHORT" data/raw/repo_issue_authors_full.nt \
   data/processed/repo_issue_titles.json 300
 rm -f "$FULL_COHORT"
-python3 scripts/compute_shared_edges.py data/raw/repo_issue_authors_full.nt \
+python3 scripts/lib/shared_edges.py data/raw/repo_issue_authors_full.nt \
   data/processed/repo_shared_issue_author_edges.json \
   data/processed/repo_shared_issue_author_edges_pruned.json 2 4 1 1
 
@@ -622,7 +646,7 @@ python3 scripts/compute_shared_edges.py data/raw/repo_issue_authors_full.nt \
 # 319 sequential requests is a non-issue -- contrast the unauthenticated
 # 60/hour cap the live frontend has to work around), cached raw markdown to
 # data/raw/readme_cache/
-python3 scripts/17_fetch_readmes.py
+python3 scripts/fetch/repo_readmes.py
 
 # clean each README down to its first real prose paragraph (badges/HTML/
 # code-blocks/RST-directives/language-switcher-lines stripped -- see
@@ -631,7 +655,7 @@ python3 scripts/17_fetch_readmes.py
 # any` (Phase 19) with BAAI/bge-small-en-v1.5 via fastembed (pip install
 # fastembed; ONNX runtime, no PyTorch/CUDA needed -- this project's third
 # tracked Python dependency; see NOTES.md)
-python3 scripts/18_text_embeddings.py
+python3 scripts/layout/text_embeddings.py
 
 # precompute a multi-level cluster hierarchy, used by web/index.html to
 # render/simulate a bounded number of cluster meta-nodes instead of every
@@ -641,11 +665,11 @@ python3 scripts/18_text_embeddings.py
 # sparsified with mutual-kNN, then partitioned with Leiden -- this
 # project's second tracked Python dependency (pip install leidenalg
 # python-igraph; see NOTES.md for why Leiden over the earlier hand-rolled
-# Louvain). Needs scripts/18's output to exist first for the text signal --
+# Louvain). Needs scripts/layout/text_embeddings.py's output to exist first for the text signal --
 # degrades gracefully to the two-signal substrate if it doesn't.
-python3 scripts/14_cluster_hierarchy.py
+python3 scripts/clusters/hierarchy.py
 
-# Phase 15, part one: cross-run cluster id stability. scripts/14 mints
+# Phase 15, part one: cross-run cluster id stability. scripts/clusters/hierarchy.py mints
 # cluster ids positionally, which reshuffles on any data refresh that
 # changes Leiden's community ordering -- silently breaking any permalink
 # that names a cluster. Matches this run's clusters against the previous
@@ -656,11 +680,11 @@ python3 scripts/14_cluster_hierarchy.py
 # A confident match keeps the old id; an unmatched cluster mints a fresh
 # one. First run ever has nothing to match against and just seeds the
 # baseline untouched.
-python3 scripts/21_stabilize_cluster_ids.py
+python3 scripts/clusters/stabilize_ids.py
 
 # Phase 15, part two: readable cluster labels, replacing the hub-repo-name
-# placeholder scripts/14 sets. Per cluster: pool members' real
-# description/topics/README text (scripts/18's build_embedding_text,
+# placeholder scripts/clusters/hierarchy.py sets. Per cluster: pool members' real
+# description/topics/README text (scripts/layout/text_embeddings.py's build_embedding_text,
 # reused as-is), reduce to the cluster's most distinctive terms via
 # c-TF-IDF (Grootendorst 2022 -- terms common across every cluster score
 # low automatically, no hand-maintained stopword list needed beyond
@@ -673,28 +697,28 @@ python3 scripts/21_stabilize_cluster_ids.py
 # signature (data/processed/cluster_labels.json, committed) so a rerun
 # with unchanged clusters costs zero LLM calls -- needs part one's stable
 # ids to make that cache key meaningful at all.
-python3 scripts/22_label_clusters.py
+python3 scripts/clusters/labels.py
 
 # Phase 12 coordinate system -- first scripts here to need numpy (pip
 # install numpy; see NOTES.md for why this is the first tracked Python
 # dependency). Trophic height (the graph's y-axis): solves Lh=v over the
 # dependency graph's Laplacian, robust to cycles unlike longest-path depth
-python3 scripts/15_trophic_levels.py
+python3 scripts/layout/trophic_levels.py
 
 # circular topic embedding (the graph's theta-axis + free coherence
 # radius): PMI-weighted topic co-occurrence graph, spectral-embedded in 2D,
 # so a repo's angle is the TF-IDF-weighted circular mean of its topics'
 # angles instead of an arbitrarily-ordered sector
-python3 scripts/16_topic_circular_embedding.py
+python3 scripts/layout/topic_theta.py
 
 # Phase 14's contrarian-claim test: does a co-star-PMI-driven theta beat
 # the topic-driven one above? Spectral-embeds the co-star repo-repo graph
 # directly, then scores both against Phase 14's real Leiden clusters.
 # Answer, and why topic-driven theta still ships despite losing on
 # precision: see NOTES.md. Not required for the main build -- an analysis
-# script, its output isn't consumed by build_web_explorer.py.
-python3 scripts/19_costar_circular_embedding.py
-python3 scripts/20_compare_theta_sources.py
+# script, its output isn't consumed by scripts/build/web_explorer.py.
+python3 scripts/layout/costar_theta.py
+python3 scripts/layout/compare_theta_sources.py
 ```
 
 ## Status
@@ -760,7 +784,7 @@ python3 scripts/20_compare_theta_sources.py
   real dependency edges now ship alongside the two proxy edge types, and are
   the default view — see `NOTES.md`.
 - Every cohort repo's live GitHub description is pre-fetched once
-  (`scripts/12_cache_repo_descriptions.py`) and shipped inline in
+  (`scripts/fetch/repo_descriptions.py`) and shipped inline in
   `repo_aggregates.json`/`web/index.html`, so hovering a repo node shows its
   description immediately with zero network requests -- previously every
   hover (debounced, but still per-node) spent part of the unauthenticated
@@ -768,14 +792,14 @@ python3 scripts/20_compare_theta_sources.py
   once the cohort grew to 319 repos. Clicking still live-fetches (star/fork
   counts and language genuinely are live); only the hover path changed.
 - A fourth repo-repo edge type: semantic edges from shared GitHub topic tags
-  (`scripts/13_semantic_edges.py`), reusing the `topics` field already
+  (`scripts/edges/topic_edges.py`), reusing the `topics` field already
   present in the cached GitHub API responses from the two scripts above --
   no new network calls needed. 348 edges over 134 of the 184 tagged repos
   (min 2 shared tags, top-4 per node). Off by default; hovering an edge
   names the actual shared tags. Deliberately the crude version -- literal
   tag-string overlap, not NLP/embedding similarity -- see `NOTES.md` for
   the planned follow-up over repo descriptions/READMEs.
-- Level-of-detail clustering: `scripts/14_cluster_hierarchy.py` precomputes
+- Level-of-detail clustering: `scripts/clusters/hierarchy.py` precomputes
   a multi-level cluster hierarchy. `web/index.html` renders/simulates only
   the top-level cluster meta-nodes by default and lazily expands one into
   its real children on click or zoom-in, so render/simulation cost stays
@@ -795,9 +819,9 @@ python3 scripts/20_compare_theta_sources.py
   that's meant to show. (Re-picked after the co-star/contributor data
   backfill below invalidated the original two picks -- see that section.)
 - Coordinate system v2 (Phase 12): the graph's y-axis is now trophic height
-  (`scripts/15_trophic_levels.py`, solved from the dependency graph's
+  (`scripts/layout/trophic_levels.py`, solved from the dependency graph's
   Laplacian rather than walked as longest-path depth), and its horizontal
-  placement is a circular topic embedding (`scripts/16_topic_circular_embedding.py`
+  placement is a circular topic embedding (`scripts/layout/topic_theta.py`
   -- angle from a PMI-weighted topic co-occurrence graph's 2D spectral
   embedding, radius from the same circular mean's resultant length, i.e.
   real topic coherence). Both are soft targets a constrained force
@@ -829,13 +853,13 @@ python3 scripts/20_compare_theta_sources.py
   signal at all and now show up as standalone repos rather than a forced
   grouping.
 - Co-star/contributor data backfill: the shared-stargazer and shared-
-  contributor extraction (`scripts/05_shared_stargazers.sh`/
-  `07_shared_contributors.sh`) originally only ever queried the raw dump
-  for the top-50 cohort, so every repo added later via dependency expansion
-  structurally had zero co-star/contributor signal regardless of whether
-  the dump actually had data for it. Re-running both against the full
-  319-repo cohort recovered real coverage for 88 repos (stargazer) and 89
-  repos (contributor), up from 51 and ~31 -- shrinking Phase 13's "no
+  contributor extraction (`scripts/extract/shared_stargazers.sh`/
+  `scripts/extract/shared_contributors.sh`) originally only ever queried the
+  raw dump for the top-50 cohort, so every repo added later via dependency
+  expansion structurally had zero co-star/contributor signal regardless of
+  whether the dump actually had data for it. Re-running both against the
+  full 319-repo cohort recovered real coverage for 88 repos (stargazer) and
+  89 repos (contributor), up from 51 and ~31 -- shrinking Phase 13's "no
   clustering signal" population from 166 to 155 repos. It also surfaced a
   real direct shared-stargazer edge between `pytorch/pytorch` and
   `pytorch/vision` (1052 shared stargazers) that simply hadn't been queried
@@ -845,7 +869,7 @@ python3 scripts/20_compare_theta_sources.py
   current full data (`dmlc/xgboost` <-> `psf/requests`, `Kludex/starlette`
   <-> `NVIDIA-NeMo/Speech`). See `NOTES.md`.
 - Real similarity signal via text embeddings (Phase 14): `scripts/
-  17_fetch_readmes.py` + `scripts/18_text_embeddings.py` embed
+  scripts/fetch/repo_readmes.py` + `scripts/layout/text_embeddings.py` embed
   `description + topics + a cleaned README first paragraph` per repo with
   `BAAI/bge-small-en-v1.5` (`fastembed`, the third tracked Python
   dependency -- ONNX runtime, no PyTorch) and fuse the cosine-similarity
@@ -858,15 +882,15 @@ python3 scripts/20_compare_theta_sources.py
   README phrasing -- and needed a text-tier-specific mutual-kNN, not just
   a cosine threshold, to actually fix; see `NOTES.md`). Also runs the
   review's contrarian-claim test from Phase 12: a co-star-PMI-driven theta
-  (`scripts/19_costar_circular_embedding.py`) turns out genuinely *more
+  (`scripts/layout/costar_theta.py`) turns out genuinely *more
   precise* than the topic-driven theta Phase 12 shipped (checked via
   within-cluster circular concentration against Phase 14's own real
-  clusters, `scripts/20_compare_theta_sources.py`) -- but only covers
+  clusters, `scripts/layout/compare_theta_sources.py`) -- but only covers
   79/319 repos against topic's 169/319, so topic-driven theta stays the
   shipped axis. A real, answered test, not a skipped one -- see `NOTES.md`
   for the full numbers and the coverage-vs-precision reasoning.
 - Cluster id stability and real labels (Phase 15): `scripts/
-  21_stabilize_cluster_ids.py` matches each run's fresh Leiden clusters
+  scripts/clusters/stabilize_ids.py` matches each run's fresh Leiden clusters
   against the previous run's by Jaccard similarity on membership (Hungarian
   assignment, `scipy.optimize.linear_sum_assignment`), so a data refresh
   that reshuffles Leiden's internal community ordering no longer reshuffles
@@ -876,7 +900,7 @@ python3 scripts/20_compare_theta_sources.py
   hasn't yet produced two genuinely different snapshots to test against
   (the 0.5 Jaccard match threshold is picked from general practice, not
   tuned against this project's own history yet -- revisit once it has
-  some). `scripts/22_label_clusters.py` replaces the old hub-repo-name
+  some). `scripts/clusters/labels.py` replaces the old hub-repo-name
   placeholder with a real category label per cluster: c-TF-IDF over
   members' real description/topic/README text picks each cluster's most
   distinctive terms, then one cached `claude -p` call turns those terms
@@ -914,7 +938,7 @@ python3 scripts/20_compare_theta_sources.py
   through at least one real waypoint. See `NOTES.md` for the full
   measure-first build history and the bundling-strength tuning call.
 - Issue-poster edges + issue-text semantics (Phase 19): a fifth repo-repo
-  edge tier, shared issue posters (`scripts/23_shared_issue_authors.py`,
+  edge tier, shared issue posters (`scripts/edges/shared_issue_authors.py`,
   same "linked by a common person" family as shared-stargazer/shared-
   contributor, same not-a-legend-toggle treatment) -- 137 edges over 59 of
   the 74 cohort repos that have any issue data in this dump at all, from a
@@ -933,7 +957,7 @@ python3 scripts/20_compare_theta_sources.py
   wiring this into six-degrees pathfinding: no shortest path in this
   cohort actually routes through the new tier, since every issue-poster-
   linked pair already has an equally-short connection via another tier.
-- Cohort inflated from 319 to 1019 repos: `scripts/10_fetch_new_repo_stats.py`'s
+- Cohort inflated from 319 to 1019 repos: `scripts/cohort/dependency_repos.py`'s
   `top_n_source` raised from 100 to 800 (its `CANDIDATE_POOL` now scales
   with that target instead of a flat constant), well within the
   authenticated `gh api` cache-backed 5000 req/hour budget. Full downstream
@@ -941,21 +965,22 @@ python3 scripts/20_compare_theta_sources.py
   semantic edges to 745/281, 49 top-level/123 total Leiden clusters
   covering all 1019 repos, level-of-detail still bounds the initial
   render to 341 on-screen nodes. Real bug found and fixed in
-  `scripts/22_label_clusters.py`: it only persisted cluster labels once,
+  `scripts/clusters/labels.py`: it only persisted cluster labels once,
   at the very end of a ~123-cluster `claude -p` labeling loop, so an
   interrupted run silently discarded every already-completed label; now
   checkpoints after each one. See `NOTES.md` for the full numbers and the
   coverage-fraction caveat on the shared-person edge tiers.
-- Cohort inflated again, 1019 to 1983 repos (`top_n_source` 800 -> 1800).
-  An unthrottled `gh api` loop in `scripts/10` tripped GitHub's rate limit
-  mid-run (0/5000 remaining within minutes, confirmed directly, not
-  inferred); fixed with a `time.sleep(0.4)` after every uncached call in
-  `scripts/10`, `12_cache_repo_descriptions.py`, and `17_fetch_readmes.py`
-  (cache hits are unaffected). Dependency edges to 7632/1929 nodes,
-  semantic edges to 1331/499, 86 top-level/203 total Leiden clusters
-  covering all 1983 repos, level-of-detail still bounds the initial render
-  to 660 on-screen nodes. See `NOTES.md` for the full numbers and the
-  rate-limit incident writeup.
+- Cohort inflated again, 1019 to 1983 repos (`top_n_source` 800 -> 1800). An
+  unthrottled `gh api` loop in `scripts/cohort/dependency_repos.py` tripped
+  GitHub's rate limit mid-run (0/5000 remaining within minutes, confirmed
+  directly, not inferred); fixed with a `time.sleep(0.4)` after every
+  uncached call in `scripts/cohort/dependency_repos.py`,
+  `scripts/fetch/repo_descriptions.py`, and `scripts/fetch/repo_readmes.py`
+  (cache hits are unaffected). Dependency edges to 7632/1929 nodes, semantic
+  edges to 1331/499, 86 top-level/203 total Leiden clusters covering all
+  1983 repos, level-of-detail still bounds the initial render to 660
+  on-screen nodes. See `NOTES.md` for the full numbers and the rate-limit
+  incident writeup.
 - The graph is now static by default: repos/clusters spawn once at a
   fixed, deterministic `WORLD_POS` and physically cannot drift afterward
   (`tick()` skips their position update entirely) unless an opt-in
@@ -1082,61 +1107,63 @@ python3 scripts/20_compare_theta_sources.py
   `logos/*.png` 404 was a renamed owner (`flagalpha` -> `LlamaChinese`):
   `github.com/{owner}.png` is keyed on the *current* login so it can never
   resolve an old one, while the file still has to be saved under the old
-  name the graph nodes carry. `08_download_repo_logos.py` now falls back to
-  `gh api repos/{repo}`'s `owner.avatar_url`, which does follow a rename,
-  and `build_web_explorer.py` ships the list of owners with no logo file so
-  the renderer never requests one at all (empty today; non-empty whenever
-  the cohort grows ahead of an `08` re-run, or an account is deleted rather
-  than renamed). The README reader's `ERR_BLOCKED_BY_ORB` badge is *not*
-  ours: rendering all 85 image URLs from eight real cohort READMEs in a
-  sandboxed frame and a plain frame side by side, exactly **0** are blocked
-  only by the sandbox -- the 3 failures fail both ways and are dead
-  third-party services (`api.cirrus-ci.com` no longer resolves; the camo
-  URL returns `502 text/plain`, which is why ORB rejects it). github.com
-  renders that README with the same broken badge.
+  name the graph nodes carry. `scripts/fetch/repo_logos.py` now falls back
+  to `gh api repos/{repo}`'s `owner.avatar_url`, which does follow a rename,
+  and `scripts/build/web_explorer.py` ships the list of owners with no logo
+  file so the renderer never requests one at all (empty today; non-empty
+  whenever the cohort grows ahead of a `scripts/fetch/repo_logos.py` re-run,
+  or an account is deleted rather than renamed). The README reader's
+  `ERR_BLOCKED_BY_ORB` badge is *not* ours: rendering all 85 image URLs from
+  eight real cohort READMEs in a sandboxed frame and a plain frame side by
+  side, exactly **0** are blocked only by the sandbox -- the 3 failures fail
+  both ways and are dead third-party services (`api.cirrus-ci.com` no longer
+  resolves; the camo URL returns `502 text/plain`, which is why ORB rejects
+  it). github.com renders that README with the same broken badge.
 - Reactive search + a computed card for repos outside the cohort. The
   suggestion list used to know only the 7051 fetched repos, so anything else
   needed its exact `owner/repo` typed from memory; a 3+ character query now
   also hits `/search/repositories` (debounced, session-cached, and on that
   endpoint's own 10/minute pool rather than the 60/hour the rest of the page
-  spends). A looked-up repo is then *computed* rather than placeholdered: its
-  GitHub topics go through `scripts/16`'s exact TF-IDF circular mean for a
-  real theta/r, its shared-tag edges use `scripts/13`'s >=2 rule, its
-  manifests are parsed with the same direct-runtime-only rules as
-  `scripts/29/31/33/36/38/41` and resolved through shipped coordinate tables,
-  and its trophic height is the closed-form stationary point of
-  `scripts/15`'s own objective for one new node -- so it shares the cohort's
-  scale instead of a parallel invented one. Costs 2-3 requests per card.
-  Measured first: shipped tables captured **100%** of the dependency edges
-  that reach this cohort, with live registry lookups adding none, so the card
-  spends nothing on registries. Person-based tiers stay unavailable and are
-  labelled as such (they would need one call per cohort repo). Verified
-  against the same card computed independently in Python: theta agrees to the
-  last float digit, and the dependency and shared-tag targets match exactly.
-  Ships +1.0MB of lookup tables (page 11.8 -> 12.8MB). See `NOTES.md` for the
-  two wrong diagnoses of one hang that measuring frame times corrected, and
-  for a misleading count in this feature's own panel that the parser check
-  caught.
+  spends). A looked-up repo is then *computed* rather than placeholdered:
+  its GitHub topics go through `scripts/layout/topic_theta.py`'s exact
+  TF-IDF circular mean for a real theta/r, its shared-tag edges use
+  `scripts/edges/topic_edges.py`'s >=2 rule, its manifests are parsed with
+  the same direct-runtime-only rules as
+  `scripts/edges/{go,js,java,rust,python,cpp}_deps.py` and resolved through
+  shipped coordinate tables, and its trophic height is the closed-form
+  stationary point of `scripts/layout/trophic_levels.py`'s own objective for
+  one new node -- so it shares the cohort's scale instead of a parallel
+  invented one. Costs 2-3 requests per card. Measured first: shipped tables
+  captured **100%** of the dependency edges that reach this cohort, with
+  live registry lookups adding none, so the card spends nothing on
+  registries. Person-based tiers stay unavailable and are labelled as such
+  (they would need one call per cohort repo). Verified against the same card
+  computed independently in Python: theta agrees to the last float digit,
+  and the dependency and shared-tag targets match exactly. Ships +1.0MB of
+  lookup tables (page 11.8 -> 12.8MB). See `NOTES.md` for the two wrong
+  diagnoses of one hang that measuring frame times corrected, and for a
+  misleading count in this feature's own panel that the parser check caught.
 
 - Java's dependency edges were fixed at the root of the problem, literally:
   a Maven/Gradle root manifest usually lists child projects rather than
-  dependencies, so reading only it left 619 of 811 Java repos with a manifest
-  and no edges (185/196 zero-dependency POMs carry `<modules>`, 331/423
-  zero-dependency Gradle roots carry `allprojects` -- measured, not assumed).
-  `scripts/32` now sweeps each repo's whole tree for submodule manifests (one
-  recursive-tree call plus batched GraphQL, where 50 aliased blobs cost 1
-  rate-limit point, so a 524-module repo costs ~11 requests not 525), and
-  `scripts/33` parses root and modules together. Java goes **12.3% -> 58.0%**
-  of repos with a real outgoing dependency edge; **243 -> 3376** edges with
-  none lost, 120 -> 579 source repos, 45 -> 223 targets, and 4551 -> 5076
-  cohort repos with a trophic height. Two things the sweep's own output
-  taught: 94 of 2465 module manifests are test fixtures / build logic /
-  vendored trees rather than project modules, and 21% of all (repo,
-  coordinate) pairs are a repo naming a module it publishes itself -- both
-  now dropped. See `NOTES.md` for the silent-failure cache format caught at
-  309 repos, and for the search.maven.org 403 whose blocked lookups were
-  being cached as permanent "unresolved" (fixing that alone took resolved
-  coordinates from 355 to 3512).
+  dependencies, so reading only it left 619 of 811 Java repos with a
+  manifest and no edges (185/196 zero-dependency POMs carry `<modules>`,
+  331/423 zero-dependency Gradle roots carry `allprojects` -- measured, not
+  assumed). `scripts/fetch/java_manifests.py` now sweeps each repo's whole
+  tree for submodule manifests (one recursive-tree call plus batched
+  GraphQL, where 50 aliased blobs cost 1 rate-limit point, so a 524-module
+  repo costs ~11 requests not 525), and `scripts/edges/java_deps.py` parses
+  root and modules together. Java goes **12.3% -> 58.0%** of repos with a
+  real outgoing dependency edge; **243 -> 3376** edges with none lost, 120
+  -> 579 source repos, 45 -> 223 targets, and 4551 -> 5076 cohort repos with
+  a trophic height. Two things the sweep's own output taught: 94 of 2465
+  module manifests are test fixtures / build logic / vendored trees rather
+  than project modules, and 21% of all (repo, coordinate) pairs are a repo
+  naming a module it publishes itself -- both now dropped. See `NOTES.md`
+  for the silent-failure cache format caught at 309 repos, and for the
+  search.maven.org 403 whose blocked lookups were being cached as permanent
+  "unresolved" (fixing that alone took resolved coordinates from 355 to
+  3512).
 
 - Zoom-in performance: the worst frame during a zoom is **halved** (3585ms ->
   1727ms, interleaved A/B) and idle is ~14% cheaper. Measured first, and the
@@ -1154,6 +1181,82 @@ python3 scripts/20_compare_theta_sources.py
   See `NOTES.md` for the LOD gate that flapped 153 times in 8 frames before
   being pinned to a stable position, for the machine drift that made a
   sequential A/B lie, and for the two optimisations measured and *not* kept.
+
+## Appendix: the flat-`scripts/` rename
+
+`scripts/` used to be one flat directory whose files were numbered in the
+order they were written -- `01_predicate_counts.sh` through
+`48_fetch_forge_repo_stats.py`, plus a handful of un-numbered ones. The
+numbering encoded creation order, not dependency order, and it could not
+encode either once stages started superseding each other (one manifest
+sweep replaced six per-ecosystem fetchers; the identity pass reaches back
+into files written twenty stages earlier). It also made the modules
+un-importable by name -- the cluster labeller had to reach its embedding
+code through `__import__("18_text_embeddings")`.
+
+The stages are the same stages; only their names and directories changed.
+Run order lives in the *Pipeline* section above, which was already the
+only accurate statement of it. This table is here so older commits,
+issues and notes stay navigable.
+
+| Was | Is now |
+|---|---|
+| `01_predicate_counts.sh` | `scripts/extract/predicate_counts.sh` |
+| `02_top_repos_by_stargazers.sh` | `scripts/extract/top_repos_by_stargazers.sh` |
+| `03_repo_aggregates.sh` | `scripts/extract/repo_aggregates.sh` |
+| `04_repo_expansions.sh` | `scripts/extract/repo_expansions.sh` |
+| `05_shared_stargazers.sh` | `scripts/extract/shared_stargazers.sh` |
+| `06_used_packages.sh` | `scripts/extract/used_packages.sh` |
+| `07_shared_contributors.sh` | `scripts/extract/shared_contributors.sh` |
+| `08_download_repo_logos.py` | `scripts/fetch/repo_logos.py` |
+| `09_resolve_packages.py` | `scripts/edges/resolve_pypi_packages.py` |
+| `10_fetch_new_repo_stats.py` | `scripts/cohort/dependency_repos.py` |
+| `11_dependency_edges.py` | `scripts/edges/dependency_edges.py` |
+| `12_cache_repo_descriptions.py` | `scripts/fetch/repo_descriptions.py` |
+| `13_semantic_edges.py` | `scripts/edges/topic_edges.py` |
+| `14_cluster_hierarchy.py` | `scripts/clusters/hierarchy.py` |
+| `15_trophic_levels.py` | `scripts/layout/trophic_levels.py` |
+| `16_topic_circular_embedding.py` | `scripts/layout/topic_theta.py` |
+| `17_fetch_readmes.py` | `scripts/fetch/repo_readmes.py` |
+| `18_text_embeddings.py` | `scripts/layout/text_embeddings.py` |
+| `19_costar_circular_embedding.py` | `scripts/layout/costar_theta.py` |
+| `20_compare_theta_sources.py` | `scripts/layout/compare_theta_sources.py` |
+| `21_stabilize_cluster_ids.py` | `scripts/clusters/stabilize_ids.py` |
+| `22_label_clusters.py` | `scripts/clusters/labels.py` |
+| `23_shared_issue_authors.py` | `scripts/edges/shared_issue_authors.py` |
+| `24_fetch_js_ecosystem_repos.py` | `scripts/cohort/js_ecosystem.py` |
+| `25_fetch_java_ecosystem_repos.py` | `scripts/cohort/java_ecosystem.py` |
+| `26_fetch_python_ecosystem_repos.py` | `scripts/cohort/python_ecosystem.py` |
+| `27_fetch_go_ecosystem_repos.py` | `scripts/cohort/go_ecosystem.py` |
+| `28_fetch_go_mod.py` | `scripts/fetch/go_mod.py` |
+| `29_go_dependency_edges.py` | `scripts/edges/go_deps.py` |
+| `30_fetch_package_json.py` | `scripts/fetch/package_json.py` |
+| `31_js_dependency_edges.py` | `scripts/edges/js_deps.py` |
+| `32_fetch_java_manifests.py` | `scripts/fetch/java_manifests.py` |
+| `33_java_dependency_edges.py` | `scripts/edges/java_deps.py` |
+| `34_fetch_rust_ecosystem_repos.py` | `scripts/cohort/rust_ecosystem.py` |
+| `35_fetch_cargo_toml.py` | `scripts/fetch/cargo_toml.py` |
+| `36_rust_dependency_edges.py` | `scripts/edges/rust_deps.py` |
+| `37_fetch_python_manifests.py` | `scripts/fetch/python_manifests.py` |
+| `38_python_dependency_edges.py` | `scripts/edges/python_deps.py` |
+| `39_fetch_cpp_ecosystem_repos.py` | `scripts/cohort/cpp_ecosystem.py` |
+| `40_fetch_cpp_manifests.py` | `scripts/fetch/cpp_manifests.py` |
+| `41_cpp_dependency_edges.py` | `scripts/edges/cpp_deps.py` |
+| `42_scan_repo_manifests.py` | `scripts/fetch/repo_manifests.py` |
+| `43_repo_refs.py` | `scripts/identity/repo_refs.py` |
+| `44_repo_identity.py` | `scripts/identity/repo_identity.py` |
+| `45_apply_identity.py` | `scripts/identity/apply_identity.py` |
+| `46_debian_dependency_edges.py` | `scripts/edges/debian_deps.py` |
+| `47_fetch_distro_repo_stats.py` | `scripts/cohort/distro_repo_stats.py` |
+| `48_fetch_forge_repo_stats.py` | `scripts/cohort/forge_repo_stats.py` |
+| `build_repo_aggregates.py` | `scripts/extract/parse_repo_aggregates.py` |
+| `build_repo_expansions.py` | `scripts/extract/parse_repo_expansions.py` |
+| `build_web_explorer.py` | `scripts/build/web_explorer.py` |
+| `compute_shared_edges.py` | `scripts/lib/shared_edges.py` |
+| `find_repos_with_packages.sh` | `scripts/extract/repos_with_packages.sh` |
+| `identity.py` | `scripts/lib/identity.py` |
+| `manifests.py` | `scripts/lib/manifests.py` |
+| `ntparse.py` | `scripts/lib/ntparse.py` |
 
 ## License
 

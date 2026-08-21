@@ -1,4 +1,4 @@
-# Debian source package -> upstream repository, for scripts/46_debian_dependency_edges.py.
+# Debian source package -> upstream repository, for scripts/edges/debian_deps.py.
 #
 # Like data/repo-lists/upstream_origins.txt, this file is a CANDIDATE
 # GENERATOR, never evidence. Every line is corroborated by the script before
@@ -22,7 +22,7 @@
 # Where a project's real home is not GitHub (glibc on sourceware, gcc on
 # gcc.gnu.org, Qt on code.qt.io, GNOME on gitlab.gnome.org), the slug named
 # here is its GitHub mirror. That is the node *label*; the mirror relationship
-# itself is recorded by scripts/44_repo_identity.py, which is exactly the
+# itself is recorded by scripts/identity/repo_identity.py, which is exactly the
 # model that phase established -- the node is the repository, the slug is a
 # readable name for it, and origins record where it really lives.
 #

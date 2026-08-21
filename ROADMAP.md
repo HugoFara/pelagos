@@ -48,7 +48,7 @@ A small static SVG "constellation" of a repo's nearest neighbors,
 generatable for any repo in the cohort, meant to be dropped into that
 repo's own README and link back to the full explorer. Each embed is free
 distribution. Needs a render-to-SVG script (likely reusing
-`compute_shared_edges.py`'s output) and somewhere to host the generated
+`scripts/lib/shared_edges.py`'s output) and somewhere to host the generated
 images.
 
 ## Phase 5 — Auto-detected clusters (done)
@@ -98,27 +98,28 @@ backwards).
 
 Two follow-ups once the cohort had grown past 51 repos with a real
 structural edge type available: first, `edgeVisible` now defaults to
-dependency-only (`{ stargazer: false, contributor: false, dependency: true }`)
-instead of shared-stargazer — the graph opens on the one relationship that
-isn't a "linked via a shared person" proxy, matching what this project is
-actually about. Second, `scripts/12_cache_repo_descriptions.py` pre-fetches
+dependency-only (`{ stargazer: false, contributor: false, dependency: true
+}`) instead of shared-stargazer — the graph opens on the one relationship
+that isn't a "linked via a shared person" proxy, matching what this project
+is actually about. Second, `scripts/fetch/repo_descriptions.py` pre-fetches
 every cohort repo's GitHub description once (via `gh api`, same cache as
-scripts 10/11) and ships it inline per-repo in `repo_aggregates.json`, so
-the explorer's hover tooltip shows it instantly with zero network requests
-instead of spending part of the unauthenticated 60-req/hour API budget on
-every node the mouse passes over — at 319 repos, a normal browsing sweep
-could exhaust that budget before a visitor even clicked anything. Clicking
-a node still live-fetches (for the star/fork counts and language, which
-actually do change); only the hover path was cacheable.
+scripts/cohort/dependency_repos.py and scripts/edges/dependency_edges.py)
+and ships it inline per-repo in `repo_aggregates.json`, so the explorer's
+hover tooltip shows it instantly with zero network requests instead of
+spending part of the unauthenticated 60-req/hour API budget on every node
+the mouse passes over — at 319 repos, a normal browsing sweep could exhaust
+that budget before a visitor even clicked anything. Clicking a node still
+live-fetches (for the star/fork counts and language, which actually do
+change); only the hover path was cacheable.
 
 ## Phase 9 — Semantic edges from shared tags (done, crude version)
 
 A fourth repo-repo edge type: two repos sharing GitHub topic tags (e.g.
 both tagged `diffusion-models`), a first cut at a subject-matter
 relationship independent of the dependency/audience/organizational signals
-the first three tiers capture. `scripts/13_semantic_edges.py` builds it
+the first three tiers capture. `scripts/edges/topic_edges.py` builds it
 from the `topics` field already sitting in the cached GitHub API responses
-from scripts 10-12 (184/319 cohort repos have at least one tag; the
+from the cohort/fetch stages (184/319 cohort repos have at least one tag; the
 SemRepo dump's own `foaf:topic` predicate only covers 55/319, so this uses
 the cache instead — no new network calls needed either way). Same overlap
 + top-K-pruning shape as the contributor tier (min 2 shared, top-4 per
@@ -134,7 +135,7 @@ both already available in this dataset).
 
 The cohort can now keep growing past 319 without the graph becoming
 unreadable or the browser choking on an all-pairs O(n²) force simulation:
-`scripts/14_cluster_hierarchy.py` precomputes a multi-level cluster
+`scripts/clusters/hierarchy.py` precomputes a multi-level cluster
 hierarchy (hand-rolled multi-level Louvain — see `NOTES.md` for why not a
 new Python dependency, and for the modularity-resolution tuning it took to
 avoid a few giant blobs swallowing most of the cohort). The frontend
@@ -176,7 +177,7 @@ relation is "depends on." This project's node is a *repo*, and
 `shortestPath()` (`web/template.html:1951`) already searches a real
 four-tier multigraph (dependency, shared-contributor, shared-stargazer,
 shared-topic) as one unified adjacency. Also stated plainly:
-`scripts/09_resolve_packages.py`'s package→repo resolution (PyPI-only
+`scripts/edges/resolve_pypi_packages.py`'s package→repo resolution (PyPI-only
 today) is exactly the "nobody does this cleanly" gap the review named as
 the one clearly unsaturated idea in this space.
 
@@ -230,7 +231,7 @@ replaces "PMI-weight the topic edges" (the interim fix Phase 11's draft
 floated) with a more complete design that removes the clique problem
 structurally instead of by reweighting.
 
-- **y = trophic level, not DAG depth (done).** `scripts/15_trophic_levels.py`
+- **y = trophic level, not DAG depth (done).** `scripts/layout/trophic_levels.py`
   solves `Λh = v` (Λ = Laplacian of the undirected dependency graph,
   `v_k = outdeg(k) - indeg(k)`, derived directly from the "consumer one
   level above what it depends on" objective rather than copied from a
@@ -243,7 +244,7 @@ structurally instead of by reweighting.
   today closer to a two-band split than the rich gradient the design
   targets. See `NOTES.md` for what would actually earn more levels.
 - **θ = circular topic embedding, not a picked topic (done).**
-  `scripts/16_topic_circular_embedding.py`: PMI-weighted topic
+  `scripts/layout/topic_theta.py`: PMI-weighted topic
   co-occurrence graph (min 2 supporting repos per topic and per pair,
   positive PMI only) — verified as a single connected component before
   trusting a 2D spectral embedding of it (175/908 topics, 545 edges,
@@ -333,19 +334,20 @@ resolution search (1.0-3.0) that found this.
 
 **Update, co-star/contributor data backfill:** the "raw co-star bipartite
 only covers top-50" finding above turned out to be a fixable data-
-collection gap, not a structural fact about the dump — `05_shared_stargazers.sh`/
-`07_shared_contributors.sh` had only ever been *queried* against the
-top-50 list, not against the full 319-repo cohort, even though the
-underlying dump has real hasStargazer/hasContributor coverage well beyond
-those 51 repos. Re-running both against the full cohort recovered real
-signal for 88 repos (stargazer, up from 51) and 89 repos (contributor, up
-from ~31), shrinking the zero-signal population from 166 to 155 and
+collection gap, not a structural fact about the dump —
+`scripts/extract/shared_stargazers.sh`/
+`scripts/extract/shared_contributors.sh` had only ever been *queried*
+against the top-50 list, not against the full 319-repo cohort, even though
+the underlying dump has real hasStargazer/hasContributor coverage well
+beyond those 51 repos. Re-running both against the full cohort recovered
+real signal for 88 repos (stargazer, up from 51) and 89 repos (contributor,
+up from ~31), shrinking the zero-signal population from 166 to 155 and
 growing the cluster count from 12 to 14 — still zero ecosystem-boundary
 blobs, now including a distinct gradient-boosting cluster (`catboost`,
-`xgboost`, `LightGBM`, `prophet`) that didn't separate out before. This
-also surfaced a real direct `pytorch/pytorch` ↔ `pytorch/vision`
-shared-stargazer edge that invalidated Phase 11's original path-finder
-examples — see that phase's update note.
+`xgboost`, `LightGBM`, `prophet`) that didn't separate out before. This also
+surfaced a real direct `pytorch/pytorch` ↔ `pytorch/vision` shared-stargazer
+edge that invalidated Phase 11's original path-finder examples — see that
+phase's update note.
 
 ## Phase 14 — Real similarity signal (coverage, not noise) (done)
 
@@ -353,9 +355,9 @@ Embeds `description + topics + a cleaned README first paragraph` per repo
 with `BAAI/bge-small-en-v1.5` (`fastembed`, ONNX runtime — this project's
 third tracked Python dependency, no PyTorch/CUDA needed) and fuses the
 result into Phase 13's clustering substrate alongside co-star PMI and
-topic PMI. New pipeline steps: `scripts/17_fetch_readmes.py` (README raw
+topic PMI. New pipeline steps: `scripts/fetch/repo_readmes.py` (README raw
 markdown, cached, `gh api` — 319/319 fetched, only 1 repo has none),
-`scripts/18_text_embeddings.py` (cleaning + embedding — 317/319 repos end
+`scripts/layout/text_embeddings.py` (cleaning + embedding — 317/319 repos end
 up embeddable, versus the ~155/319 the two PMI signals alone could reach).
 Real coverage win: the "no clustering signal" population drops from 166
 (Phase 13) to 84 — see `NOTES.md` for the two real problems found and
@@ -365,9 +367,9 @@ mutual-kNN, not just a cosine threshold, to break apart into genuinely
 distinct research sub-themes).
 
 **The contrarian-claim test, run and answered.** `scripts/
-19_costar_circular_embedding.py` builds a co-star-PMI-driven θ (spectral-
+scripts/layout/costar_theta.py` builds a co-star-PMI-driven θ (spectral-
 embeds the repo-repo co-star graph directly, no aggregation step needed
-unlike the topic version) and `scripts/20_compare_theta_sources.py`
+unlike the topic version) and `scripts/layout/compare_theta_sources.py`
 compares it against Phase 12's topic-driven θ using within-cluster
 circular concentration against Phase 14's own real Leiden clusters as
 ground truth. Result, on the 53 repos both sources cover: co-star-driven θ
@@ -394,7 +396,7 @@ Labeling itself: c-TF-IDF over member descriptions to get top terms, then
 a single LLM call per cluster to turn those terms into a readable label —
 one offline pass, cached permanently, not a runtime dependency.
 
-Both shipped as written. `scripts/21_stabilize_cluster_ids.py` keeps a
+Both shipped as written. `scripts/clusters/stabilize_ids.py` keeps a
 `repo_cluster_hierarchy_prev.json` snapshot, matches each run's clusters
 against it per level via Jaccard-on-flattened-membership solved with
 `scipy.optimize.linear_sum_assignment` (already installed transitively
@@ -414,14 +416,14 @@ project's own before/after data, for the obvious reason that no such data
 existed until this script started producing it; worth revisiting once a
 few real refreshes have accumulated.
 
-`scripts/22_label_clusters.py` handles naming, and runs into a real
+`scripts/clusters/labels.py` handles naming, and runs into a real
 tension with an earlier decision worth naming honestly: `web/template.html`
 carried a comment since Phase 10 justifying hub-name labels specifically
 *against* an invented one ("everything shown in this app is a real,
 derived value, not a guessed one"). This phase overturns that, but tries
 to keep faith with the underlying principle rather than abandon it: the
 label is derived from real member text (the same cleaned description/
-topics/README paragraph `scripts/18_text_embeddings.py` already produces
+topics/README paragraph `scripts/layout/text_embeddings.py` already produces
 per repo), reduced to each cluster's most distinctive terms via c-TF-IDF
 (Grootendorst 2022 — a term common to every cluster scores low
 automatically, no hand-maintained stopword list needed beyond ordinary
@@ -547,7 +549,7 @@ at a small fraction of the node count that motivated floating it here —
 a deliberate call at the current ~319-node scale, not evidence this phase
 has quietly started. See Phase 18 for why that's not a contradiction: it
 keeps the single-*delivery-model* property in spirit (a static sibling
-asset via `<script src>`, zero `build_web_explorer.py` changes) even
+asset via `<script src>`, zero `scripts/build/web_explorer.py` changes) even
 though it's no longer literally one file, which is a materially smaller
 break than the tile-pyramid/inlined-JSON rework described above.
 
@@ -603,7 +605,7 @@ repo-repo edge tier (shared issue posters) and issue titles folded into
 the Phase 14 text-embedding signal. Unblocked by picking a concrete
 sampling design — the thing that kept this "flagged, not scheduled": a
 capped, first-encountered-in-file-order sample of 300 issues per repo,
-resolved via a two-hop join (`scripts/23_shared_issue_authors.py`) since
+resolved via a two-hop join (`scripts/edges/shared_issue_authors.py`) since
 `hasIssueAuthor`'s subject is the *issue*, not the repo. 300 was picked by
 measuring, not guessing — 40 (an arbitrary first guess) yielded exactly
 one edge after pruning; 100/150/200/300 were each measured directly, and
@@ -612,13 +614,14 @@ edge) stopped improving fast enough to justify the extra grep cost
 (~53s/run over the 12GB dump either way, cheap regardless).
 
 - **Real, honest coverage finding, matching this pipeline's other gaps:**
-  only 74 of the current 319-repo cohort have *any* `hasIssue` data in
-  this dump at all — measured directly, not assumed. Of those 74, real
-  issue counts range from single digits into the tens of thousands
+  only 74 of the current 319-repo cohort have *any* `hasIssue` data in this
+  dump at all — measured directly, not assumed. Of those 74, real issue
+  counts range from single digits into the tens of thousands
   (`pytorch/pytorch` alone has 20000, the dump's own per-repo cap), so the
   300-cap sample is a thin slice for the busiest repos and exhaustive for
   the quietest ones — same "sample, not full neighborhood" idiom
-  `04_repo_expansions.sh` already uses for individual-level issue nodes.
+  `scripts/extract/repo_expansions.sh` already uses for individual-level
+  issue nodes.
 - **Real data-quality fix, found by measuring before shipping:** an
   uncapped first pass surfaced `"ghost"` (GitHub's shared placeholder for
   a deleted account — every repo with any issue from a since-deleted user
@@ -670,21 +673,21 @@ edge) stopped improving fast enough to justify the extra grep cost
   shorter than the README paragraph (20 titles, 400 chars) since issue
   titles are individually short incident-report phrasing ("crash on
   startup") rather than prose about the project as a whole —
-  `load_issue_titles()` in `scripts/18_text_embeddings.py`. Only thickens
-  signal for the 74 repos that have any (this doesn't close a coverage
-  gap the way the README paragraph did for Phase 14). Re-running the full
-  downstream chain (`18` → `14` → `21` → `22`) measured a controlled,
-  bounded perturbation: exactly the 74 affected repos' embedding vectors
-  moved (avg cosine similarity 0.92 against the pre-change vectors), the
-  other 243 embedded repos stayed bit-for-bit identical (cosine 1.0).
-  Cluster count held at 20; Phase 15's stabilization machinery — until now
-  only verified against a hand-built synthetic before/after pair, since
-  this cohort's data had never actually produced two different real
-  clustering runs — matched 19 of 20 clusters to their previous stable id
-  on this first real test, re-minting only one (the `openmoss/moss`-hub
-  cluster reshaped into a more thematically coherent speech/LLM-chat/
-  diffusion grouping, re-labeled "Speech and Language AI" by
-  `scripts/22_label_clusters.py`).
+  `load_issue_titles()` in `scripts/layout/text_embeddings.py`. Only
+  thickens signal for the 74 repos that have any (this doesn't close a
+  coverage gap the way the README paragraph did for Phase 14). Re-running
+  the full downstream chain (`text_embeddings.py` → `hierarchy.py` →
+  `stabilize_ids.py` → `labels.py`) measured a controlled, bounded
+  perturbation: exactly the 74 affected repos' embedding vectors moved (avg
+  cosine similarity 0.92 against the pre-change vectors), the other 243
+  embedded repos stayed bit-for-bit identical (cosine 1.0). Cluster count
+  held at 20; Phase 15's stabilization machinery — until now only verified
+  against a hand-built synthetic before/after pair, since this cohort's data
+  had never actually produced two different real clustering runs — matched
+  19 of 20 clusters to their previous stable id on this first real test,
+  re-minting only one (the `openmoss/moss`-hub cluster reshaped into a more
+  thematically coherent speech/LLM-chat/ diffusion grouping, re-labeled
+  "Speech and Language AI" by `scripts/clusters/labels.py`).
 - Still true, and still worth naming honestly: the dump has a per-issue
   **title**, not a body/description field — no `hasIssueBody` or similar
   predicate shows up in `data/processed/predicate_counts.txt`, so
@@ -712,19 +715,19 @@ sample by reading full git trees: 20% carry a root manifest for an ecosystem
 other than their own, 41% carry one at some depth, 11% have their own
 ecosystem's manifest only nested, and 10% have no root manifest at all while
 shipping real nested ones — reported as dependency-free when they were not.
-`scripts/42_scan_repo_manifests.py` replaces the six blind probes with one
-tree read per repo; `scripts/manifests.py` is the shared read side all six
+`scripts/fetch/repo_manifests.py` replaces the six blind probes with one
+tree read per repo; `scripts/lib/manifests.py` is the shared read side all six
 edge scripts now use. Vendored trees and byte-identical copies of other
 projects' manifests are excluded at read time, the second by content hash
 because a directory-name rule cannot see a checked-in `transformers/`.
 
 **A node is a repository, not a GitHub slug.** The shipped 7,051-slug cohort
 held 5 rename pairs as separate nodes and 62 fork nodes, 18 shadowing an
-upstream that was also a node. Identity is decided by intrinsic git object ids
-(`scripts/43_repo_refs.py`, `scripts/44_repo_identity.py`) — a hash of an
-object's content, so two origins serving one repository agree by construction
-— layered over GitHub's own rename and fork metadata.
-`scripts/45_apply_identity.py` collapses the duplicates out of
+upstream that was also a node. Identity is decided by intrinsic git object
+ids (`scripts/identity/repo_refs.py`, `scripts/identity/repo_identity.py`) —
+a hash of an object's content, so two origins serving one repository agree
+by construction — layered over GitHub's own rename and fork metadata.
+`scripts/identity/apply_identity.py` collapses the duplicates out of
 `data/processed/`. 7,051 slugs → **7,026 repositories**.
 
 ### Measured outcome
@@ -817,7 +820,7 @@ needs libjpeg not at all. That is a structural gap in every registry, not a
 coverage gap in this pipeline.
 
 Distributions are the only place those edges exist, because a distribution is
-the thing that has to resolve them. `scripts/46_debian_dependency_edges.py`
+the thing that has to resolve them. `scripts/edges/debian_deps.py`
 reads Debian's binary `Depends` — 68,750 binary packages, 37,588 source
 packages, two static files behind no auth — and turns it into repo→repo edges
 in the same tier as every other ecosystem.

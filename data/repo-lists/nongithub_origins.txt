@@ -1,5 +1,5 @@
 # Debian source package -> upstream origin, for projects with no GitHub
-# repository at all. Read by scripts/46_debian_dependency_edges.py.
+# repository at all. Read by scripts/edges/debian_deps.py.
 #
 # These are the repositories that ROADMAP Phase 21 had to leave out. They are
 # not obscure -- libX11, cairo, dbus, mesa, wayland and fontconfig sit under

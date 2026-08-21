@@ -3,7 +3,7 @@
 # Uploads web/ as the site root rather than copying it to /docs, so
 # https://<user>.github.io/pelagos/ serves web/index.html directly and the
 # repository keeps one copy of the page. index.html is a committed build
-# artifact (scripts/build_web_explorer.py renders web/template.html into it),
+# artifact (scripts/build/web_explorer.py renders web/template.html into it),
 # so there is nothing to build here -- this only publishes what is committed.
 name: Deploy explorer to GitHub Pages
 

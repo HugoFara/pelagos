@@ -838,18 +838,18 @@
           dependency edges (arrowed, on by default, toggleable in the legend — the one edge type
           here that isn't a shared-person proxy, A really does depend on B): real
           <code>usedPackage</code> triples resolved from PyPI package name back to the GitHub repo
-          that publishes it (<code>scripts/09_resolve_packages.py</code>), which is how the cohort
+          that publishes it (<code>scripts/edges/resolve_pypi_packages.py</code>), which is how the cohort
           grew past the original 51 — every newly-added node either publishes a package another
           repo in this dataset actually imports, or is one of the real academic repos doing that
           importing (a top-100 slice by distinct-dependency count, out of ~21,100 candidates — see
-          <code>scripts/10_fetch_new_repo_stats.py</code>). Hover an arrow to see the actual
-          package name(s) behind it, and see <code>scripts/15_trophic_levels.py</code> for how this
+          <code>scripts/cohort/dependency_repos.py</code>). Hover an arrow to see the actual
+          package name(s) behind it, and see <code>scripts/layout/trophic_levels.py</code> for how this
           tier alone also drives the graph's vertical axis (Phase 12). __SEMANTIC_EDGE_COUNT__
           semantic edges from <code>repo_semantic_edges_pruned.json</code> (on by default,
           toggleable in the legend) — two repos sharing real GitHub topic tags (min 2 shared,
           top-4 pruned; hover an edge to see the actual shared tags), a first, crude cut at a
           subject-matter relationship rather than a dependency or audience one; see
-          <code>scripts/16_topic_circular_embedding.py</code> for how the same topic data also
+          <code>scripts/layout/topic_theta.py</code> for how the same topic data also
           drives the graph's circular axis, independent of whether this tier's lines are toggled
           on. __EDGE_COUNT__ shared-stargazer edges from <code>repo_shared_edges_pruned.json</code>
           (the full overlap across the original 51 repos, pruned to each node's top-4 strongest)
@@ -862,7 +862,7 @@
           __ISSUE_AUTHOR_EDGE_COUNT__ shared issue-poster edges from
           <code>repo_shared_issue_author_edges_pruned.json</code> (Phase 19) join that same
           not-a-legend-toggle family — real overlapping <code>hasIssueAuthor</code> sets over a
-          capped per-repo issue sample (<code>scripts/23_shared_issue_authors.py</code>, since the
+          capped per-repo issue sample (<code>scripts/edges/shared_issue_authors.py</code>, since the
           dump has 2.6M issue triples total; only 74 of this cohort's repos have any issue data at
           all in this dump), min 2 shared, top-4 pruned; hover an edge once shown to see who the
           shared issue posters are. __EXPANDABLE_COUNT__ of the original 51 repos (dashed ring) also
@@ -886,10 +886,10 @@
 (function () {
   "use strict";
 
-  // ---- Data generated from data/processed/*.json by scripts/build_web_explorer.py ----
+  // ---- Data generated from data/processed/*.json by scripts/build/web_explorer.py ----
   var AGGREGATES = __AGGREGATES_JSON__;
   // Every edge tuple below ships with its two repo ids interned as integer
-  // indices into REPO_IDS (build_web_explorer.py). The same ~6000 id strings
+  // indices into REPO_IDS (scripts/build/web_explorer.py). The same ~6000 id strings
   // repeat across ~190k edge tuples, so spelling them out literally cost ~7MB
   // of a 17MB page -- pure redundancy, not data. rehydrateEdges() swaps the
   // indices back for the real id strings in place, once, before anything
@@ -899,7 +899,7 @@
   // intern still works.
   var REPO_IDS = __REPO_IDS_JSON__;
   // Which slugs each node absorbed, and which non-GitHub origins serve it
-  // (scripts/44_repo_identity.py). Only the merged/mirrored repos are shipped
+  // (scripts/identity/repo_identity.py). Only the merged/mirrored repos are shipped
   // -- a node with a single GitHub origin and no aliases has nothing to say
   // and no entry here.
   var REPO_IDENTITY = __REPO_IDENTITY_JSON__;
@@ -917,7 +917,7 @@
   var SEMANTIC_EDGES = rehydrateEdges(__SEMANTIC_EDGES_JSON__);
   // A fifth "linked by a common person" tier (ROADMAP.md Phase 19): two
   // repos whose issues were filed by the same people, resolved from a
-  // capped per-repo issue sample (scripts/23_shared_issue_authors.py) --
+  // capped per-repo issue sample (scripts/edges/shared_issue_authors.py) --
   // same family/shape as CONTRIB_EDGES above, not a new kind of signal.
   var ISSUE_AUTHOR_EDGES = rehydrateEdges(__ISSUE_AUTHOR_EDGES_JSON__);
   // Full (unpruned) overlap data, used only by Compare mode -- the main
@@ -931,7 +931,7 @@
   var FULL_ISSUE_AUTHOR_EDGES = rehydrateEdges(__FULL_ISSUE_AUTHOR_EDGES_JSON__);
   var EXPANSIONS = __EXPANSIONS_JSON__;
   var EXPANDABLE = __EXPANDABLE_JSON__;
-  // Precomputed multi-level cluster hierarchy (scripts/14_cluster_hierarchy.py)
+  // Precomputed multi-level cluster hierarchy (scripts/clusters/hierarchy.py)
   // -- CLUSTERS: clusterId -> {id, level, parent, children, hub, label,
   // memberCount, stargazers, forks}. A child is either another cluster id
   // (present as a key in CLUSTERS) or a real repo id (present in
@@ -950,14 +950,14 @@
   var CLUSTERS = CLUSTER_HIERARCHY.clusters;
   var CLUSTER_EDGES_BY_LEVEL = CLUSTER_HIERARCHY.edgesByLevel;
   var CLUSTER_ROOTS = CLUSTER_HIERARCHY.topLevelIds;
-  // Phase 12 coordinate system (scripts/15_trophic_levels.py,
-  // scripts/16_topic_circular_embedding.py) -- see layoutTargetFor() below
+  // Phase 12 coordinate system (scripts/layout/trophic_levels.py,
+  // scripts/layout/topic_theta.py) -- see layoutTargetFor() below
   // for how these become an actual screen position.
   var TROPHIC_LEVELS = __TROPHIC_LEVELS_JSON__;
   var TOPIC_CIRCULAR = __TOPIC_CIRCULAR_JSON__;
 
   // ---- Inputs for placing a repo this pipeline has never seen (see
-  // build_web_explorer.py for what each one is and why it ships).
+  // scripts/build/web_explorer.py for what each one is and why it ships).
   // TOPIC_REPOS' values are REPO_IDS indices, same interning as the edge
   // blobs; rehydrated lazily by topicRepoIds() rather than up front, since
   // most of these 13518 topics are never touched in a session.
@@ -989,7 +989,7 @@
     contributorReference: "--n-contrib"
   };
   // No "person" entry: hasStargazer/hasWatcher objects are filtered out of
-  // repo_expansions.json (see scripts/build_repo_expansions.py), so no person
+  // repo_expansions.json (see scripts/extract/parse_repo_expansions.py), so no person
   // node can exist and a legend toggle for one would reveal nothing. The
   // --n-person color var and githubTarget's person branch are left in place;
   // they're inert, and are what this would need if person nodes ever return.
@@ -1026,7 +1026,7 @@
   var liveCache = {}; // node id -> { state: "loading"|"ok"|"error", data, error }
 
   // Descriptions for the cohort repos are pre-fetched once per pipeline run
-  // (scripts/12_cache_repo_descriptions.py) and shipped inline in
+  // (scripts/fetch/repo_descriptions.py) and shipped inline in
   // AGGREGATES, precisely so hovering doesn't need a live GitHub call just
   // to show tooltip text -- only clicking (for the fuller, actually-live
   // star/fork counts and language) still hits the API. Missing from this
@@ -1262,7 +1262,7 @@
   }
 
   // ---- README reader -------------------------------------------------
-  // The pipeline already caches every cohort README (scripts/17_fetch_readmes.py)
+  // The pipeline already caches every cohort README (scripts/fetch/repo_readmes.py)
   // but that's ~96MB of markdown for 7051 repos -- eight times this whole
   // page, and it only exists as embedding input. So the reader fetches the
   // one repo you asked for, live, from the same unauthenticated GitHub API
@@ -1561,9 +1561,9 @@
   })();
 
   // ---- Tier 1: the aggregate-stats repo layer + level-of-detail cluster
-  // meta-nodes (scripts/14_cluster_hierarchy.py). Repos aren't all
+  // meta-nodes (scripts/clusters/hierarchy.py). Repos aren't all
   // materialized eagerly anymore -- the cohort (originally 51, grew via
-  // 10_fetch_new_repo_stats.py to 319 once real dependency edges needed
+  // scripts/cohort/dependency_repos.py to 319 once real dependency edges needed
   // real repos on both ends, and is meant to keep growing) can be well past
   // what a browser should render/simulate every frame at once. Only the
   // hierarchy's top-level cluster meta-nodes exist at startup;
@@ -1576,7 +1576,7 @@
   var nodeById = {};
 
   // ---- Phase 12 coordinate system: trophic height (y) + circular topic
-  // embedding (theta, r) per repo, precomputed offline (scripts/15, 16) --
+  // embedding (theta, r) per repo, precomputed offline (scripts/layout/trophic_levels.py, 16) --
   // turned into a world-space target position here. Repos with no
   // dependency data get y=0.5 (float mid-stack -- honest "no evidence
   // either way" rather than a guessed height); repos with no topic signal
@@ -1585,7 +1585,7 @@
   // the axis" semantics from the design (see ROADMAP.md Phase 12).
   // World-space vertical spread: top = consumers, bottom = dependencies
   // (labeled directly on the rendered axis, see draw()'s "consumers"/
-  // "dependencies" text). Raw trophic y (scripts/15_trophic_levels.py) is
+  // "dependencies" text). Raw trophic y (scripts/layout/trophic_levels.py) is
   // 0 = pure dependency/foundational (nothing lower it depends on), 1 =
   // pure consumer -- so layoutWorldPos maps y directly onto this range
   // with no inversion (see NOTES.md: an earlier version of layoutWorldPos
@@ -1615,7 +1615,7 @@
     };
   });
 
-  // ---- Declutter piles: scripts/14_cluster_hierarchy.py clusters on a
+  // ---- Declutter piles: scripts/clusters/hierarchy.py clusters on a
   // co-star/topic/text similarity *graph* -- a repo with no edges in that
   // graph (no shared stargazers, no topic tags, no readable text signal)
   // stays a singleton at every level no matter how visually close it sits
@@ -1637,13 +1637,13 @@
   // Fix: group top-level singleton repos that land in the same coarse
   // world-space cell into a synthetic pile "cluster" -- same
   // {id,parent,children,hub,label,memberCount,stargazers,forks} shape
-  // scripts/14 already produces, so every downstream consumer (hull/volume
+  // scripts/clusters/hierarchy.py already produces, so every downstream consumer (hull/volume
   // rendering, expand/collapse, halos, color-by-cluster, the detail panel)
   // needs no special-casing at all. Labeled honestly by count alone
   // ("N repos") rather than a topic guess -- unlike a real Leiden cluster,
   // a pile's only claim is spatial proximity, not any actual shared
   // signal, so implying one with a topic-sounding label would violate the
-  // same "real, derived, never guessed" rule scripts/22's cluster labels
+  // same "real, derived, never guessed" rule scripts/clusters/labels.py's cluster labels
   // already follow. Deliberately computed from each repo's raw layout
   // target, not the tie-broken WORLD_POS below -- WORLD_POS is also what
   // every real cluster's hull is built from at every level, and grouping
@@ -1904,7 +1904,7 @@
     };
   }
 
-  // y is the raw Phase-12 trophic score (scripts/15_trophic_levels.py): 0 =
+  // y is the raw Phase-12 trophic score (scripts/layout/trophic_levels.py): 0 =
   // pure dependency/foundational (renders near the *bottom* -- see the
   // TROPHIC_Y_RANGE note above), 1 = pure consumer (renders near the *top*).
   function trophicHeightNote(c) {
@@ -1952,7 +1952,7 @@
     return 14 + 26 * Math.max(0, Math.min(1, t));
   }
 
-  // Repo owner avatars (scripts/08_download_repo_logos.py -> web/logos/
+  // Repo owner avatars (scripts/fetch/repo_logos.py -> web/logos/
   // {owner}.png) are loaded lazily by the renderer, in scene3d.js's
   // loadAvatarTexture(): one THREE.TextureLoader call the first time an
   // owner's node is actually drawn, memoized per owner as
@@ -1967,20 +1967,20 @@
   // anyway. Removed rather than repaired -- lazy loading is what the live
   // render path already does.
   //
-  // Owners with no logo file at build time (build_web_explorer.py compares
+  // Owners with no logo file at build time (scripts/build/web_explorer.py compares
   // the cohort's owners against web/logos/*.png). Handed to Scene3D.init as
   // avatarlessOwners so the lazy loader treats them as already-failed rather
   // than learning it from a 404 per owner per page load. Usually empty -- it
-  // fills whenever the cohort grows ahead of an 08_download_repo_logos.py
+  // fills whenever the cohort grows ahead of an scripts/fetch/repo_logos.py
   // re-run, and stays non-empty for any owner whose GitHub account is gone
-  // (08 follows renames via the API, but a deleted account has no avatar
+  // (scripts/fetch/repo_logos.py follows renames via the API, but a deleted account has no avatar
   // left to fetch).
   var MISSING_LOGO_OWNERS = __MISSING_LOGO_OWNERS_JSON__;
   var repoKeys = Object.keys(AGGREGATES);
 
   // repoId -> its nearest real cluster ancestor, at whatever level that
   // happens to be (not always level 1 -- since the singleton-collapsing
-  // pass in scripts/14_cluster_hierarchy.py, a repo that fails to merge
+  // pass in scripts/clusters/hierarchy.py, a repo that fails to merge
   // with anything until level 3 has its level-1/2 wrapping removed, so its
   // immediate parent in CLUSTERS' children can be a level-3 cluster
   // directly; a repo that's a singleton all the way to the top has no
@@ -3385,7 +3385,7 @@
   var externalNode = null;
 
   // ---- Cluster-color toggle: tints a materialized repo node by its static
-  // level-1 cluster (scripts/14_cluster_hierarchy.py) instead of by type.
+  // level-1 cluster (scripts/clusters/hierarchy.py) instead of by type.
   // Cluster meta-nodes already visually encode grouping on their own (they
   // *are* the cluster, see draw()) -- this is only useful once a repo has
   // been drilled down to. Used to be a live-recomputed Louvain pass over
@@ -4236,7 +4236,7 @@
       // for why that was both redundant with the volume and a real per-
       // frame cost) -- it now only appears on hover, same as its full stats
       // in tooltipHtml. Every cluster has a real label by construction
-      // (scripts/22_label_clusters.py never leaves one blank -- see its
+      // (scripts/clusters/labels.py never leaves one blank -- see its
       // fallback chain), so n.label is trusted here same as a repo's.
       //
       // "forced" candidates (an explicit point of user focus -- selected,
@@ -4658,12 +4658,13 @@
   //
   //   theta/r (topic circle) -- the repo's own GitHub topics, which arrive
   //     free in the /repos response, fed through the identical TF-IDF
-  //     circular mean scripts/16 applies to cohort repos, against the
+  //     circular mean scripts/layout/topic_theta.py applies to cohort repos, against the
   //     shipped per-topic angles. Same formula, same angles, same axis.
   //   shared-tag edges -- literal tag overlap against TOPIC_REPOS, the same
-  //     >=2-shared rule as scripts/13.
+  //     >=2-shared rule as scripts/edges/topic_edges.py.
   //   dependency edges -- the repo's own manifests, parsed here with the
-  //     same direct-runtime-only rules as scripts/29/31/33/36/38/41, then
+  //     same direct-runtime-only rules as
+  //     scripts/edges/{go,js,java,rust,python,cpp}_deps.py, then
   //     resolved through the shipped coordinate tables.
   //   y (trophic height) -- solved from those dependency edges, see
   //     vanityTrophicLevel.
@@ -4674,8 +4675,8 @@
   // them against a 60/hour cap. Unavailable is reported as unavailable
   // rather than approximated by something cheaper wearing its name (which
   // is what the old same-owner edge was doing).
-  var VANITY_SEMANTIC_MIN_SHARED = 2;  // scripts/13_semantic_edges.py MIN_SHARED
-  var VANITY_TOP_K = 4;                // ...and its TOP_K, shared with scripts/11
+  var VANITY_SEMANTIC_MIN_SHARED = 2;  // scripts/edges/topic_edges.py MIN_SHARED
+  var VANITY_TOP_K = 4;                // ...and its TOP_K, shared with scripts/edges/dependency_edges.py
   var VANITY_ID_PREFIX = "external/";
 
   // TOPIC_REPOS ships REPO_IDS indices (same interning as the edge blobs).
@@ -4691,7 +4692,7 @@
     }
     return topicRepoCache[topic];
   }
-  // n_docs in scripts/16's TF-IDF: cohort repos that have any topic at all,
+  // n_docs in scripts/layout/topic_theta.py's TF-IDF: cohort repos that have any topic at all,
   // which is exactly the set TOPIC_REPOS was built from.
   var TOPIC_DOC_COUNT = (function () {
     var seen = {};
@@ -4701,7 +4702,7 @@
     return Object.keys(seen).length;
   })();
 
-  // Port of scripts/16_topic_circular_embedding.py's repo_circular_mean():
+  // Port of scripts/layout/topic_theta.py's repo_circular_mean():
   // TF-IDF-weighted circular mean of the repo's topics' angles, with the
   // resultant length falling out as r. Topics with no shipped angle (below
   // the PMI graph's min-support, or stranded outside its giant component)
@@ -4725,7 +4726,7 @@
   }
 
   // Literal shared-tag overlap against the cohort, the same signal and the
-  // same >=2 threshold as scripts/13_semantic_edges.py. The top-K here is
+  // same >=2 threshold as scripts/edges/topic_edges.py. The top-K here is
   // one-sided by necessity: the cohort's own edges were pruned by a mutual
   // top-4 over the whole graph, and one late arrival can't re-run that
   // without recomputing every cohort repo's neighborhood. Keeping this
@@ -4752,7 +4753,7 @@
   // runtime/direct only, because that's what the cohort's own edges mean.
   // Each parser returns coordinate strings for one resolution table.
   function parsePackageJson(text) {
-    // scripts/31: `dependencies` only -- never devDependencies (build/test
+    // scripts/edges/js_deps.py: `dependencies` only -- never devDependencies (build/test
     // tooling) or peerDependencies (a requirement on the consumer).
     try {
       var deps = (JSON.parse(text) || {}).dependencies;
@@ -4760,7 +4761,7 @@
     } catch (e) { return null; }  // unreadable -- not the same as declaring none
   }
   function parseGoMod(text) {
-    // scripts/29: non-`// indirect` require lines, both the single-line and
+    // scripts/edges/go_deps.py: non-`// indirect` require lines, both the single-line and
     // parenthesized-block forms.
     var out = [], inBlock = false;
     text.split("\n").forEach(function (raw) {
@@ -4780,7 +4781,7 @@
     return out;
   }
   function parseCargoToml(text) {
-    // scripts/36: [dependencies], [workspace.dependencies] and
+    // scripts/edges/rust_deps.py: [dependencies], [workspace.dependencies] and
     // [target.<cfg>.dependencies]; never [dev-dependencies]/[build-dependencies].
     var out = [], active = false;
     text.split("\n").forEach(function (raw) {
@@ -4803,7 +4804,7 @@
     return name.toLowerCase().replace(/[_.]+/g, "-");
   }
   function parseRequirementsTxt(text) {
-    // scripts/38: skip comments, -r/-e/--flag lines, and URLs.
+    // scripts/edges/python_deps.py: skip comments, -r/-e/--flag lines, and URLs.
     var out = [];
     text.split("\n").forEach(function (raw) {
       var line = raw.trim();
@@ -4815,7 +4816,7 @@
     return out;
   }
   function parsePyproject(text) {
-    // A real TOML parser is far more than this needs: scripts/38 takes
+    // A real TOML parser is far more than this needs: scripts/edges/python_deps.py takes
     // [project].dependencies plus optional-dependencies minus dev/test/docs
     // extras, and [tool.poetry.dependencies] minus `python`. Those are the
     // only sections read here, and only requirement strings inside them.
@@ -4850,7 +4851,7 @@
     return out;
   }
   function parsePomXml(text) {
-    // scripts/33: groupId:artifactId per <dependency>, excluding scope=test
+    // scripts/edges/java_deps.py: groupId:artifactId per <dependency>, excluding scope=test
     // and any ${...}-templated coordinate. Read with DOMParser rather than
     // regex -- the same parser the README reader already relies on.
     var out = [];
@@ -4870,7 +4871,7 @@
     } catch (e) { return null; }
     return out;
   }
-  // scripts/41: .gitmodules is the dominant C/C++ signal and needs no
+  // scripts/edges/cpp_deps.py: .gitmodules is the dominant C/C++ signal and needs no
   // registry at all -- the URLs are literal. Hand-scanned rather than
   // parsed as INI because git indents keys under [submodule "..."] with
   // tabs, which an INI parser reads as line continuations.
@@ -4970,7 +4971,7 @@
     if (table === null) {
       target = coord;  // already owner/repo
     } else if (table === "go") {
-      // scripts/29: a github.com/owner/repo[/sub][/vN] module path is its
+      // scripts/edges/go_deps.py: a github.com/owner/repo[/sub][/vN] module path is its
       // first two segments, free. Anything else is a vanity import path
       // needing a live ?go-get=1 fetch, so it only resolves if some cohort
       // repo already required it.
@@ -4988,7 +4989,7 @@
     return vanityCanonLookup[String(target).toLowerCase()] || null;
   }
 
-  // Exact minimizer of scripts/15_trophic_levels.py's own objective for one
+  // Exact minimizer of scripts/layout/trophic_levels.py's own objective for one
   // new node, holding every cohort height fixed. That objective sums
   // (h_a - h_b - 1)^2 over each edge a -> b; differentiating with respect
   // to the single unknown h and setting it to zero gives
@@ -4998,12 +4999,12 @@
   // it is that solve's stationary condition for this node, which is what
   // makes the resulting height comparable to the cohort's rather than a
   // separate scale. "One level" is 1.0 in the raw units the solve used, so
-  // it converts through TROPHIC_SCALE (see scripts/15).
+  // it converts through TROPHIC_SCALE (see scripts/layout/trophic_levels.py).
   //
   // The incoming half of that sum is structurally always empty here, which
   // is worth stating rather than leaving as an unexplained omission: every
   // dependency edge in this dataset was kept only when its target resolved
-  // to a cohort repo (scripts/11), so a repo outside the cohort can never
+  // to a cohort repo (scripts/edges/dependency_edges.py), so a repo outside the cohort can never
   // be the target of one. A vanity card therefore knows what the repo
   // depends on and cannot know what depends on it -- the height below is
   // the correct answer to the question the data can actually answer, and
@@ -5070,7 +5071,7 @@
   }
 
   // One listing of the repo root tells us which manifests exist, so only
-  // those get fetched -- the same trick scripts/40 uses to turn a blind
+  // those get fetched -- the same trick scripts/fetch/cpp_manifests.py uses to turn a blind
   // 4-probes-per-repo sweep into one call plus the hits. Under a 60/hour
   // unauthenticated cap that difference is the feature being usable at all.
   //
@@ -5421,7 +5422,7 @@
     if (scene3dReady) Scene3D.focusNode(n);
   }
 
-  // ---- Clusters: precomputed by scripts/14_cluster_hierarchy.py (see
+  // ---- Clusters: precomputed by scripts/clusters/hierarchy.py (see
   // NOTES.md) rather than recomputed live in the browser -- this is the
   // same static hierarchy the level-of-detail system itself materializes
   // meta-nodes from, so "cluster" means one consistent thing everywhere in
@@ -5441,7 +5442,7 @@
   // for a repo with no cluster ancestor at all (a singleton all the way to
   // the top, e.g. a high-degree hub that never merges with anything --
   // CLUSTERS no longer contains memberCount-1 clusters to check for here,
-  // the collapsing pass in scripts/14_cluster_hierarchy.py already means
+  // the collapsing pass in scripts/clusters/hierarchy.py already means
   // "no entry in repoParentCluster" is exactly that case).
   function clusterColorOf(repoId) {
     var cid = repoParentCluster[repoId];
@@ -5454,7 +5455,7 @@
   // whichever member has the most edges says nothing about the actual
   // theme, and two unrelated clusters can share the same kind of hub (see
   // NOTES.md). Phase 15 generates a real category label per cluster
-  // instead (scripts/22_label_clusters.py) while keeping that same "not a
+  // instead (scripts/clusters/labels.py) while keeping that same "not a
   // guessed one" principle: c.label is derived from each member's real
   // description/topics/README text, reduced to the cluster's most
   // distinctive terms (c-TF-IDF), and only then turned into readable
@@ -5510,7 +5511,7 @@
     if (n) focusNode(n, { fromPanel: "clusters" });
   });
 
-  // A node is a repository, not a GitHub slug (scripts/44_repo_identity.py).
+  // A node is a repository, not a GitHub slug (scripts/identity/repo_identity.py).
   // Where those two differ the panel says so, because both halves change what
   // the reader should conclude: the other slugs are duplicates that would
   // otherwise have been separate nodes, and a non-GitHub origin means the
