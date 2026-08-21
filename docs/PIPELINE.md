@@ -273,6 +273,85 @@ genuinely forge-independent, time-stable identifier: identical across every
 mirror, fork and rename, and unlike a ref-set digest it does not change when
 someone pushes a tag.
 
+## The bottom of the stack: cross-language edges
+
+Every dependency source above stops at the edge of its own language. npm knows
+`sharp` needs `libvips` only as an opaque string; PyPI knows `Pillow` needs
+libjpeg not at all. No language registry packages C libraries, so none of them
+can express what sits underneath a language ecosystem. That is a structural
+gap in the registries, not a coverage gap here, and it made the bottom of the
+trophic axis wrong: `python-pillow/Pillow` had a dependency in-degree of 1,239
+while `madler/zlib`, which it genuinely depends on, had effectively none.
+
+A distribution is the one thing that has to resolve those edges, so it is the
+one place they exist. `scripts/46_debian_dependency_edges.py` reads Debian's
+binary `Depends` field — 68,750 binary packages and 37,588 source packages,
+two static `.xz` files behind no auth — and emits repo→repo edges into the
+same tier as every other ecosystem.
+
+Nixpkgs is the cleaner source (derivations evaluate to an exact closure, no
+parsing) and the better long-term one, but it needs `nix` on the machine to
+evaluate. Debian needs nothing but HTTP. Only runtime `Depends` is read, never
+`Build-Depends`: build dependencies are the toolchain, a different relation,
+and including them would place gcc *above* everything instead of beneath it —
+the same call this codebase already makes for npm `devDependencies`, Maven
+`scope=test` and Go's `// indirect`.
+
+### The hard part is resolving a package to a repository
+
+    42.3% of Debian source packages carry a github.com URL in Homepage/Vcs-*
+    ...but those cover only 11.2% of all reverse-dependency mass
+
+Automatic resolution finds the leaves and misses every root: glibc (23,246
+reverse-deps), gcc (16,285), zlib (2,787), openssl (1,108) and ncurses (982)
+publish on gnu.org, zlib.net and invisible-island.net. Three layers, in
+increasing order of how far they can be trusted alone:
+
+1. **The package's own declared URL** — 15,872 packages. Not a guess; the
+   package is naming its own homepage.
+2. **A curated file**, `data/repo-lists/distro_upstreams.txt`, for the top
+   unresolved packages by reverse-dependency count — 106 entries.
+3. **Name matching against the cohort** — 364 entries. Debian's `pillow` is
+   `python-pillow/Pillow`, but its Homepage is `python-pillow.github.io`, a
+   Pages URL the regex skips. This is the layer that actually produces the
+   cross-language edges, because it reconnects repos already on the map.
+
+Layers 2 and 3 are candidate generators, never evidence. Both are corroborated
+by **version-tag match**: the upstream version Debian ships must appear among
+the repository's own git tags, read with one `git ls-remote --tags`. The check
+does real work — **239 of 603 name matches were refused by it**, including
+Debian's `glance` (OpenStack's image service) against the cohort's unrelated
+`glanceapp/glance`.
+
+Node admission is capped deliberately. 14,714 auto-resolved repos sit outside
+the cohort and admitting all of them would be exactly the "200,000 nodes of
+which 80% is noise" failure; a repo becomes a node only if it is already in
+the cohort or carries at least 5 reverse-dependencies.
+
+### What it produced
+
+```
+python-pillow/Pillow          y=0.4607
+    -> libjpeg-turbo/libjpeg-turbo  y=0.3460   via libjpeg62-turbo
+    -> madler/zlib                  y=0.3366   via zlib1g
+    -> bminor/glibc                 y=0.3255   via libc6
+```
+
+`bminor/glibc` now has 947 dependents, `madler/zlib` 194, `gcc-mirror/gcc`
+421 — all previously near zero — and 895 nodes sit below the median
+language-library height.
+
+### What is still out of reach, and why it is left empty
+
+cairo, dbus, fontconfig, libdrm, libX11, libxcb, mesa, wayland, eigen,
+binutils, readline, ncurses, giflib, libcap, x264, GNU gsl and libssh are all
+absent. Each was tried and **rejected by corroboration**: they publish only on
+gitlab.freedesktop.org, sourceware or savannah with no GitHub repository at
+all, and the GitHub mirrors that do exist are stale forks whose tags do not
+match what Debian ships. They cannot become nodes until a node id can be
+something other than a GitHub slug. Guessing a plausible-looking mirror would
+put fabricated edges under the most load-bearing part of the graph.
+
 ## Pipeline (reproducing `data/processed/`)
 
 ```bash
@@ -431,6 +510,17 @@ done
 python3 scripts/43_repo_refs.py
 python3 scripts/44_repo_identity.py
 python3 scripts/45_apply_identity.py
+
+# Cross-language edges from Debian's package graph -- the only source here
+# that crosses a language boundary, since no language registry packages C
+# libraries. See "The bottom of the stack" above for the resolution layers and
+# what corroborates them. 46 also writes the list of repos it wants added;
+# 47 fetches their GitHub stats and merges them into the cohort, after which
+# 46 is re-run so its edges land on nodes that now exist.
+python3 scripts/46_debian_dependency_edges.py
+python3 scripts/47_fetch_distro_repo_stats.py
+python3 scripts/46_debian_dependency_edges.py   # again: the new repos are nodes now
+python3 scripts/11_dependency_edges.py          # fold the Debian tier into the shared prune
 
 # backfill: now that the full cohort (top50 + dependency-expansion repos)
 # is known, re-run the shared-stargazer/shared-contributor extraction above

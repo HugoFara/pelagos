@@ -4174,3 +4174,124 @@ One small thing worth doing right: 45 originally rewrote the repo-lists with
 buried the handful of real changes under hundreds of moved lines. It now
 preserves input order, so the diff shows only what identity changed -- 16
 insertions and 35 deletions across four files instead of a wholesale rewrite.
+
+## Phase 21: filling the bottom, and what a distribution is actually for
+
+Phase 20 fixed the *identity* of the bottom of the trophic axis and left it
+empty. The most depended-on repos were still all language-level libraries --
+pytorch, tqdm, Pillow, requests -- with nothing underneath, because no language
+registry packages C libraries. npm records that `sharp` needs `libvips` as an
+opaque string; PyPI does not record that `Pillow` needs libjpeg at all. That is
+a structural property of registries, not a gap in this pipeline: each one stops
+at the boundary of its own language because that is all it packages.
+
+A distribution is the one artifact that has to resolve across that boundary,
+which is why it is the only place the edges exist. Debian publishes them as two
+static files: 68,750 binary packages with a `Depends` field, 37,588 source
+packages with homepage/Vcs metadata.
+
+Nixpkgs is the better source and was the first choice -- derivations evaluate
+to an exact closure with no parsing at all -- but it needs `nix` on the
+machine, and installing a package manager to run a data pipeline whose every
+other input is plain HTTP is not a trade worth making unprompted. Debian gives
+the same relation for the cost of two downloads. Worth revisiting if `nix`
+is ever acceptable.
+
+### The measurement that shaped the whole design
+
+    42.3% of Debian source packages carry a github.com URL in Homepage/Vcs-*
+    ...but those cover only 11.2% of all reverse-dependency mass
+
+Automatic resolution finds the leaves and misses every root. The packages with
+the most dependents -- glibc at 23,246, gcc at 16,285, zlib 2,787, openssl
+1,108, ncurses 982 -- publish on gnu.org, zlib.net and invisible-island.net,
+and none of them names a GitHub URL anywhere in its Debian metadata. Resolving
+by URL alone would have produced a graph that looked broad and left the actual
+bottom exactly as empty as before.
+
+### Three layers, and the one that mattered was not the one expected
+
+Curating the top ~150 unresolved packages by reverse-dep count was the obvious
+move and it worked (106 corroborated entries). But the layer that actually
+produced the cross-language edges was the unglamorous one: **565 Debian source
+packages turned out to be repos already in the cohort**, unresolved only
+because their Homepage is not a repository URL. `pillow` is the canonical case
+-- its Debian Homepage is `python-pillow.github.io`, a GitHub *Pages* URL, so
+the regex skips it and `python3-pil` never links to `libjpeg62-turbo` even
+though Debian states the dependency outright. Name-matching those against the
+cohort resolved 364 more.
+
+**239 of 603 name matches were refused by corroboration**, which is a 40%
+false-positive rate and exactly why name matching alone would have been
+indefensible. The clearest case: Debian's `glance` is OpenStack's image
+service; the cohort's `glanceapp/glance` is an unrelated dashboard. Nothing but
+the version-tag check separates them.
+
+### Corroboration by version tag, and two bugs in it
+
+The rule is that the upstream version Debian ships must appear among the
+repository's own git tags -- one `git ls-remote --tags` per candidate, no API.
+Getting the comparison right took two passes:
+
+- **Stripping non-digits from a tag is wrong.** `pcre2-10.46` becomes
+  "210.46" because the project name's own digit survives, and `curl-8_14_1`
+  loses its separators entirely. Both are correct mappings that were being
+  rejected. Fixed by *extracting* version-shaped runs rather than deleting
+  characters.
+- **A single pattern allowing both `.` and `-` separators reintroduces the
+  same bug**, matching "2-10" inside `pcre2-10.46` and never reaching the real
+  version, because findall is non-overlapping and scans left to right. The
+  dotted and dashed patterns have to run separately and every candidate be
+  tried: dotted finds 10.46 in `pcre2-10.46`, dashed finds 2-13-3 in
+  freetype's `VER-2-13-3`.
+
+That fix alone recovered 7 mappings. A third pattern handles date releases
+(re2 ships as 20240702 and tags as 2024-07-02).
+
+### 20 curated candidates rejected outright, and left rejected
+
+cairo, dbus, fontconfig, libdrm, libX11, libxcb, mesa, wayland, eigen,
+binutils, readline, ncurses, giflib, libcap, x264, GNU gsl and libssh were all
+tried and all failed corroboration. Checked directly: `freedesktop/cairo`,
+`dbus/dbus`, `Mesa3D/mesa`, `wayland/wayland`, `libeigen/eigen` and
+`bminor/binutils-gdb` are all HTTP 404 -- they publish on
+gitlab.freedesktop.org or sourceware and have no GitHub repository at all --
+and the mirrors that do exist (Distrotech/*, mirrorer/giflib, mirror/x264) are
+stale forks whose tags do not match what Debian ships.
+
+They are left out. Fabricating a plausible mirror for glibc-adjacent libraries
+would put invented edges under the most load-bearing part of the graph, which
+is the one region where a wrong edge propagates furthest through a trophic
+solve. They become reachable when a node id can be something other than a
+GitHub slug -- the remaining half of Phase 20.
+
+### Result
+
+    bminor/glibc                 947 dependents   y=0.3255
+    python/cpython               583             y=0.3193
+    gcc-mirror/gcc               421             y=0.3448
+    madler/zlib                  194             y=0.3366
+    GNOME/glib                   138             y=0.3701
+    openssl/openssl              112             y=0.3555
+    pnggroup/libpng               51             y=0.3562
+    libjpeg-turbo/libjpeg-turbo   44             y=0.3460
+
+All were effectively zero before. 895 nodes now sit below the median
+language-library height, and the example the whole exercise was aimed at
+resolves end to end: Pillow (0.4607) -> libjpeg-turbo (0.3460) -> zlib
+(0.3366) -> glibc (0.3255).
+
+### A regression worth recording: identity is knowledge, not a derived view
+
+Re-running 44_repo_identity.py after the cohort grew dropped the alias count
+from 25 to 2. The cause is subtle and would have shipped silently: 45 has
+already collapsed the duplicates out of the cohort, so a plain rebuild reads
+inputs that no longer contain them and "discovers" only what has appeared
+since. `hwchase17/langchain` stopped resolving to anything.
+
+That is real data loss. The alias table is the only thing still connecting an
+old slug to the repository it named -- for a shared permalink, for registry
+metadata that still points at the old name, for the explorer's "also known as"
+row. 44 now merges into whatever the file already holds rather than rebuilding
+it, and reports what it carried forward. Caught by checking the output against
+the previous run instead of reading the summary line, which said nothing wrong.

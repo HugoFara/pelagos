@@ -805,3 +805,98 @@ cleanest to evaluate), and seeding real nodes from kernel.org, sourceware,
 freedesktop and Savannah is the other half. Both are deliberately out of scope
 here: this phase makes those additions a data change rather than a schema
 change, which is what had to come first.
+
+## Phase 21 — Fill the bottom: cross-language edges from a distribution (done)
+
+Phase 20 fixed the *identity* of the bottom of the trophic axis. It did not
+fill it. The most depended-on repos were still all language-level libraries —
+`pytorch/pytorch`, `tqdm/tqdm`, `python-pillow/Pillow`, `psf/requests` — with
+nothing underneath, because no language registry packages C libraries. npm
+knows `sharp` needs `libvips` only as an opaque string; PyPI knows `Pillow`
+needs libjpeg not at all. That is a structural gap in every registry, not a
+coverage gap in this pipeline.
+
+Distributions are the only place those edges exist, because a distribution is
+the thing that has to resolve them. `scripts/46_debian_dependency_edges.py`
+reads Debian's binary `Depends` — 68,750 binary packages, 37,588 source
+packages, two static files behind no auth — and turns it into repo→repo edges
+in the same tier as every other ecosystem.
+
+**The example that motivated all of this now exists:**
+
+```
+python-pillow/Pillow          y=0.4607
+    -> libjpeg-turbo/libjpeg-turbo  y=0.3460   via libjpeg62-turbo
+    -> madler/zlib                  y=0.3366   via zlib1g
+    -> bminor/glibc                 y=0.3255   via libc6
+```
+
+Dependency in-degree for the foundational libraries, all of which were
+effectively zero before:
+
+| | dependents | trophic height |
+|---|---|---|
+| `bminor/glibc` | **947** | 0.3255 |
+| `python/cpython` | 583 | 0.3193 |
+| `gcc-mirror/gcc` | 421 | 0.3448 |
+| `madler/zlib` | **194** | 0.3366 |
+| `GNOME/glib` | 138 | 0.3701 |
+| `openssl/openssl` | 112 | 0.3555 |
+| `pnggroup/libpng` | 51 | 0.3562 |
+| `libjpeg-turbo/libjpeg-turbo` | 44 | 0.3460 |
+
+**895 nodes now sit below the median language-library height.** The cohort
+grew from 7,026 to 8,253 repositories, dependency edges from 80,792 to 87,695,
+and repos with a real computed height from 84.8% to 86.8%.
+
+### Resolving a Debian package to a repository
+
+This is the whole difficulty, and the distribution of it is the finding:
+**42.3% of Debian source packages carry a github.com URL, but those cover only
+11.2% of all reverse-dependency mass.** Auto-resolution finds the leaves and
+misses every root — glibc (23,246 reverse-deps), gcc (16,285), zlib (2,787),
+openssl (1,108) and ncurses (982) publish on gnu.org, zlib.net and
+invisible-island.net. Three layers, in increasing order of how much they can
+be trusted on their own:
+
+1. **The package's own declared URL** — 15,872 packages. Not a guess: the
+   package is naming its own homepage.
+2. **A curated file** (`data/repo-lists/distro_upstreams.txt`) for the top
+   unresolved packages by reverse-dependency count — 106 entries, each
+   corroborated before use.
+3. **Name matching against the cohort** — 364 entries. Debian's `pillow` is
+   `python-pillow/Pillow`, but its Homepage is `python-pillow.github.io`, a
+   Pages URL the regex skips. This layer is what actually produced the
+   cross-language edges, since it connects the repos already on the map.
+
+Layers 2 and 3 are candidate generators, never evidence, and are corroborated
+by **version-tag match**: the upstream version Debian ships has to appear
+among the repository's own git tags. The check earns its keep —
+**239 of 603 name matches were refused by it**, including Debian's `glance`
+(OpenStack's image service) against the cohort's unrelated `glanceapp/glance`.
+Of the curated file, 20 candidates were dropped outright during development
+because the repo did not exist or was a stale mirror whose tags never matched.
+
+- **Runtime `Depends` only, never `Build-Depends`.** Build dependencies are
+  the toolchain, which is a different relation; including them would put gcc
+  *above* everything rather than beneath it. Same call this codebase already
+  makes for npm `devDependencies`, Maven `scope=test` and Go's `// indirect`.
+- **Debian rather than Nixpkgs**, which is the cleaner graph and the better
+  long-term source but needs `nix` on the machine to evaluate. Debian
+  publishes the same relation as two static files. Nixpkgs remains the right
+  upgrade when a `nix` dependency is acceptable.
+- **Node admission is capped.** 14,714 auto-resolved repos are outside the
+  cohort; admitting all of them would be exactly the "200,000 nodes of which
+  80% is noise" failure. A repo becomes a node only if already in the cohort
+  or carrying ≥5 reverse-dependencies — 1,227 added, median 362 stars.
+
+**Still open.** cairo, dbus, fontconfig, libdrm, libX11, libxcb, mesa,
+wayland, eigen, binutils, readline, ncurses, giflib, libcap, x264, GNU gsl and
+libssh are all absent, and each was *tried and rejected* by corroboration:
+they publish only on gitlab.freedesktop.org, sourceware or savannah with no
+GitHub repository, and the GitHub mirrors that do exist are stale forks whose
+tags do not match what Debian ships. They cannot be nodes until a node id can
+be something other than a GitHub slug — the remaining half of Phase 20's work.
+Guessing a plausible-looking mirror for them would put fabricated edges under
+the most load-bearing part of the graph, which is the one place this project
+can least afford them.

@@ -1,12 +1,12 @@
 # Pelagos
 
-**A 3D view of the open-source dependency ecosystem.** 7,026 repositories,
+**A 3D view of the open-source dependency ecosystem.** 8,251 repositories,
 placed by what they actually depend on and what they are actually about —
 then you fly through it.
 
 ### [→ Explore it live](https://hugofara.github.io/pelagos/)
 
-![The Pelagos explorer: a 3D graph of 7,026 repositories, with cluster
+![The Pelagos explorer: a 3D graph of 8,251 repositories, with cluster
 volumes, repo labels and a sidebar listing auto-detected clusters](docs/img/pelagos.png)
 
 ## What you're looking at
@@ -33,14 +33,19 @@ Two things that are easy to get wrong, and that this deliberately does not:
   `pyproject.toml`, `.gitmodules` and the rest — at any depth, not from the
   one file at the root of whatever language GitHub labelled it. Nearly a third
   of the repos here declare dependencies in more than one ecosystem, and
-  before this they could only ever contribute the one. It is why 18.6% of the
-  dependency edges now cross an ecosystem boundary rather than 3.2%.
+  before this they could only ever contribute the one.
 - **A node is a repository, not a GitHub slug.** `hwchase17/langchain` and
   `langchain-ai/langchain` are one repo, and so are a repo and its mirror.
   Which slugs mean the same thing is settled by intrinsic git object ids —
   content hashes, so two origins serving one repository agree exactly — not by
   matching names. `torvalds/linux` is labelled here as what it is: a mirror of
   git.kernel.org.
+- **The stack has a bottom.** No language registry packages C libraries, so
+  none of them can say what sits underneath an ecosystem — npm records that
+  `sharp` needs `libvips` only as an opaque string. Distributions are the one
+  place those edges exist, so the graph also reads Debian's `Depends`. That is
+  why `Pillow` sits above `libjpeg-turbo`, above `zlib`, above `glibc`, and why
+  **18.1% of dependency edges cross an ecosystem boundary rather than 3.2%**.
 
 ## Things to try
 
@@ -63,9 +68,9 @@ with a plain-language reading of each](docs/img/panel.png)
 
 ## What's in it, honestly
 
-7,026 repositories — a **curated cohort, not all of GitHub**. It was grown per
+8,251 repositories — a **curated cohort, not all of GitHub**. It was grown per
 language with quotas, so it holds roughly a thousand each of Java, Rust and Go,
-1,683 Python, and exactly one C#. Treat it as a large sample of well-known
+1,916 Python, and exactly one C#. Treat it as a large sample of well-known
 open source, not a census. (Those are *dominant* languages, and a third of
 these repos declare dependencies in more than one ecosystem — the quotas
 shaped what was collected, not what each repo contributes.)
@@ -73,12 +78,13 @@ shaped what was collected, not what each repo contributes.)
 Coverage is uneven and the explorer doesn't hide it. A repo whose dependencies
 couldn't be resolved has no height and floats at the mid-plane, and the panel
 says so in as many words rather than showing a number that looks measured.
-84.8% of the cohort has a real height; the rest is honest absence.
+89.4% of the cohort has a real height; the rest is honest absence.
 
 Built from the **GitHub API** and **[SemRepo](https://semrepo.org)**, a large
 RDF dump of GitHub activity released under CC0. SemRepo is the only source for
 the three person-based tiers; the cohort itself, descriptions, topics, READMEs,
-avatars and the dependency manifests come from the GitHub API. Repo *identity*
+avatars and the dependency manifests come from the GitHub API, and the
+cross-language edges from **Debian**'s published package index. Repo *identity*
 comes from neither — it is read off the origins themselves with `git ls-remote`,
 because a git object id is a content hash and therefore agrees across forges by
 construction.
