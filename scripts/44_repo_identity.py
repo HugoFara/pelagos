@@ -99,6 +99,22 @@ Writes data/processed/repo_identity.json:
 `alias` is the join table every other script needs: one lookup turns any slug
 this cohort has ever collected into the repository it actually names.
 
+## Why this file accumulates rather than being rebuilt
+
+Once 45_apply_identity.py has collapsed a duplicate out of the cohort, that
+slug is gone from every input this script reads -- so a plain rebuild would
+"discover" only the duplicates that have appeared since, and silently drop
+the record of every one already merged. Re-running after the Debian expansion
+did exactly that in development: 25 aliases became 2, and
+`hwchase17/langchain` stopped resolving to anything.
+
+That is a real loss, not bookkeeping. The alias table is the only thing that
+still connects an old slug to the repository it named -- for a permalink
+somebody shared, for a package whose registry metadata still points at the old
+name, and for the explorer's "also known as" row. So this merges into whatever
+data/processed/repo_identity.json already holds: new findings win on conflict,
+previously-recorded aliases and verified origins survive.
+
 Usage: python3 scripts/44_repo_identity.py
 """
 import json
@@ -440,8 +456,44 @@ def main():
     for canonical in identity:
         identity[canonical].setdefault("anchor", None)
 
+    # Merge with what is already recorded -- see the module docstring.
+    carried_aliases, carried_origins = 0, 0
+    if OUT_PATH.exists():
+        previous = json.loads(OUT_PATH.read_text())
+        for slug, canon in previous.get("alias", {}).items():
+            # Follow the chain: a slug merged before may since have been
+            # merged again into a further canonical repo.
+            target = canon
+            while target in alias:
+                target = alias[target]
+            if slug not in alias and slug not in identity:
+                alias[slug] = target
+                carried_aliases += 1
+        for repo, record in previous.get("repos", {}).items():
+            current = identity.get(repo)
+            if current is None:
+                continue
+            known = {o.get("url") for o in current["origins"]}
+            for origin in record.get("origins", []):
+                if origin.get("url") not in known:
+                    current["origins"].append(origin)
+                    carried_origins += 1 if origin.get("forge") != "github" else 0
+            merged = set(current["aliases"]) | {
+                a for a in record.get("aliases", []) if a not in identity}
+            current["aliases"] = sorted(merged)
+            if current.get("anchor") is None and record.get("anchor"):
+                current["anchor"] = record["anchor"]
+    for slug, canon in alias.items():
+        record = identity.get(canon)
+        if record is not None and slug not in record["aliases"]:
+            record["aliases"] = sorted(set(record["aliases"]) | {slug})
+
     OUT_PATH.write_text(json.dumps(
         {"repos": identity, "alias": alias}, indent=0, sort_keys=True))
+    if carried_aliases or carried_origins:
+        print(f"carried forward {carried_aliases} aliases and {carried_origins} verified "
+              f"non-GitHub origins from the previous run (already collapsed out of the "
+              f"cohort, so this run could not rediscover them)", file=sys.stderr)
 
     print(f"\n{len(repos)} slugs -> {len(identity)} repositories "
           f"({len(alias)} slugs are duplicates of another)", file=sys.stderr)
