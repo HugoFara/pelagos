@@ -900,3 +900,77 @@ be something other than a GitHub slug — the remaining half of Phase 20's work.
 Guessing a plausible-looking mirror for them would put fabricated edges under
 the most load-bearing part of the graph, which is the one place this project
 can least afford them.
+
+## Phase 22 — A node id that is not a GitHub slug (done)
+
+Phase 21 filled the bottom of the trophic axis and then listed seventeen
+projects it had to leave out: cairo, dbus, fontconfig, libdrm, libX11, libxcb,
+mesa, wayland and the rest. They are not obscure — those libraries sit under
+most of a Linux desktop — but every one publishes on gitlab.freedesktop.org,
+gitlab.gnome.org or sourceware with no GitHub repository, and a node id had to
+be an `owner/name` GitHub slug. A naming convention was deciding which
+repositories were allowed to exist.
+
+A forge node's id is `host/path`: `gitlab.freedesktop.org/xorg/lib/libx11`,
+`sourceware.org/elfutils`. A first segment containing a dot means a forge
+host, which is **unambiguous rather than conventional** — GitHub owner names
+are `[A-Za-z0-9-]+` and cannot contain a dot, checked against all 8,251
+existing nodes before the scheme was chosen.
+
+**43 forge nodes, all corroborated, all with a real trophic height.** The
+corroboration needed no new mechanism: `git ls-remote` is forge-independent,
+so the version-tag rule Phase 21 already used works unchanged against GitLab
+and sourceware. Generalising it was a matter of passing a URL where a slug had
+been passed.
+
+| | dependents | height |
+|---|---|---|
+| `gitlab.freedesktop.org/xorg/lib/libx11` | **103** | 0.2731 |
+| `gitlab.freedesktop.org/cairo/cairo` | 55 | 0.3381 |
+| `gitlab.freedesktop.org/xorg/lib/libxext` | 43 | 0.2734 |
+| `gitlab.freedesktop.org/dbus/dbus` | 30 | 0.2997 |
+| `gitlab.freedesktop.org/fontconfig/fontconfig` | 30 | 0.3077 |
+| `gitlab.freedesktop.org/wayland/wayland` | 30 | 0.2998 |
+
+libX11 lands at the floor beside `bminor/glibc` (0.2372), `madler/zlib`
+(0.2531) and `gcc-mirror/gcc` (0.2643) — which is where it belongs and where
+nothing could previously be placed.
+
+- **42 of 43 got real metadata**, because GitLab instances expose a public
+  REST API with description, star and fork counts. Only `sourceware.org/elfutils`
+  keeps nulls, and it keeps them honestly: null rather than 0, because 0 is a
+  real value that would place it at the bottom of a size ranking it was never
+  measured for.
+- **Star counts are not comparable across forges** and the explorer says so.
+  A GitLab star and a GitHub star are both bookmarks, but the populations
+  differ by orders of magnitude — cairo has 41 stars where a mid-tier GitHub
+  library has thousands. Only the node-size encoding is affected; the trophic
+  axis is computed from dependency edges, measured identically for every node
+  regardless of forge.
+- The explorer never asks api.github.com about a forge node — that would spend
+  part of the 60/hour unauthenticated budget to receive a 404 — and the panel
+  states plainly that no stars, forks or README are shown *because there is
+  nothing there to read, not because it has none*.
+
+### A finding that cost 7,700 reverse-dependencies, correctly
+
+`gcc-N-cross`, `gcc-N-cross-ports` and `gcc-N-cross-mipsen` looked like the
+largest remaining prize — ~7,700 reverse-dependencies between them — and they
+really are Debian packaging around GCC, so mapping them to `gcc-mirror/gcc`
+would have been defensible. Corroboration refused them: they carry Debian's
+own packaging version ("21", "5+c1"), not GCC's.
+
+Checking what actually depends on them settled it rather than the version
+check alone: **800 of `gcc-14-cross-mipsen`'s 800 reverse-dependencies are
+themselves cross-toolchain packaging** (`gcc-14-cross-mipsen`,
+`gcc-13-cross-mipsen`, `gcc-defaults-mipsen`). It is a closed loop of Debian
+cross-compilation plumbing, not ecosystem structure, and the reverse-dependency
+mass that made it look important was counting that loop. Left unmapped, with
+the reasoning recorded in the curated file.
+
+### Still open
+
+`binutils` remains absent: sourceware serves it, but that repository publishes
+no tags at all, so the version rule has nothing to check against. It needs a
+different corroboration (branch tips, or the initial commit) rather than an
+exception.

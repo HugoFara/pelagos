@@ -1,12 +1,12 @@
 # Pelagos
 
-**A 3D view of the open-source dependency ecosystem.** 8,251 repositories,
+**A 3D view of the open-source dependency ecosystem.** 8,313 repositories,
 placed by what they actually depend on and what they are actually about —
 then you fly through it.
 
 ### [→ Explore it live](https://hugofara.github.io/pelagos/)
 
-![The Pelagos explorer: a 3D graph of 8,251 repositories, with cluster
+![The Pelagos explorer: a 3D graph of 8,313 repositories, with cluster
 volumes, repo labels and a sidebar listing auto-detected clusters](docs/img/pelagos.png)
 
 ## What you're looking at
@@ -46,6 +46,11 @@ Two things that are easy to get wrong, and that this deliberately does not:
   place those edges exist, so the graph also reads Debian's `Depends`. That is
   why `Pillow` sits above `libjpeg-turbo`, above `zlib`, above `glibc`, and why
   **18.1% of dependency edges cross an ecosystem boundary rather than 3.2%**.
+- **Not everything is on GitHub, and the graph does not pretend otherwise.**
+  libX11, cairo, dbus, mesa and wayland hold up most of a Linux desktop and
+  none of them has a GitHub repository. They are nodes here under their real
+  home — `gitlab.freedesktop.org/xorg/lib/libx11` — with their own forge's
+  metadata. libX11 has 103 dependents and sits at the floor beside glibc.
 
 ## Things to try
 
@@ -68,7 +73,7 @@ with a plain-language reading of each](docs/img/panel.png)
 
 ## What's in it, honestly
 
-8,251 repositories — a **curated cohort, not all of GitHub**. It was grown per
+8,313 repositories — a **curated cohort, and not only GitHub**. It was grown per
 language with quotas, so it holds roughly a thousand each of Java, Rust and Go,
 1,916 Python, and exactly one C#. Treat it as a large sample of well-known
 open source, not a census. (Those are *dominant* languages, and a third of
@@ -78,7 +83,7 @@ shaped what was collected, not what each repo contributes.)
 Coverage is uneven and the explorer doesn't hide it. A repo whose dependencies
 couldn't be resolved has no height and floats at the mid-plane, and the panel
 says so in as many words rather than showing a number that looks measured.
-89.4% of the cohort has a real height; the rest is honest absence.
+88.0% of the cohort has a real height; the rest is honest absence.
 
 Built from the **GitHub API** and **[SemRepo](https://semrepo.org)**, a large
 RDF dump of GitHub activity released under CC0. SemRepo is the only source for

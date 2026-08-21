@@ -341,16 +341,53 @@ python-pillow/Pillow          y=0.4607
 421 — all previously near zero — and 895 nodes sit below the median
 language-library height.
 
-### What is still out of reach, and why it is left empty
+### Nodes that are not on GitHub
 
-cairo, dbus, fontconfig, libdrm, libX11, libxcb, mesa, wayland, eigen,
-binutils, readline, ncurses, giflib, libcap, x264, GNU gsl and libssh are all
-absent. Each was tried and **rejected by corroboration**: they publish only on
-gitlab.freedesktop.org, sourceware or savannah with no GitHub repository at
-all, and the GitHub mirrors that do exist are stale forks whose tags do not
-match what Debian ships. They cannot become nodes until a node id can be
-something other than a GitHub slug. Guessing a plausible-looking mirror would
-put fabricated edges under the most load-bearing part of the graph.
+The projects above could not be nodes while a node id had to be an
+`owner/name` GitHub slug. cairo, dbus, fontconfig, libdrm, libX11, libxcb,
+mesa and wayland sit under most of a Linux desktop and all publish on
+gitlab.freedesktop.org, gitlab.gnome.org or sourceware, so a naming convention
+was deciding which repositories were allowed to exist.
+
+A forge node's id is `host/path` —
+`gitlab.freedesktop.org/xorg/lib/libx11`, `sourceware.org/elfutils`. A first
+segment containing a dot means a forge host, which is unambiguous rather than
+conventional: GitHub owner names are `[A-Za-z0-9-]+` and cannot contain a dot,
+checked against every node in the cohort before the scheme was chosen.
+`scripts/identity.py`'s `is_forge_node()` is the shared predicate, and the
+scripts that talk to the GitHub API use it to skip the nodes that API could
+only 404 on.
+
+Corroboration needed no new mechanism. `git ls-remote` is forge-independent,
+so the version-tag rule works unchanged against GitLab and sourceware —
+generalising it meant passing a URL where a slug had been passed. That is the
+payoff of building the check on intrinsic git data rather than on a GitHub
+API: it generalises to other forges for free.
+
+`scripts/48_fetch_forge_repo_stats.py` fills in what can be filled. GitLab
+instances expose a public REST API, so 42 of 43 nodes get a real description,
+star count and fork count; `sourceware.org/elfutils` (cgit, no API) keeps
+nulls — null rather than 0, since 0 is a real value that would place it at the
+bottom of a size ranking it was never measured for.
+
+**Star counts are not comparable across forges.** cairo has 41 GitLab stars
+where a mid-tier GitHub library has thousands, so freedesktop nodes render
+smaller than their importance. Only the size encoding is affected: the trophic
+axis is computed from dependency edges, measured identically for every node
+regardless of forge. The explorer states this in the panel rather than leaving
+it to be inferred.
+
+    103  y=0.2731  gitlab.freedesktop.org/xorg/lib/libx11
+     55  y=0.3381  gitlab.freedesktop.org/cairo/cairo
+     43  y=0.2734  gitlab.freedesktop.org/xorg/lib/libxext
+     30  y=0.2997  gitlab.freedesktop.org/dbus/dbus
+
+libX11 lands at the floor beside `bminor/glibc` (0.2372), `madler/zlib`
+(0.2531) and `gcc-mirror/gcc` (0.2643).
+
+Still absent: `binutils`. sourceware serves it, but that repository publishes
+no tags, so the version rule has nothing to check against — that wants a
+different corroboration rather than an exception.
 
 ## Pipeline (reproducing `data/processed/`)
 
@@ -520,6 +557,7 @@ python3 scripts/45_apply_identity.py
 python3 scripts/46_debian_dependency_edges.py
 python3 scripts/47_fetch_distro_repo_stats.py
 python3 scripts/46_debian_dependency_edges.py   # again: the new repos are nodes now
+python3 scripts/48_fetch_forge_repo_stats.py    # metadata for the non-GitHub forge nodes
 python3 scripts/11_dependency_edges.py          # fold the Debian tier into the shared prune
 
 # backfill: now that the full cohort (top50 + dependency-expansion repos)

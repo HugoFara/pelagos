@@ -4295,3 +4295,108 @@ metadata that still points at the old name, for the explorer's "also known as"
 row. 44 now merges into whatever the file already holds rather than rebuilding
 it, and reports what it carried forward. Caught by checking the output against
 the previous run instead of reading the summary line, which said nothing wrong.
+
+## Phase 22: a node id that is not a GitHub slug
+
+Phase 21 ended with a list of seventeen projects it had to leave out -- cairo,
+dbus, fontconfig, libdrm, libX11, libxcb, mesa, wayland and the rest -- for a
+reason that had nothing to do with data quality. A node id had to be an
+`owner/name` GitHub slug, those projects publish on gitlab.freedesktop.org,
+gitlab.gnome.org or sourceware, and so they could not exist. A naming
+convention was deciding which repositories were allowed on the map, and it was
+excluding exactly the layer the map was missing.
+
+### The id scheme, and why it is unambiguous rather than conventional
+
+A forge node's id is `host/path`: `gitlab.freedesktop.org/xorg/lib/libx11`,
+`sourceware.org/elfutils`. The rule for telling one from a GitHub slug is that
+the first segment contains a dot.
+
+That is not a convention chosen and then defended -- it was checked first.
+GitHub owner names match `[A-Za-z0-9-]+`; verified against all 8,251 nodes in
+the cohort, zero contain a dot or any other character. So the two id spaces
+cannot collide, and `is_forge_node()` is a total function rather than a
+heuristic.
+
+The full path is kept rather than the last segment, so `xorg/lib/libx11` and
+`mesa/drm` stay distinct from anything else on the same host. A leading `git/`
+segment is dropped: sourceware serves `sourceware.org/git/elfutils.git`, where
+`git` is cgit's mount point and not part of the project's name.
+
+### The corroboration needed no new mechanism
+
+This is the part that was easier than expected. `git ls-remote` is
+forge-independent -- gitlab.freedesktop.org, gitlab.gnome.org and sourceware
+answer it exactly as github.com does -- so the version-tag rule from Phase 21
+works unchanged. Generalising it meant passing a URL where a slug had been
+passed, and deleting the `f"https://github.com/{repo}.git"` that had been
+hardcoded inside the tag reader. All 43 candidates corroborated on the first
+run; the rejections that remained were the gcc-cross ones below.
+
+That is the payoff of having built corroboration on intrinsic git data in
+Phase 20 rather than on a GitHub API: it generalised to other forges for free,
+where an API-based check would have needed one integration per forge.
+
+### 42 of 43 got real metadata; the last one keeps honest nulls
+
+GitLab instances expose `/api/v4/projects/<url-encoded path>` publicly, which
+covers 41 freedesktop and GNOME nodes plus gitlab.inria.fr, giving a real
+description, star count and fork count. Only `sourceware.org/elfutils` (cgit,
+no API) has nulls -- and null rather than 0, because 0 is a real value that
+would place it at the bottom of a size ranking it was never measured for.
+
+**Star counts are not comparable across forges, and this is worth being loud
+about.** cairo has 41 GitLab stars; a mid-tier GitHub library has thousands.
+Both are "someone bookmarked this" but the populations differ by orders of
+magnitude, so every freedesktop node renders smaller than its importance. The
+trophic axis is unaffected -- it is computed from dependency edges, measured
+identically for every node regardless of forge -- so the placement is right
+even where the size is misleading. The panel says this rather than leaving the
+reader to infer it.
+
+### The result
+
+    103  y=0.2731  gitlab.freedesktop.org/xorg/lib/libx11
+     55  y=0.3381  gitlab.freedesktop.org/cairo/cairo
+     43  y=0.2734  gitlab.freedesktop.org/xorg/lib/libxext
+     30  y=0.2997  gitlab.freedesktop.org/dbus/dbus
+     30  y=0.3077  gitlab.freedesktop.org/fontconfig/fontconfig
+     30  y=0.2998  gitlab.freedesktop.org/wayland/wayland
+
+All 43 have a real trophic height. libX11 lands at the floor beside
+bminor/glibc (0.2372), madler/zlib (0.2531) and gcc-mirror/gcc (0.2643).
+
+### A finding that cost 7,700 reverse-dependencies, and was right to
+
+gcc-N-cross, gcc-N-cross-ports and gcc-N-cross-mipsen looked like the largest
+remaining prize. They are genuinely Debian packaging around GCC, so mapping
+them to gcc-mirror/gcc would have been defensible on the facts. Corroboration
+refused them -- they carry Debian's packaging version ("21", "5+c1"), not
+GCC's -- and rather than special-case them, checking what depends on them
+settled it:
+
+    800 of gcc-14-cross-mipsen's 800 reverse-dependencies are themselves
+    cross-toolchain packaging (gcc-14-cross-mipsen, gcc-13-cross-mipsen,
+    gcc-defaults-mipsen)
+
+A closed loop of Debian cross-compilation plumbing. The reverse-dependency
+mass that made it look like the biggest remaining win was counting that loop
+against itself. Left unmapped, with the reasoning in the curated file so the
+next person does not rediscover it as an oversight.
+
+### Two small breakages worth recording
+
+Adding a third path segment to node ids broke two things that had quietly
+assumed exactly two. `43_repo_refs.py` built its cache filename with
+`repo.split("/", 1)` and then wrote `{owner}__{name}.json`, which for
+`gitlab.freedesktop.org/xorg/lib/libx11` left real slashes in the filename and
+raised FileNotFoundError against directories that do not exist. And
+`08_download_repo_logos.py` would have asked the GitHub API for a user called
+`gitlab.freedesktop.org`. Both now go through `is_forge_node()`.
+
+### Still open
+
+`binutils` is still absent. sourceware serves it, but that repository
+publishes no tags at all, so the version rule has nothing to check against.
+That wants a different corroboration -- branch tips, or the initial commit --
+rather than an exception carved out for one package.
