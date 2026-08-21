@@ -27,12 +27,14 @@ build/test tooling or an author's compatibility note, not this repo's own
 "depends on" edge, the npm parallel of 29 only counting go.mod's non-`//
 indirect` requires.
 
-Known real coverage gap, not a bug: this only reads the repo-root
-package.json (scripts/30_fetch_package_json.py, same repo-root-only scoping
-go.mod's fetch used). A JS/TS monorepo that declares most of its real
-dependencies in nested workspace package.json files rather than at the root
-will show fewer edges here than it actually has -- an honest gap in what got
-fetched, not a resolution failure.
+Reads every package.json in the cohort, at any depth -- not the repo-root
+file of the repos GitHub labels `language:javascript`. Both halves of that
+mattered and both were measured (see scripts/manifests.py): workspace
+monorepos declare most of their real dependencies in nested package.json
+files that root-only fetching never saw, and a repo whose dominant language
+is Rust or C++ could not contribute npm edges at all. Vendored trees and
+byte-identical copies of other projects' manifests are dropped by that module
+before anything is parsed here.
 
 Output shape mirrors 11_dependency_edges.py's / 29's full-edge tuples
 (source, target, weight, [package names]) so 11 can fold this file straight
@@ -52,8 +54,11 @@ import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from identity import canonical_lookup  # noqa: E402
+from manifests import iter_manifests, manifest_stats  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
-PACKAGE_JSON_CACHE = ROOT / "data/raw/package_json_cache"
 NPM_CACHE = ROOT / "data/raw/npm_registry_cache"
 NPM_FETCH_THROTTLE_S = 0.1  # same politeness margin 09_resolve_packages.py uses against PyPI's JSON API
 
@@ -110,16 +115,12 @@ def fetch_npm_registry(package):
 def load_node_ids():
     top50 = json.loads((ROOT / "data/processed/repo_aggregates.json").read_text())
     extra = json.loads((ROOT / "data/processed/dependency_repo_aggregates.json").read_text())
-    all_ids = list(top50) + list(extra)
-    return {rid.lower(): rid for rid in all_ids}  # last one wins on collision; none expected
+    return canonical_lookup(list(top50) + list(extra))  # duplicate slugs resolved; see scripts/identity.py
 
 
 def main(out_path="data/processed/repo_js_dependency_edges.json"):
     canon_lookup = load_node_ids()
-    js_repos = sorted(set(
-        l.strip() for l in
-        (ROOT / "data/repo-lists/js_ecosystem_repos.txt").read_text().splitlines() if l.strip()
-    ))
+    cohort = sorted(set(canon_lookup.values()))
 
     package_resolved = {}  # npm package name -> owner/repo or None, shared across every repo's dependencies
     resolved_count, unresolved_count = 0, 0
@@ -127,18 +128,20 @@ def main(out_path="data/processed/repo_js_dependency_edges.json"):
     direct_dep_total = 0
     edge_packages = defaultdict(set)  # (source, target) -> {package names}
 
-    for repo in js_repos:
-        owner, name = repo.split("/", 1)
-        cache_path = PACKAGE_JSON_CACHE / f"{owner}__{name}.json"
-        if not cache_path.exists():
-            continue
-        text = cache_path.read_text(encoding="utf-8", errors="replace")
+    for repo, _path, text in iter_manifests("js", cohort):
         if not text.strip():
             empty += 1
             continue
         try:
             manifest = json.loads(text)
         except json.JSONDecodeError:
+            unparseable += 1
+            continue
+        if not isinstance(manifest, dict):
+            # Valid JSON, but not an object -- a `package.json` holding a bare
+            # string or array. Real and rare, and only reachable now that the
+            # sweep reads nested files: template/fixture directories ship
+            # these. Counted as unparseable rather than crashing on .get().
             unparseable += 1
             continue
         parsed += 1
@@ -177,12 +180,14 @@ def main(out_path="data/processed/repo_js_dependency_edges.json"):
     (ROOT / "data/processed/js_package_to_repo.json").write_text(
         json.dumps(package_map, indent=0, sort_keys=True))
 
+    repos_with, files, nested = manifest_stats("js", cohort)
     touched = {n for e in edges for n in (e[0], e[1])}
     sources = {e[0] for e in edges}
     targets = {e[1] for e in edges}
     print(
-        f"{parsed}/{len(js_repos)} JS repos have a real package.json ({empty} have none, "
-        f"{unparseable} unparseable), {direct_dep_total} dependencies entries, "
+        f"{parsed} package.json files parsed across {repos_with} repos "
+        f"({nested} of the {files} files are nested, unreachable by root-only fetching; "
+        f"{empty} empty, {unparseable} unparseable), {direct_dep_total} dependencies entries, "
         f"{len(package_resolved)} distinct package names ({resolved_count} resolved to a GitHub repo, "
         f"{unresolved_count} left unresolved/non-GitHub) -> {len(edges)} dependency edges "
         f"({len(sources)} source repos -> {len(targets)} target repos, {len(touched)} nodes total) "

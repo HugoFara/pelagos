@@ -1,8 +1,15 @@
 #!/usr/bin/env python3
 """Turn go.mod `require` directives into real, directed `repo --depends
 on--> repo` edges, the Go-ecosystem counterpart to 11_dependency_edges.py's
-PyPI-usedPackage-based edges (see scripts/28_fetch_go_mod.py for why go.mod
-needed no registry-API resolution step the way PyPI packages did).
+
+Reads every go.mod in the cohort, at any depth, via
+scripts/manifests.py -- not one file at the root of the repos GitHub's
+`language:` facet labelled Go. That facet reports a repo's *dominant*
+language, one value per repo, so under the old scoping a repo could not
+contribute Go dependencies unless Go happened to be its biggest
+language by bytes. Vendored trees and byte-identical copies of other
+projects' manifests are dropped by that module before anything is parsed
+here; see its docstring for the measurement behind the change.
 
 Resolution, checked directly against real go.mod files and the real Go
 module-discovery protocol before writing this (kubernetes/kubernetes,
@@ -51,8 +58,11 @@ import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from identity import canonical_lookup  # noqa: E402
+from manifests import iter_manifests, manifest_stats  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
-GO_MOD_CACHE = ROOT / "data/raw/go_mod_cache"
 VANITY_CACHE = ROOT / "data/raw/go_vanity_cache"
 VANITY_FETCH_THROTTLE_S = 0.2  # polite pacing for fresh vanity-domain fetches (not GitHub's API, no shared budget to protect, but still hundreds of distinct hosts)
 
@@ -130,16 +140,12 @@ def resolve_vanity(module_path):
 def load_node_ids():
     top50 = json.loads((ROOT / "data/processed/repo_aggregates.json").read_text())
     extra = json.loads((ROOT / "data/processed/dependency_repo_aggregates.json").read_text())
-    all_ids = list(top50) + list(extra)
-    return {rid.lower(): rid for rid in all_ids}  # last one wins on collision; none expected
+    return canonical_lookup(list(top50) + list(extra))  # duplicate slugs resolved; see scripts/identity.py
 
 
 def main(out_path="data/processed/repo_go_dependency_edges.json"):
     canon_lookup = load_node_ids()
-    go_repos = sorted(set(
-        l.strip() for l in
-        (ROOT / "data/repo-lists/go_ecosystem_repos.txt").read_text().splitlines() if l.strip()
-    ))
+    cohort = sorted(set(canon_lookup.values()))
 
     module_resolved = {}  # module path -> owner/repo or None, shared across every repo's requires
     github_direct, vanity_resolved, vanity_unresolved = 0, 0, 0
@@ -147,12 +153,7 @@ def main(out_path="data/processed/repo_go_dependency_edges.json"):
     direct_req_total = 0
     edge_modules = defaultdict(set)  # (source, target) -> {module paths}
 
-    for repo in go_repos:
-        owner, name = repo.split("/", 1)
-        cache_path = GO_MOD_CACHE / f"{owner}__{name}.mod"
-        if not cache_path.exists():
-            continue
-        text = cache_path.read_text(encoding="utf-8", errors="replace")
+    for repo, _path, text in iter_manifests("go", cohort):
         if not text.strip():
             empty += 1
             continue
@@ -195,11 +196,14 @@ def main(out_path="data/processed/repo_go_dependency_edges.json"):
     (ROOT / "data/processed/go_module_to_repo.json").write_text(
         json.dumps(vanity_map, indent=0, sort_keys=True))
 
+    repos_with, files_seen, nested = manifest_stats("go", cohort)
     touched = {n for e in edges for n in (e[0], e[1])}
     sources = {e[0] for e in edges}
     targets = {e[1] for e in edges}
     print(
-        f"{parsed}/{len(go_repos)} Go repos have a real go.mod ({empty} have none), "
+        f"{parsed} go.mod files parsed across {repos_with} cohort repos "
+        f"({nested} of the {files_seen} files are nested, unreachable by root-only fetching; "
+        f"{empty} empty), "
         f"{direct_req_total} direct (non-indirect) require lines, {len(module_resolved)} distinct "
         f"module paths ({github_direct} resolved free via github.com/*, {vanity_resolved} resolved "
         f"via go-import, {vanity_unresolved} left unresolved/non-GitHub) -> {len(edges)} dependency "

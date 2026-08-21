@@ -19,11 +19,15 @@ cheapest of the four:
 
 ## [workspace.dependencies] is what makes the Rust coverage good
 
-Fetching only the repo-root manifest cost JS and Java most of their
+Fetching only the repo-root manifest used to cost JS and Java most of their
 coverage: a monorepo's real dependencies sit in per-package/per-submodule
-files that are never fetched (npm workspaces; okhttp's
-okhttp/build.gradle.kts). Rust has the same root-only scoping here -- but
-Cargo's workspace-inheritance feature (Rust 1.64+) means the root manifest
+files that were never fetched (npm workspaces; okhttp's
+okhttp/build.gradle.kts). Since 42_scan_repo_manifests.py that scoping is
+gone -- every Cargo.toml in the tree is read, and a workspace's member
+crates are parsed alongside its root. The note below is kept because it
+still explains why Rust's coverage was good even *before* that, and why
+this ecosystem lost the least to root-only fetching: Cargo's
+workspace-inheritance feature (Rust 1.64+) means the root manifest
 of a workspace usually still carries the full dependency list, in
 `[workspace.dependencies]`, for members to inherit with `foo.workspace =
 true`. Measured directly on real roots before writing this:
@@ -91,8 +95,11 @@ import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from identity import canonical_lookup  # noqa: E402
+from manifests import iter_manifests, manifest_stats  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
-CARGO_TOML_CACHE = ROOT / "data/raw/cargo_toml_cache"
 CRATES_IO_CACHE = ROOT / "data/raw/crates_io_cache"
 # crates.io actively enforces its crawler policy -- a request with no
 # User-Agent gets a flat 403 (verified directly), unlike PyPI/npm/Maven. 0.3s
@@ -221,16 +228,12 @@ def _resolve_crate_repo_live(crate):
 def load_node_ids():
     top50 = json.loads((ROOT / "data/processed/repo_aggregates.json").read_text())
     extra = json.loads((ROOT / "data/processed/dependency_repo_aggregates.json").read_text())
-    all_ids = list(top50) + list(extra)
-    return {rid.lower(): rid for rid in all_ids}  # last one wins on collision; none expected
+    return canonical_lookup(list(top50) + list(extra))  # duplicate slugs resolved; see scripts/identity.py
 
 
 def main(out_path="data/processed/repo_rust_dependency_edges.json"):
     canon_lookup = load_node_ids()
-    rust_repos = sorted(set(
-        l.strip() for l in
-        (ROOT / "data/repo-lists/rust_ecosystem_repos.txt").read_text().splitlines() if l.strip()
-    ))
+    cohort = sorted(set(canon_lookup.values()))
 
     crate_resolved = {}  # crate name -> owner/repo or None, shared across every repo
     resolved_count, unresolved_count = 0, 0
@@ -238,14 +241,8 @@ def main(out_path="data/processed/repo_rust_dependency_edges.json"):
     direct_dep_total, git_dep_total = 0, 0
     edge_crates = defaultdict(set)  # (source, target) -> {crate name, ...}
 
-    for repo in rust_repos:
-        owner, name = repo.split("/", 1)
-        cache_path = CARGO_TOML_CACHE / f"{owner}__{name}.toml"
-        if not cache_path.exists():
-            no_manifest += 1
-            continue
-        text = cache_path.read_text(encoding="utf-8", errors="replace")
-        if not text.strip():  # 0-byte marker: no Cargo.toml at repo root
+    for repo, _path, text in iter_manifests("rust", cohort):
+        if not text.strip():
             no_manifest += 1
             continue
         deps = parse_cargo_dependencies(text)
@@ -288,11 +285,14 @@ def main(out_path="data/processed/repo_rust_dependency_edges.json"):
     (ROOT / "data/processed/crate_to_repo.json").write_text(
         json.dumps(crate_map, indent=0, sort_keys=True))
 
+    repos_with, files_seen, nested = manifest_stats("rust", cohort)
     touched = {n for e in edges for n in (e[0], e[1])}
     sources = {e[0] for e in edges}
     targets = {e[1] for e in edges}
     print(
-        f"{parsed}/{len(rust_repos)} Rust repos have a real Cargo.toml ({no_manifest} have none), "
+        f"{parsed} Cargo.toml files parsed across {repos_with} cohort repos "
+        f"({nested} of the {files_seen} files are nested, unreachable by root-only fetching; "
+        f"{no_manifest} empty), "
         f"{direct_dep_total} dependency entries ({git_dep_total} git deps resolved without a "
         f"registry call), {len(crate_resolved)} distinct crates looked up on crates.io "
         f"({resolved_count} resolved to a GitHub repo, {unresolved_count} left "

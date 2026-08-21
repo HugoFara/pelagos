@@ -58,9 +58,12 @@ other three ecosystems:
   aggregators carrying <modules> and 331/423 zero-dependency Gradle roots are
   multi-project roots carrying `allprojects` -- files whose job is to list and
   configure children, with every real dependency one directory down. Every
-  non-root pom.xml/build.gradle[.kts] cached by 32_fetch_java_manifests.py's
-  submodule sweep is parsed with the same two parsers and unioned into the
-  repo's coordinate set. Measured on a 25-repo random sample of the
+  non-root pom.xml/build.gradle[.kts] found by the manifest sweep is parsed
+  with the same two parsers and unioned into the repo's coordinate set.
+  (That sweep was Java-only when this was written --
+  32_fetch_java_manifests.py -- and is now cohort-wide across all six
+  ecosystems, 42_scan_repo_manifests.py; the Java behaviour described here
+  is unchanged, it is just no longer a Java-only privilege.) Measured on a 25-repo random sample of the
   zero-dependency population before writing this: 24 of 25 go from zero
   dependencies to some.
 
@@ -101,9 +104,11 @@ from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from identity import canonical_lookup  # noqa: E402
+from manifests import coverage, load_manifests, manifest_stats  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
-JAVA_MANIFEST_CACHE = ROOT / "data/raw/java_manifest_cache"
-JAVA_MODULE_CACHE = ROOT / "data/raw/java_module_manifest_cache"
 MAVEN_CACHE = ROOT / "data/raw/maven_central_cache"
 MAVEN_FETCH_THROTTLE_S = 0.2  # same politeness margin 09/31 use against PyPI/npm
 MAVEN_RESOLVE_WORKERS = 4  # kept low on purpose -- see the resolution phase in main()
@@ -343,15 +348,15 @@ def _resolve_maven_scm_live(group, artifact):
 def load_node_ids():
     top50 = json.loads((ROOT / "data/processed/repo_aggregates.json").read_text())
     extra = json.loads((ROOT / "data/processed/dependency_repo_aggregates.json").read_text())
-    all_ids = list(top50) + list(extra)
-    return {rid.lower(): rid for rid in all_ids}  # last one wins on collision; none expected
+    return canonical_lookup(list(top50) + list(extra))  # duplicate slugs resolved; see scripts/identity.py
 
 
-def find_cached_manifest(owner, name):
+def find_root_manifest(files):
+    """(text, kind) for the repo's root build file, in MANIFEST_KINDS priority
+    order, or (None, None)."""
     for kind in MANIFEST_KINDS:
-        p = JAVA_MANIFEST_CACHE / f"{owner}__{name}.{kind}"
-        if p.exists():
-            return p, kind
+        if kind in files:
+            return files[kind], kind
     return None, None
 
 
@@ -407,28 +412,24 @@ def is_project_module(path):
     return not TEST_SOURCE_SET_RE.search(path)
 
 
-def load_module_manifests(owner, name):
-    """({path: text} for the repo's own project modules, count skipped).
-    A missing cache file means 32's submodule sweep has not reached this repo
-    or could not read it -- which is a different fact from a cached sweep that
-    found nothing, so it's reported separately rather than merged into it."""
-    cache_path = JAVA_MODULE_CACHE / f"{owner}__{name}.json"
-    if not cache_path.exists():
-        return None, 0
-    try:
-        texts = json.loads(cache_path.read_text()).get("texts", {})
-    except (ValueError, AttributeError):
-        return None, 0
-    kept = {p: t for p, t in texts.items() if is_project_module(p)}
-    return kept, len(texts) - len(kept)
+def split_modules(files):
+    """({nested path: text} for the repo's own project modules, count skipped).
+
+    The nested half of what 42_scan_repo_manifests.py swept, minus the
+    build-logic directories is_project_module() rejects. Java is the one
+    ecosystem that already read nested manifests before that sweep existed
+    (32's Java-only submodule pass); it now shares the cohort-wide one, which
+    is the same data for Java repos and newly non-empty for every repo whose
+    dominant language is something else."""
+    nested = {p: t for p, t in files.items() if "/" in p}
+    kept = {p: t for p, t in nested.items() if is_project_module(p)}
+    return kept, len(nested) - len(kept)
 
 
 def main(out_path="data/processed/repo_java_dependency_edges.json"):
     canon_lookup = load_node_ids()
-    java_repos = sorted(set(
-        l.strip() for l in
-        (ROOT / "data/repo-lists/java_ecosystem_repos.txt").read_text().splitlines() if l.strip()
-    ))
+    cohort = sorted(set(canon_lookup.values()))
+    by_repo = load_manifests("java", cohort)
 
     parsed_pom, parsed_gradle, no_manifest = 0, 0, 0
     direct_dep_total = 0
@@ -437,27 +438,23 @@ def main(out_path="data/processed/repo_java_dependency_edges.json"):
 
     # Root-only vs. root+modules, tracked side by side so the run report can
     # say what the submodule sweep actually bought rather than asserting it.
-    not_swept, module_files, build_logic_skipped, intra_repo_refs = 0, 0, 0, 0
+    module_files, build_logic_skipped, intra_repo_refs = 0, 0, 0
     repos_with_deps, repos_with_deps_root_only, repos_module_only = 0, 0, 0
 
-    for repo in java_repos:
-        owner, name = repo.split("/", 1)
-        manifest_path, kind = find_cached_manifest(owner, name)
-        module_texts, skipped = load_module_manifests(owner, name)
-        build_logic_skipped += skipped
-        if module_texts is None:
-            not_swept += 1
-            module_texts = {}
-        module_files += len(module_texts)
-
-        if manifest_path is None and not module_texts:
+    for repo in cohort:
+        files = by_repo.get(repo)
+        if not files:
             no_manifest += 1
             continue
+        root_text, kind = find_root_manifest(files)
+        module_texts, skipped = split_modules(files)
+        build_logic_skipped += skipped
+        module_files += len(module_texts)
 
         manifests = dict(module_texts)
         root_deps = []
-        if manifest_path is not None:
-            text = manifest_path.read_text(encoding="utf-8", errors="replace")
+        if root_text is not None:
+            text = root_text
             manifests[kind] = text
             root_deps = parse_manifest(kind, text)
             if kind == "pom.xml":
@@ -531,15 +528,18 @@ def main(out_path="data/processed/repo_java_dependency_edges.json"):
     (ROOT / "data/processed/java_coord_to_repo.json").write_text(
         json.dumps(coord_map, indent=0, sort_keys=True))
 
+    repos_with, files_seen, nested = manifest_stats("java", cohort)
+    scanned, legacy, unscanned = coverage("java", cohort)
     touched = {n for e in edges for n in (e[0], e[1])}
     sources = {e[0] for e in edges}
     targets = {e[1] for e in edges}
     print(
-        f"{parsed_pom + parsed_gradle}/{len(java_repos)} Java repos have a root manifest "
-        f"({parsed_pom} pom.xml, {parsed_gradle} build.gradle[.kts], {no_manifest} have neither a "
-        f"root manifest nor any module one), plus {module_files} submodule manifests "
-        f"({build_logic_skipped} skipped as build logic / test fixtures / vendored trees, "
-        f"{not_swept} repos not swept by 32 yet). "
+        f"{repos_with}/{len(cohort)} cohort repos have a Java manifest across {files_seen} files "
+        f"({nested} nested); {parsed_pom} contributed a root pom.xml, {parsed_gradle} a root "
+        f"build.gradle[.kts], {no_manifest} have none at all. {module_files} module manifests "
+        f"parsed ({build_logic_skipped} skipped as build logic / test fixtures / vendored trees; "
+        f"{scanned} repos from the tree sweep, {legacy} from the legacy root-only cache, "
+        f"{unscanned} never fetched). "
         f"{intra_repo_refs} (repo, coordinate) pairs dropped as references to a module the repo "
         f"publishes itself. "
         f"{repos_with_deps} repos declare at least one dependency "

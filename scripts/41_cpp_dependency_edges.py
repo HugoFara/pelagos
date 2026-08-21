@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
-"""Real `repo --depends on--> repo` edges for the C/C++ cohort, from each
-repo's .gitmodules / vcpkg.json / conanfile.{py,txt} (cached by
-40_fetch_cpp_manifests.py).
+"""Real `repo --depends on--> repo` edges from declared C/C++ dependencies.
+
+Reads every .gitmodules / vcpkg.json / conanfile in the cohort, at any depth,
+via scripts/manifests.py -- not one file at the root of the repos GitHub's
+`language:` facet labelled C/C++. That facet reports a repo's *dominant*
+language, one value per repo, so under the old scoping a repo could not
+contribute C/C++ dependencies unless C/C++ happened to be its biggest
+language by bytes. Vendored trees and byte-identical copies of other
+projects' manifests are dropped by that module before anything is parsed
+here; see its docstring for the measurement behind the change.
 
 Sixth ecosystem wired into 11_dependency_edges.py's combined dependency
 tier, after Go (29), JS/TS (31), Java (33), Rust (36) and Python (38), and
@@ -92,8 +99,11 @@ import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from identity import canonical_lookup  # noqa: E402
+from manifests import load_manifests, manifest_stats  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
-CPP_MANIFEST_CACHE = ROOT / "data/raw/cpp_manifest_cache"
 VCPKG_PORT_CACHE = ROOT / "data/raw/vcpkg_port_cache"
 CONAN_RECIPE_CACHE = ROOT / "data/raw/conan_recipe_cache"
 
@@ -323,44 +333,39 @@ def _resolve_conan_package_live(package):
 def load_node_ids():
     top50 = json.loads((ROOT / "data/processed/repo_aggregates.json").read_text())
     extra = json.loads((ROOT / "data/processed/dependency_repo_aggregates.json").read_text())
-    all_ids = list(top50) + list(extra)
-    return {rid.lower(): rid for rid in all_ids}  # last one wins on collision; none expected
-
-
-def manifest_path(owner, name, kind):
-    suffix = kind if kind.startswith(".") else f".{kind}"
-    return CPP_MANIFEST_CACHE / f"{owner}__{name}{suffix}"
+    return canonical_lookup(list(top50) + list(extra))  # duplicate slugs resolved; see scripts/identity.py
 
 
 def main(out_path="data/processed/repo_cpp_dependency_edges.json"):
     canon_lookup = load_node_ids()
-    cpp_repos = sorted(set(
-        l.strip() for l in
-        (ROOT / "data/repo-lists/cpp_ecosystem_repos.txt").read_text().splitlines() if l.strip()
-    ))
+    cohort = sorted(set(canon_lookup.values()))
+    manifests = load_manifests("cpp", cohort)
 
     vcpkg_resolved = {}  # port -> owner/repo or None, shared across every repo
     conan_resolved = {}  # package -> owner/repo or None
     edge_coords = defaultdict(set)  # (source, target) -> {coordinate, ...}
 
-    kind_repo_counts = defaultdict(int)  # kind -> repos that declared >=1 dep via it
+    kind_repos = defaultdict(set)  # kind -> repos that declared >=1 dep via it
     kind_dep_counts = defaultdict(int)   # kind -> raw declared entries
     with_manifest = 0
     relative_total = 0
 
-    for repo in cpp_repos:
-        owner, name = repo.split("/", 1)
-        source = canon_lookup.get(repo.lower(), repo)
-        present = [k for k in MANIFEST_KINDS if manifest_path(owner, name, k).exists()]
-        if not present:
+    for repo in cohort:
+        files = manifests.get(repo)
+        if not files:
             continue
+        source = canon_lookup.get(repo.lower(), repo)
         with_manifest += 1
 
-        # (coordinate, already-resolved owner/repo or None, registry) triples
+        # (coordinate, already-resolved owner/repo or None, registry) triples.
+        # A repo can now hold several manifests of the same kind at different
+        # paths -- a vcpkg.json per subproject, a .gitmodules in a nested
+        # component -- so this walks (path, kind) pairs rather than the single
+        # root file per kind the root-only cache could hold.
         entries = []
-        for kind in present:
-            text = manifest_path(owner, name, kind).read_text(encoding="utf-8", errors="replace")
-            if not text.strip():
+        for path, text in sorted(files.items()):
+            kind = path.rpartition("/")[2]
+            if kind not in MANIFEST_KINDS or not text.strip():
                 continue
             if kind == ".gitmodules":
                 deps, relative = parse_gitmodules(text, repo)
@@ -373,8 +378,8 @@ def main(out_path="data/processed/repo_cpp_dependency_edges.json"):
             else:  # conanfile.txt
                 found = [(pkg, None, "conan") for pkg in parse_conanfile_txt(text)]
             if found:
-                kind_repo_counts[kind] += 1
-                kind_dep_counts[kind] += len(found)
+                kind_repos[kind].add(repo)  # a set, not a counter: one repo can hold
+                kind_dep_counts[kind] += len(found)  # several manifests of the same kind now
             entries.extend(found)
 
         for coord, direct, registry in entries:
@@ -415,12 +420,14 @@ def main(out_path="data/processed/repo_cpp_dependency_edges.json"):
     sources = {e[0] for e in edges}
     targets = {e[1] for e in edges}
     per_kind = ", ".join(
-        f"{kind_dep_counts[k]} via {k} ({kind_repo_counts[k]} repos)"
+        f"{kind_dep_counts[k]} via {k} ({len(kind_repos[k])} repos)"
         for k in MANIFEST_KINDS if kind_dep_counts[k])
+    _repos_with, files_seen, nested = manifest_stats("cpp", cohort)
     vcpkg_ok = sum(1 for v in vcpkg_resolved.values() if v)
     conan_ok = sum(1 for v in conan_resolved.values() if v)
     print(
-        f"{with_manifest}/{len(cpp_repos)} C/C++ repos have at least one manifest, "
+        f"{with_manifest}/{len(cohort)} cohort repos have at least one C/C++ manifest across "
+        f"{files_seen} files ({nested} of them nested, unreachable by root-only fetching), "
         f"{sum(kind_dep_counts.values())} dependency entries [{per_kind}], "
         f"{relative_total} submodule URLs resolved relative to their superproject; "
         f"registry lookups: {len(vcpkg_resolved)} vcpkg ports ({vcpkg_ok} resolved), "

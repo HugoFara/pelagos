@@ -1,7 +1,18 @@
 #!/usr/bin/env python3
-"""Real `repo --depends on--> repo` edges for the Python-ecosystem cohort,
-from each repo's root pyproject.toml / requirements.txt (cached by
-37_fetch_python_manifests.py).
+"""Real `repo --depends on--> repo` edges from declared Python dependencies.
+
+Reads every pyproject.toml / requirements.txt in the cohort, at any depth, via
+scripts/manifests.py -- not one file at the root of the repos GitHub's
+`language:` facet labelled Python. That facet reports a repo's *dominant*
+language, one value per repo, so under the old scoping a repo could not
+contribute Python dependencies unless Python happened to be its biggest
+language by bytes. Vendored trees and byte-identical copies of other
+projects' manifests are dropped by that module before anything is parsed
+here; see its docstring for the measurement behind the change.
+
+The pyproject-wins-unless-empty priority is resolved per *directory* now,
+not once per repo: a nested package has its own pair of files and its own
+answer to which of the two is real.
 
 Fifth and last ecosystem folded into 11_dependency_edges.py's combined
 dependency tier, after Go (29), JS/TS (31), Java (33) and Rust (36). Closes
@@ -64,8 +75,11 @@ import urllib.request
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from identity import canonical_lookup  # noqa: E402
+from manifests import load_manifests, manifest_stats  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
-PYTHON_MANIFEST_CACHE = ROOT / "data/raw/python_manifest_cache"
 PYPI_CACHE = ROOT / "data/raw/pypi_cache"  # shared with 09_resolve_packages.py
 PYPI_FETCH_THROTTLE_S = 0.1  # same margin 09_resolve_packages.py uses
 
@@ -220,42 +234,52 @@ def resolve_from_pypi_json(data):
 def load_node_ids():
     top50 = json.loads((ROOT / "data/processed/repo_aggregates.json").read_text())
     extra = json.loads((ROOT / "data/processed/dependency_repo_aggregates.json").read_text())
-    all_ids = list(top50) + list(extra)
-    return {rid.lower(): rid for rid in all_ids}  # last one wins on collision; none expected
+    return canonical_lookup(list(top50) + list(extra))  # duplicate slugs resolved; see scripts/identity.py
 
 
-def repo_dependencies(owner, name):
-    """(package names, kind_used) for one repo, or ([], None) if it has no
-    manifest at all.
+def repo_dependencies(files):
+    """(package names, kinds used) for one repo, or ([], set()) if none of its
+    manifests declares anything.
 
     pyproject.toml wins when it actually declares something. When it parses to
     nothing -- `dynamic = ["dependencies"]`, or a pyproject that is purely
     ruff/black config -- the requirements.txt beside it is the real list, so
     fall back to it rather than reporting the repo as dependency-free
     (3b1b/manim, AUTOMATIC1111/stable-diffusion-webui, Comfy-Org/ComfyUI,
-    ansible/ansible, vllm-project/vllm, hacksider/Deep-Live-Cam all hit this)."""
+    ansible/ansible, vllm-project/vllm, hacksider/Deep-Live-Cam all hit this).
+
+    That priority is resolved **per directory**, now that a repo can have more
+    than one manifest. A nested package has its own pyproject/requirements
+    pair and its own answer to which of the two is real; deciding once for the
+    whole repo would let one directory's populated pyproject suppress
+    another's requirements.txt."""
     parsers = {
         "pyproject.toml": parse_pyproject_dependencies,
         "requirements.txt": parse_requirements_dependencies,
     }
-    present = None
-    for kind in MANIFEST_KINDS:  # priority order
-        path = PYTHON_MANIFEST_CACHE / f"{owner}__{name}.{kind}"
-        if not path.exists():
-            continue
-        present = present or kind
-        deps = parsers[kind](path.read_text(encoding="utf-8", errors="replace"))
-        if deps:
-            return deps, kind
-    return [], present
+    by_dir = defaultdict(dict)
+    for path, text in files.items():
+        directory, _, filename = path.rpartition("/")
+        by_dir[directory][filename] = text
+
+    deps, kinds = [], set()
+    for directory in sorted(by_dir):
+        here = by_dir[directory]
+        for kind in MANIFEST_KINDS:  # priority order
+            if kind not in here:
+                continue
+            found = parsers[kind](here[kind])
+            if found:
+                deps.extend(found)
+                kinds.add(kind)
+                break
+    return deps, kinds
 
 
 def main(out_path="data/processed/repo_python_dependency_edges.json"):
     canon_lookup = load_node_ids()
-    python_repos = sorted(set(
-        l.strip() for l in
-        (ROOT / "data/repo-lists/python_ecosystem_repos.txt").read_text().splitlines() if l.strip()
-    ))
+    cohort = sorted(set(canon_lookup.values()))
+    manifests = load_manifests("python", cohort)
 
     pkg_resolved = {}  # normalized name -> owner/repo or None, shared across repos
     resolved_count, unresolved_count = 0, 0
@@ -263,15 +287,15 @@ def main(out_path="data/processed/repo_python_dependency_edges.json"):
     direct_dep_total = 0
     edge_packages = defaultdict(set)  # (source, target) -> {package name, ...}
 
-    for repo in python_repos:
-        owner, name = repo.split("/", 1)
-        deps, kind = repo_dependencies(owner, name)
-        if kind is None:
+    for repo in cohort:
+        files = manifests.get(repo)
+        if not files:
             no_manifest += 1
             continue
-        if kind == "pyproject.toml":
+        deps, kinds = repo_dependencies(files)
+        if "pyproject.toml" in kinds:
             parsed_pyproject += 1
-        else:
+        if "requirements.txt" in kinds:
             parsed_requirements += 1
         if not deps:
             continue
@@ -308,13 +332,15 @@ def main(out_path="data/processed/repo_python_dependency_edges.json"):
     (ROOT / "data/processed/python_package_to_repo.json").write_text(
         json.dumps(pkg_map, indent=0, sort_keys=True))
 
+    repos_with, files_seen, nested = manifest_stats("python", cohort)
     touched = {n for e in edges for n in (e[0], e[1])}
     sources = {e[0] for e in edges}
     targets = {e[1] for e in edges}
     print(
-        f"{parsed_pyproject + parsed_requirements}/{len(python_repos)} Python repos have a real "
-        f"manifest ({parsed_pyproject} pyproject.toml, {parsed_requirements} requirements.txt, "
-        f"{no_manifest} have neither), {direct_dep_total} dependency entries, "
+        f"{repos_with}/{len(cohort)} cohort repos have a real Python manifest across "
+        f"{files_seen} files ({nested} of them nested, unreachable by root-only fetching; "
+        f"{parsed_pyproject} repos contributed a pyproject.toml, {parsed_requirements} a "
+        f"requirements.txt, {no_manifest} have neither), {direct_dep_total} dependency entries, "
         f"{len(pkg_resolved)} distinct packages ({resolved_count} resolved to a GitHub repo, "
         f"{unresolved_count} left unresolved/non-GitHub) -> {len(edges)} dependency edges "
         f"({len(sources)} source repos -> {len(targets)} target repos, {len(touched)} nodes total) "

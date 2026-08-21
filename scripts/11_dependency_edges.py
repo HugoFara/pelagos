@@ -68,6 +68,9 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from identity import canonical_lookup  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 GITHUB_CACHE = ROOT / "data/raw/github_cache"
 
@@ -79,10 +82,17 @@ TRIPLE_RE = re.compile(
 
 
 def load_node_ids():
+    """Lowercased slug -> canonical node id.
+
+    Case-insensitive snapping was always needed here (the dependency cohort's
+    raw ids disagree with the curated lists on casing and ordering -- see the
+    module docstring). It now also resolves *duplicate* slugs: a package whose
+    registry metadata still points at `rwightman/pytorch-image-models` lands
+    on the one repository that names, instead of a second node beside it.
+    See scripts/identity.py."""
     top50 = json.loads((ROOT / "data/processed/repo_aggregates.json").read_text())
     extra = json.loads((ROOT / "data/processed/dependency_repo_aggregates.json").read_text())
-    all_ids = list(top50) + list(extra)
-    return {rid.lower(): rid for rid in all_ids}  # last one wins on collision; none expected
+    return canonical_lookup(list(top50) + list(extra))
 
 
 def package_target_cache(package_to_repo, canon_lookup):
