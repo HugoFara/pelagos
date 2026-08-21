@@ -31,8 +31,11 @@ pyproject.toml/requirements.txt-derived edges, see
 38_python_dependency_edges.py -- those repos postdate the SemRepo dump, so
 the usedPackage triples above never covered them), and data/processed/
 repo_cpp_dependency_edges.json (C/C++'s .gitmodules/vcpkg.json/conanfile
--derived edges, see 41_cpp_dependency_edges.py)
-when present, before the single top-K prune pass below runs -- all seven
+-derived edges, see 41_cpp_dependency_edges.py), and data/processed/
+repo_debian_dependency_edges.json (Debian's binary `Depends` field, see
+46_debian_dependency_edges.py -- the only source here that crosses the
+language boundary at all, since no language registry packages C libraries)
+when present, before the single top-K prune pass below runs -- all eight
 sources are the same semantic tier (a real, declared package
 dependency, the explorer's one "real dependency edge" type), so they need one
 shared prune over the combined graph, not several separate prunes
@@ -161,6 +164,7 @@ def main(out_full="data/processed/repo_dependency_edges.json",
         ("Cargo.toml requires", ROOT / "data/processed/repo_rust_dependency_edges.json"),
         ("pyproject/requirements requires", ROOT / "data/processed/repo_python_dependency_edges.json"),
         (".gitmodules/vcpkg/conan requires", ROOT / "data/processed/repo_cpp_dependency_edges.json"),
+        ("Debian Depends", ROOT / "data/processed/repo_debian_dependency_edges.json"),
     ]
     extra_summary = []
     for label, path in extra_sources:

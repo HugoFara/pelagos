@@ -1,0 +1,174 @@
+# Debian source package -> upstream repository, for scripts/46_debian_dependency_edges.py.
+#
+# Like data/repo-lists/upstream_origins.txt, this file is a CANDIDATE
+# GENERATOR, never evidence. Every line is corroborated by the script before
+# it is used, and an uncorroborated line is printed as a rejection rather than
+# silently trusted. See the script's docstring for the two corroborations.
+#
+# It exists because Debian's own metadata does not carry the upstream repo for
+# exactly the packages that matter most. 42.3% of Debian source packages have
+# a github.com URL in Homepage or Vcs-*, but those cover only 11.2% of all
+# reverse-dependency mass: the heavy bottom of the stack (glibc 23,246
+# reverse-deps, gcc 16,285, zlib 2,787, openssl 1,108, ncurses 982) publishes
+# on gnu.org, zlib.net and invisible-island.net, not on GitHub. Auto-resolution
+# finds the leaves and misses the roots, which is the half of the map this
+# whole exercise is about.
+#
+# Curating the top ~150 unresolved packages by reverse-dependency count adds
+# ~47% of reverse-dep mass on top of the automatic 11.2%. Past that the curve
+# flattens hard, so this list stops rather than chasing a long tail of
+# single-dependent packages.
+#
+# Where a project's real home is not GitHub (glibc on sourceware, gcc on
+# gcc.gnu.org, Qt on code.qt.io, GNOME on gitlab.gnome.org), the slug named
+# here is its GitHub mirror. That is the node *label*; the mirror relationship
+# itself is recorded by scripts/44_repo_identity.py, which is exactly the
+# model that phase established -- the node is the repository, the slug is a
+# readable name for it, and origins record where it really lives.
+#
+# Deliberately absent, and worth naming: cairo, dbus, fontconfig, libdrm,
+# libX11, libxcb, mesa, wayland, eigen, binutils, readline, ncurses, giflib,
+# libcap, x264, GNU gsl and libssh. Each was tried and rejected by the
+# corroboration below -- most publish only on gitlab.freedesktop.org,
+# sourceware.org or savannah, with no GitHub repository at all, and the
+# GitHub mirrors that do exist for them are stale forks whose tags do not
+# match what Debian ships. They cannot be nodes until a node id can be
+# something other than a GitHub slug, which is the remaining half of this
+# work. Guessing a plausible-looking mirror for them would put fabricated
+# edges under the most load-bearing part of the graph.
+#
+# Format: <debian source package><TAB><owner/repo>
+
+# The C runtime and toolchain -- the true bottom of the stack.
+glibc	bminor/glibc
+gcc-14	gcc-mirror/gcc
+gcc-13	gcc-mirror/gcc
+gcc-12	gcc-mirror/gcc
+llvm-toolchain-19	llvm/llvm-project
+llvm-toolchain-18	llvm/llvm-project
+
+# Compression, crypto, encoding -- the most-linked leaf libraries.
+zlib	madler/zlib
+bzip2	libarchive/bzip2
+xz-utils	tukaani-project/xz
+libzstd	facebook/zstd
+lz4	lz4/lz4
+brotli	google/brotli
+openssl	openssl/openssl
+gnutls28	gnutls/gnutls
+libgcrypt20	gpg/libgcrypt
+nettle	gnutls/nettle
+libsodium	jedisct1/libsodium
+
+# Image, font and text rendering.
+libpng1.6	pnggroup/libpng
+libjpeg-turbo	libjpeg-turbo/libjpeg-turbo
+tiff	libsdl-org/libtiff
+libwebp	webmproject/libwebp
+freetype	freetype/freetype
+harfbuzz	harfbuzz/harfbuzz
+fribidi	fribidi/fribidi
+libexpat	libexpat/libexpat
+libxml2	GNOME/libxml2
+libxslt	GNOME/libxslt
+
+# Core system libraries.
+ncurses	ThomasDickey/ncurses-snapshots
+pcre2	PCRE2Project/pcre2
+libffi	libffi/libffi
+sqlite3	sqlite/sqlite
+openldap	openldap/openldap
+cyrus-sasl2	cyrusimap/cyrus-sasl
+krb5	krb5/krb5
+util-linux	util-linux/util-linux
+systemd	systemd/systemd
+audit	linux-audit/audit-userspace
+libseccomp	seccomp/libseccomp
+pam	linux-pam/linux-pam
+shadow	shadow-maint/shadow
+e2fsprogs	tytso/e2fsprogs
+
+# Languages and their runtimes.
+python3-defaults	python/cpython
+python3.13	python/cpython
+python3.12	python/cpython
+perl	Perl/perl5
+ruby-defaults	ruby/ruby
+ruby3.1	ruby/ruby
+php8.2	php/php-src
+mono	mono/mono
+openjdk-21	openjdk/jdk21u
+openjdk-17	openjdk/jdk17u
+nodejs	nodejs/node
+lua5.4	lua/lua
+tcl8.6	tcltk/tcl
+golang-1.24	golang/go
+rustc	rust-lang/rust
+
+# Networking and transport.
+curl	curl/curl
+libssh2	libssh2/libssh2
+c-ares	c-ares/c-ares
+nghttp2	nghttp2/nghttp2
+libpsl	rockdaboot/libpsl
+openssh	openssh/openssh-portable
+rsync	RsyncProject/rsync
+
+# Graphics, desktop and multimedia.
+glib2.0	GNOME/glib
+gtk+3.0	GNOME/gtk
+gtk4	GNOME/gtk
+pango1.0	GNOME/pango
+gdk-pixbuf	GNOME/gdk-pixbuf
+atk1.0	GNOME/atk
+libglvnd	NVIDIA/libglvnd
+qt6-base	qt/qtbase
+qtbase-opensource-src	qt/qtbase
+qt6-declarative	qt/qtdeclarative
+qtdeclarative-opensource-src	qt/qtdeclarative
+ffmpeg	FFmpeg/FFmpeg
+libvpx	webmproject/libvpx
+opus	xiph/opus
+libogg	xiph/ogg
+libvorbis	xiph/vorbis
+flac	xiph/flac
+alsa-lib	alsa-project/alsa-lib
+pulseaudio	pulseaudio/pulseaudio
+sdl2	libsdl-org/SDL
+libreoffice	LibreOffice/core
+
+# KDE frameworks (invent.kde.org, mirrored to GitHub).
+kf6-kconfig	KDE/kconfig
+kf6-kio	KDE/kio
+kf6-ki18n	KDE/ki18n
+kf6-kcoreaddons	KDE/kcoreaddons
+kf6-kwidgetsaddons	KDE/kwidgetsaddons
+kf6-kcompletion	KDE/kcompletion
+
+# Scientific and numeric.
+numpy	numpy/numpy
+lapack	Reference-LAPACK/lapack
+openblas	OpenMathLib/OpenBLAS
+suitesparse	DrTimothyAldenDavis/SuiteSparse
+fftw3	FFTW/fftw3
+hdf5	HDFGroup/hdf5
+opencv	opencv/opencv
+
+# Widely-depended-on application-level packages.
+requests	psf/requests
+sphinx	sphinx-doc/sphinx
+boost1.83	boostorg/boost
+dpdk	DPDK/dpdk
+node-jquery	jquery/jquery
+symfony	symfony/symfony
+protobuf	protocolbuffers/protobuf
+grpc	grpc/grpc
+abseil	abseil/abseil-cpp
+re2	google/re2
+snappy	google/snappy
+jsoncpp	open-source-parsers/jsoncpp
+yaml-cpp	jbeder/yaml-cpp
+fmtlib	fmtlib/fmt
+spdlog	gabime/spdlog
+catch2	catchorg/Catch2
+googletest	google/googletest
