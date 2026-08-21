@@ -347,7 +347,7 @@ ElliottYan/Multi_Unit_Transformer
 ElliottYan/RefuteBench
 EmbarkStudios/cargo-deny
 EmbarkStudios/kajiya
-EmbarkStudios/rust-gpu
+Rust-GPU/rust-gpu
 Ending2015a/liepose-diffusion
 EndlessCheng/codeforces-go
 EngineHub/WorldEdit
@@ -983,7 +983,7 @@ P-H-C/phc-winner-argon2
 PBH-BTN/PeerBanHelper
 PCSX2/pcsx2
 PJunhyuk/people-counting-pose
-PKU-DAIR/mindware
+thomas-young-2013/mindware
 PKU-DAIR/open-box
 PKU-YuanGroup/Chat-UniVi
 PPjmchen/vlmpc
@@ -1071,7 +1071,7 @@ RPISEC/MBE
 RSSNext/Folo
 RT-Thread/rt-thread
 RUCAIBox/LAMOC
-RafaelMostert/detectron2
+facebookresearch/detectron2
 Raising-hrx/FAME
 Raldir/AdMIRaL
 Raldir/AuT-Few
@@ -1121,7 +1121,6 @@ Ruiyang-061X/LiSe
 RunanywhereAI/runanywhere-sdks
 RunpeiDong/DreamLLM
 Rust-GPU/rust-cuda
-Rust-GPU/rust-gpu
 Rust-SDL2/rust-sdl2
 RustAudio/cpal
 RustAudio/rodio
@@ -1404,7 +1403,7 @@ ValveSoftware/Proton
 ValveSoftware/openvr
 ValveSoftware/source-sdk-2013
 VamosC/CapHuman
-VarunGumma/fairseq
+facebookresearch/fairseq
 VaughnVernon/IDDD_Samples
 Vchitect/Latte
 Veason-silverbullet/UniTRec
@@ -1432,7 +1431,6 @@ Vujas-Eteph/LazyXMem
 WU-CVGL/MVControl
 WVector/AppUpdate
 WXinlong/DenseCL
-Waino/OpenNMT-py
 Walid-Rahman2/modified_sentence_transfomers
 WangWenhao0716/ISC-Track1-Submission
 WasmEdge/WasmEdge
@@ -1664,7 +1662,7 @@ alejandrobarredo/COUNTGEN-Framework
 aleksispi/ml-cloud-opt-thick
 alexZeakis/Embeddings4ER
 alexellis/k3sup
-alexmir1/catboost-cpu-evaluation-optimization
+catboost/catboost
 alexpasmantier/television
 algorithm-visualizer/algorithm-visualizer
 aliasrobotics/RVD
@@ -2262,7 +2260,6 @@ caskcsg/sentemb
 castorflex/SmoothProgressBar
 castorini/honk
 castorini/transformers-selective
-catboost/catboost
 catchorg/Catch2
 catppuccin/catppuccin
 cayleygraph/cayley
@@ -2272,7 +2269,7 @@ ccfos/nightingale
 cclx/Effective_Metrics
 ccusage/ccusage
 cdhx/MarkQA
-cedrickchee/pytorch-pretrained-BERT
+huggingface/transformers
 cemu-project/Cemu
 centrifugal/centrifugo
 ceph/ceph
@@ -2351,7 +2348,6 @@ chyyuu/os_kernel_lab
 cilium/cilium
 cilium/ebpf
 cinder/Cinder
-cindyxinyiwang/fairseq
 cinit/QAuxiliary
 cisco-open/DeepVision
 cisco/openh264
@@ -2380,7 +2376,7 @@ clidey/whodb
 clin1223/VLDet
 cline/cline
 clinicalml/co-llm
-clintonjwang/ControlNet
+lllyasviel/controlnet
 clobotics/piou
 clockworklabs/SpacetimeDB
 clojure/clojure
@@ -2405,7 +2401,6 @@ cloudwu/skynet
 clvoloshin/COBS
 clvrai/new-actions-rl
 cmb-chula/ReCasNet
-cmu-catalyst/collage
 cmu-db/bustub
 cmubig/SafeShift
 cmus/cmus
@@ -2904,7 +2899,6 @@ ethho/DeepLabCut
 ethz-asl/kalibr
 etsy/AndroidStaggeredGrid
 eugenp/tutorials
-eurecom-asp/spk_anon_nac_lm
 evalcrafter/EvalCrafter
 evant/gradle-retrolambda
 evanw/esbuild
@@ -2967,10 +2961,8 @@ facebookresearch/LASER
 facebookresearch/NeRF-Det
 facebookresearch/ParlAI
 facebookresearch/aepsych
-facebookresearch/detectron2
 facebookresearch/diplomacy_cicero
 facebookresearch/esm
-facebookresearch/fairseq
 facebookresearch/multihop_dense_retrieval
 facebookresearch/selective-vqa_ood
 facebookresearch/stopes
@@ -3086,7 +3078,6 @@ foreversd/forever
 forezp/SpringCloudLearning
 forhappy/Cplusplus-Concurrency-In-Practice
 formatjs/formatjs
-formiel/fairseq
 formkit/auto-animate
 forwardemail/superagent
 forwardemail/supertest
@@ -3618,7 +3609,6 @@ huggingface/sentence-transformers
 huggingface/text-embeddings-inference
 huggingface/text-generation-inference
 huggingface/tokenizers
-huggingface/transformers
 huggingface/transformers.js
 hui-po-wang/hijackgan
 huihut/interview
@@ -4312,7 +4302,6 @@ lltcggie/waifu2x-caffe
 llyx97/sparse-and-robust-PLM
 lmarzen/esp32-weather-epd
 lni/dragonboat
-lntzm/CVPR24Track-LongVideo
 lobehub/lobehub
 localForage/localForage
 localstack/localstack
@@ -4481,7 +4470,6 @@ mcxiaoke/android-volley
 mcxiaoke/packer-ng-plugin
 mcxtzhang/SwipeDelMenuLayout
 mdoumbouya/nicolingua
-mdtux89/OpenNMT-py-AMR-to-text
 mdx-js/mdx
 me115/design_patterns
 medialab/xan
@@ -4741,7 +4729,6 @@ msiemens/tinydb
 mstange/samply
 msu-video-group/adversarial-defenses-for-iqa
 mswjs/msw
-mt-upc/fairseq
 mtcld/mmdetection
 mthom/scryer-prolog
 mtkennerly/ludusavi
@@ -4865,7 +4852,6 @@ nisrulz/android-tips-tricks
 niumoo/bing-wallpaper
 nix-community/nh
 nix-rust/nix
-niyunsheng/EMS-SD
 njjiang/NLI_disagreement_taxonomy
 njucckevin/KnowCap
 nkaz001/hftbacktest
@@ -5698,7 +5684,6 @@ samizdatco/skia-canvas
 sammwyy/MikuMikuBeam
 sampotts/plyr
 samsam3232/qampari
-samwisegamjeee/pytorch-transformers
 sandboxie-plus/Sandboxie
 sangmichaelxie/doremi
 sangnekim/SMPConv
@@ -5813,7 +5798,6 @@ sharpbracket/redshift
 shawnkx/NAT-with-Local-AT
 shazow/ssh-chat
 sheeki03/tirith
-sheffieldnlp/AMR2Text-summ
 shelljs/shelljs
 shellphish/how2heap
 shenyunhang/UWSOD
@@ -6059,7 +6043,7 @@ sudheerj/javascript-interview-questions
 sudheerj/reactjs-interview-questions
 sufe-nlp/transformer-alignment
 sumatrapdfreader/sumatrapdf
-sumedhrasal/simulation
+openbmb/chatdev
 sunblaze-ucb/SED
 sundowndev/phoneinfoga
 sunface/rust-by-practice
@@ -6205,7 +6189,6 @@ theseus-os/Theseus
 thingsboard/thingsboard
 thinkaurelius/titan
 thoas/go-funk
-thomas-young-2013/mindware
 thomasgolda/Human-Pose-Estimation-for-Real-World-Crowded-Scenarios
 thomaspark/bootswatch
 threedworld-mit/tdw
@@ -6545,7 +6528,6 @@ vitejs/awesome-vite
 vitejs/vite
 vitessio/vitess
 vitest-dev/vitest
-vj-thakur/catboost
 vk-com/kphp-kdb
 vlcn-io/cr-sqlite
 vllm-project/aibrix

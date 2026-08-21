@@ -2,9 +2,9 @@ ray-project/ray
 pytorch/pytorch
 torvalds/linux
 openai/gpt-3
-tensorflow/magenta
+magenta/magenta
 facebookresearch/faiss
-hwchase17/langchain
+langchain-ai/langchain
 ultralytics/ultralytics
 compvis/stable-diffusion
 deepinsight/insightface

@@ -47,7 +47,7 @@ EbTech/rust-algorithms
 EcoPasteHub/EcoPaste
 EmbarkStudios/cargo-deny
 EmbarkStudios/kajiya
-EmbarkStudios/rust-gpu
+Rust-GPU/rust-gpu
 EpicGames/lore
 EricLBuehler/mistral.rs
 Eventual-Inc/Daft
@@ -127,7 +127,6 @@ RedisJSON/RedisJSON
 Rigellute/spotify-tui
 RightNow-AI/openfang
 Rust-GPU/rust-cuda
-Rust-GPU/rust-gpu
 Rust-SDL2/rust-sdl2
 RustAudio/cpal
 RustAudio/rodio

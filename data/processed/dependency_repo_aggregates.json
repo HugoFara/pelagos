@@ -2791,14 +2791,6 @@
 "title": "kajiya",
 "watchers": 90
 },
-"EmbarkStudios/rust-gpu": {
-"contributors": null,
-"forks": 247,
-"openIssues": 108,
-"stargazers": 7570,
-"title": "rust-gpu",
-"watchers": 2
-},
 "Ending2015a/liepose-diffusion": {
 "contributors": null,
 "forks": 1,
@@ -7879,14 +7871,6 @@
 "title": "people-counting-pose",
 "watchers": 14
 },
-"PKU-DAIR/mindware": {
-"contributors": null,
-"forks": 10,
-"openIssues": 0,
-"stargazers": 65,
-"title": "mindware",
-"watchers": 2
-},
 "PKU-DAIR/open-box": {
 "contributors": null,
 "forks": 57,
@@ -8581,14 +8565,6 @@
 "openIssues": 0,
 "stargazers": 3,
 "title": "LAMOC",
-"watchers": 0
-},
-"RafaelMostert/detectron2": {
-"contributors": null,
-"forks": 0,
-"openIssues": 0,
-"stargazers": 0,
-"title": "detectron2",
 "watchers": 0
 },
 "Raising-hrx/FAME": {
@@ -11247,14 +11223,6 @@
 "title": "CapHuman",
 "watchers": 8
 },
-"VarunGumma/fairseq": {
-"contributors": null,
-"forks": 6,
-"openIssues": 0,
-"stargazers": 25,
-"title": "fairseq",
-"watchers": 1
-},
 "VaughnVernon/IDDD_Samples": {
 "contributors": null,
 "forks": 921,
@@ -11470,14 +11438,6 @@
 "stargazers": 570,
 "title": "DenseCL",
 "watchers": 7
-},
-"Waino/OpenNMT-py": {
-"contributors": null,
-"forks": 4,
-"openIssues": 0,
-"stargazers": 7,
-"title": "OpenNMT-py",
-"watchers": 1
 },
 "Walid-Rahman2/modified_sentence_transfomers": {
 "contributors": null,
@@ -13326,14 +13286,6 @@
 "stargazers": 7402,
 "title": "k3sup",
 "watchers": 77
-},
-"alexmir1/catboost-cpu-evaluation-optimization": {
-"contributors": null,
-"forks": 0,
-"openIssues": 0,
-"stargazers": 0,
-"title": "catboost-cpu-evaluation-optimization",
-"watchers": 0
 },
 "alexpasmantier/television": {
 "contributors": null,
@@ -18191,14 +18143,6 @@
 "title": "MarkQA",
 "watchers": 2
 },
-"cedrickchee/pytorch-pretrained-BERT": {
-"contributors": null,
-"forks": 5,
-"openIssues": 0,
-"stargazers": 11,
-"title": "pytorch-pretrained-BERT",
-"watchers": 1
-},
 "cemu-project/Cemu": {
 "contributors": null,
 "forks": 911,
@@ -18823,14 +18767,6 @@
 "title": "Cinder",
 "watchers": 257
 },
-"cindyxinyiwang/fairseq": {
-"contributors": null,
-"forks": 0,
-"openIssues": 0,
-"stargazers": 0,
-"title": "fairseq",
-"watchers": 0
-},
 "cinit/QAuxiliary": {
 "contributors": null,
 "forks": 411,
@@ -19055,14 +18991,6 @@
 "title": "co-llm",
 "watchers": 10
 },
-"clintonjwang/ControlNet": {
-"contributors": null,
-"forks": 10,
-"openIssues": 0,
-"stargazers": 101,
-"title": "ControlNet",
-"watchers": 1
-},
 "clobotics/piou": {
 "contributors": null,
 "forks": 38,
@@ -19254,14 +19182,6 @@
 "stargazers": 9,
 "title": "ReCasNet",
 "watchers": 2
-},
-"cmu-catalyst/collage": {
-"contributors": 370,
-"forks": 3,
-"openIssues": null,
-"stargazers": 48,
-"title": "collage",
-"watchers": 3
 },
 "cmu-db/bustub": {
 "contributors": null,
@@ -19744,7 +19664,7 @@
 "watchers": 337
 },
 "coqui-ai/TTS": {
-"contributors": null,
+"contributors": 121,
 "forks": 6153,
 "openIssues": 4,
 "stargazers": 45748,
@@ -23247,14 +23167,6 @@
 "title": "tutorials",
 "watchers": 1471
 },
-"eurecom-asp/spk_anon_nac_lm": {
-"contributors": 121,
-"forks": null,
-"openIssues": null,
-"stargazers": 2,
-"title": "spk_anon_nac_lm",
-"watchers": null
-},
 "evalcrafter/EvalCrafter": {
 "contributors": null,
 "forks": 13,
@@ -24702,14 +24614,6 @@
 "stargazers": 14731,
 "title": "formatjs",
 "watchers": 126
-},
-"formiel/fairseq": {
-"contributors": 291,
-"forks": 1,
-"openIssues": null,
-"stargazers": 19,
-"title": "fairseq",
-"watchers": null
 },
 "formkit/auto-animate": {
 "contributors": null,
@@ -33128,7 +33032,7 @@
 "watchers": 11
 },
 "langchain-ai/langchain": {
-"contributors": null,
+"contributors": 481,
 "forks": 23575,
 "openIssues": 424,
 "stargazers": 141857,
@@ -34471,6 +34375,14 @@
 "title": "SpaDiT",
 "watchers": 2
 },
+"lllyasviel/controlnet": {
+"contributors": 6,
+"forks": 1026,
+"openIssues": 426,
+"stargazers": 10000,
+"title": "controlnet",
+"watchers": 219
+},
 "lllyasviel/style2paints": {
 "contributors": null,
 "forks": 2068,
@@ -34510,14 +34422,6 @@
 "stargazers": 5320,
 "title": "dragonboat",
 "watchers": 146
-},
-"lntzm/CVPR24Track-LongVideo": {
-"contributors": null,
-"forks": 1,
-"openIssues": 0,
-"stargazers": 5,
-"title": "CVPR24Track-LongVideo",
-"watchers": 0
 },
 "lobehub/lobehub": {
 "contributors": null,
@@ -35861,14 +35765,6 @@
 "openIssues": 1,
 "stargazers": 10,
 "title": "nicolingua",
-"watchers": 1
-},
-"mdtux89/OpenNMT-py-AMR-to-text": {
-"contributors": null,
-"forks": 5,
-"openIssues": 1,
-"stargazers": 24,
-"title": "OpenNMT-py-AMR-to-text",
 "watchers": 1
 },
 "mdx-js/mdx": {
@@ -37943,14 +37839,6 @@
 "title": "msw",
 "watchers": 64
 },
-"mt-upc/fairseq": {
-"contributors": 293,
-"forks": null,
-"openIssues": null,
-"stargazers": 6,
-"title": "fairseq",
-"watchers": null
-},
 "mtcld/mmdetection": {
 "contributors": 156,
 "forks": 1,
@@ -38934,14 +38822,6 @@
 "stargazers": 3060,
 "title": "nix",
 "watchers": 28
-},
-"niyunsheng/EMS-SD": {
-"contributors": null,
-"forks": 2,
-"openIssues": 0,
-"stargazers": 11,
-"title": "EMS-SD",
-"watchers": 0
 },
 "njjiang/NLI_disagreement_taxonomy": {
 "contributors": null,
@@ -39942,6 +39822,14 @@
 "stargazers": 6672,
 "title": "openbao",
 "watchers": 38
+},
+"openbmb/chatdev": {
+"contributors": 56,
+"forks": 934,
+"openIssues": 23,
+"stargazers": 10000,
+"title": "chatdev",
+"watchers": 316
 },
 "openclaw/gogcli": {
 "contributors": null,
@@ -45599,14 +45487,6 @@
 "title": "qampari",
 "watchers": 1
 },
-"samwisegamjeee/pytorch-transformers": {
-"contributors": 96,
-"forks": null,
-"openIssues": null,
-"stargazers": 1,
-"title": "pytorch-transformers",
-"watchers": 1
-},
 "sandboxie-plus/Sandboxie": {
 "contributors": null,
 "forks": 2047,
@@ -46518,14 +46398,6 @@
 "stargazers": 2632,
 "title": "tirith",
 "watchers": 5
-},
-"sheffieldnlp/AMR2Text-summ": {
-"contributors": null,
-"forks": 5,
-"openIssues": 3,
-"stargazers": 24,
-"title": "AMR2Text-summ",
-"watchers": 2
 },
 "shelljs/shelljs": {
 "contributors": null,
@@ -48486,14 +48358,6 @@
 "stargazers": 17238,
 "title": "sumatrapdf",
 "watchers": 312
-},
-"sumedhrasal/simulation": {
-"contributors": 40,
-"forks": null,
-"openIssues": null,
-"stargazers": 4,
-"title": "simulation",
-"watchers": null
 },
 "sunblaze-ucb/SED": {
 "contributors": null,
@@ -52375,14 +52239,6 @@
 "title": "vitest",
 "watchers": 56
 },
-"vj-thakur/catboost": {
-"contributors": null,
-"forks": 0,
-"openIssues": 0,
-"stargazers": 0,
-"title": "catboost",
-"watchers": 1
-},
 "vk-com/kphp-kdb": {
 "contributors": null,
 "forks": 214,
@@ -55152,7 +55008,7 @@
 "watchers": 3
 },
 "zai-org/ChatGLM-6B": {
-"contributors": null,
+"contributors": 46,
 "forks": 5132,
 "openIssues": 609,
 "stargazers": 41029,

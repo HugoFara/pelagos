@@ -16,7 +16,7 @@ google-ai-edge/mediapipe
 google/sentencepiece
 h2oai/h2ogpt
 hpcaitech/colossalai
-hwchase17/langchain
+langchain-ai/langchain
 isl-org/open3d
 jetbrains/intellij-community
 kanaries/pygwalker
@@ -24,7 +24,7 @@ labmlai/annotated_deep_learning_paper_implementations
 lllyasviel/controlnet
 ludwig-ai/ludwig
 microsoft/airsim
-microsoft/guidance
+guidance-ai/guidance
 microsoft/swin-transformer
 mlc-ai/web-llm
 myshell-ai/openvoice
@@ -39,12 +39,12 @@ pytorch/examples
 pytorch/pytorch
 qwenlm/qwen1.5
 ray-project/ray
-rwightman/pytorch-image-models
+huggingface/pytorch-image-models
 seemoo-lab/openhaystack
 slundberg/shap
 state-spaces/mamba
-tensorflow/magenta
-thudm/chatglm-6b
+magenta/magenta
+zai-org/ChatGLM-6B
 torvalds/linux
 ultralytics/ultralytics
 vision-cair/minigpt-4

@@ -1,410 +1,410 @@
 {
 "2noise/chattts": {
-"title": "chattts",
-"stargazers": 10000,
+"contributors": 52,
 "forks": 694,
 "openIssues": 61,
-"watchers": 191,
-"contributors": 52
-},
-"aigc-audio/audiogpt": {
-"title": "audiogpt",
 "stargazers": 10000,
-"forks": 270,
-"openIssues": 41,
-"watchers": 134,
-"contributors": 11
+"title": "chattts",
+"watchers": 191
 },
 "AliaksandrSiarohin/first-order-model": {
-"title": "first-order-model",
-"stargazers": 10000,
+"contributors": 21,
 "forks": 1013,
 "openIssues": 307,
-"watchers": 352,
-"contributors": 21
-},
-"apple/ml-stable-diffusion": {
-"title": "ml-stable-diffusion",
 "stargazers": 10000,
-"forks": 612,
-"openIssues": 165,
-"watchers": 141,
-"contributors": 37
+"title": "first-order-model",
+"watchers": 352
 },
 "Avik-Jain/100-Days-Of-ML-Code": {
-"title": "100-Days-Of-ML-Code",
-"stargazers": 10000,
+"contributors": 6,
 "forks": 1072,
 "openIssues": null,
-"watchers": 2450,
-"contributors": 6
-},
-"bradyfu/awesome-multimodal-large-language-models": {
-"title": "awesome-multimodal-large-language-models",
 "stargazers": 10000,
-"forks": 207,
-"openIssues": 34,
-"watchers": 268,
-"contributors": 11
-},
-"compvis/latent-diffusion": {
-"title": "latent-diffusion",
-"stargazers": 10000,
-"forks": 1008,
-"openIssues": 266,
-"watchers": 98,
-"contributors": 4
-},
-"d2l-ai/d2l-en": {
-"title": "d2l-en",
-"stargazers": 10000,
-"forks": 1021,
-"openIssues": 101,
-"watchers": 421,
-"contributors": 297
-},
-"deepinsight/insightface": {
-"title": "insightface",
-"stargazers": 10000,
-"forks": 1053,
-"openIssues": 1146,
-"watchers": 519,
-"contributors": 57
-},
-"dmlc/dgl": {
-"title": "dgl",
-"stargazers": 10000,
-"forks": 1010,
-"openIssues": 432,
-"watchers": 173,
-"contributors": 288
-},
-"facebookresearch/animateddrawings": {
-"title": "animateddrawings",
-"stargazers": 10000,
-"forks": 534,
-"openIssues": 15,
-"watchers": 95,
-"contributors": 17
-},
-"facebookresearch/faiss": {
-"title": "faiss",
-"stargazers": 10000,
-"forks": 1081,
-"openIssues": 225,
-"watchers": 480,
-"contributors": 169
-},
-"facebookresearch/seamless_communication": {
-"title": "seamless_communication",
-"stargazers": 10000,
-"forks": 279,
-"openIssues": 218,
-"watchers": 145,
-"contributors": 36
-},
-"flagalpha/llama2-chinese": {
-"title": "llama2-chinese",
-"stargazers": 10000,
-"forks": 263,
-"openIssues": 194,
-"watchers": 147,
-"contributors": 15
-},
-"google-ai-edge/mediapipe": {
-"title": "mediapipe",
-"stargazers": 10000,
-"forks": 1039,
-"openIssues": 373,
-"watchers": 519,
-"contributors": 80
-},
-"google/sentencepiece": {
-"title": "sentencepiece",
-"stargazers": 10000,
-"forks": 970,
-"openIssues": 38,
-"watchers": 128,
-"contributors": 85
-},
-"h2oai/h2ogpt": {
-"title": "h2ogpt",
-"stargazers": 10000,
-"forks": 433,
-"openIssues": 280,
-"watchers": 156,
-"contributors": 69
-},
-"hpcaitech/colossalai": {
-"title": "colossalai",
-"stargazers": 10000,
-"forks": 1005,
-"openIssues": 400,
-"watchers": 385,
-"contributors": 188
-},
-"hwchase17/langchain": {
-"title": "langchain",
-"stargazers": 10000,
-"forks": 1015,
-"openIssues": 356,
-"watchers": 711,
-"contributors": 481
-},
-"isl-org/open3d": {
-"title": "open3d",
-"stargazers": 10000,
-"forks": 1042,
-"openIssues": 1217,
-"watchers": 197,
-"contributors": 216
-},
-"jetbrains/intellij-community": {
-"title": "intellij-community",
-"stargazers": 10000,
-"forks": 1068,
-"openIssues": null,
-"watchers": 541,
-"contributors": 273
-},
-"kanaries/pygwalker": {
-"title": "pygwalker",
-"stargazers": 10000,
-"forks": 290,
-"openIssues": 57,
-"watchers": 82,
-"contributors": 22
-},
-"labmlai/annotated_deep_learning_paper_implementations": {
-"title": "annotated_deep_learning_paper_implementations",
-"stargazers": 10000,
-"forks": 1057,
-"openIssues": 29,
-"watchers": 465,
-"contributors": 37
-},
-"lllyasviel/controlnet": {
-"title": "controlnet",
-"stargazers": 10000,
-"forks": 1026,
-"openIssues": 426,
-"watchers": 219,
-"contributors": 6
-},
-"ludwig-ai/ludwig": {
-"title": "ludwig",
-"stargazers": 10000,
-"forks": 1030,
-"openIssues": 38,
-"watchers": 193,
-"contributors": 148
-},
-"microsoft/airsim": {
-"title": "airsim",
-"stargazers": 10000,
-"forks": 1016,
-"openIssues": 660,
-"watchers": 592,
-"contributors": 198
-},
-"microsoft/guidance": {
-"title": "guidance",
-"stargazers": 10000,
-"forks": 499,
-"openIssues": 249,
-"watchers": 120,
-"contributors": 74
-},
-"microsoft/swin-transformer": {
-"title": "swin-transformer",
-"stargazers": 10000,
-"forks": 1032,
-"openIssues": 180,
-"watchers": 126,
-"contributors": 14
-},
-"mlc-ai/web-llm": {
-"title": "web-llm",
-"stargazers": 10000,
-"forks": 368,
-"openIssues": 84,
-"watchers": 132,
-"contributors": 45
-},
-"myshell-ai/openvoice": {
-"title": "openvoice",
-"stargazers": 10000,
-"forks": 643,
-"openIssues": 213,
-"watchers": 229,
-"contributors": 13
-},
-"nvidia/deeplearningexamples": {
-"title": "deeplearningexamples",
-"stargazers": 10000,
-"forks": 1035,
-"openIssues": 280,
-"watchers": 297,
-"contributors": 102
-},
-"nvlabs/stylegan2": {
-"title": "stylegan2",
-"stargazers": 10000,
-"forks": 1067,
-"openIssues": null,
-"watchers": 370,
-"contributors": 3
-},
-"openai/gpt-3": {
-"title": "gpt-3",
-"stargazers": 10000,
-"forks": 1069,
-"openIssues": 3,
-"watchers": 893,
-"contributors": 3
-},
-"openbmb/chatdev": {
-"title": "chatdev",
-"stargazers": 10000,
-"forks": 934,
-"openIssues": 23,
-"watchers": 316,
-"contributors": 56
-},
-"openmoss/moss": {
-"title": "moss",
-"stargazers": 10000,
-"forks": 1065,
-"openIssues": 234,
-"watchers": 121,
-"contributors": 16
+"title": "100-Days-Of-ML-Code",
+"watchers": 2450
 },
 "PaddlePaddle/PaddleDetection": {
-"title": "PaddleDetection",
-"stargazers": 10000,
+"contributors": 174,
 "forks": 1023,
 "openIssues": 1215,
-"watchers": 198,
-"contributors": 174
-},
-"phillipi/pix2pix": {
-"title": "pix2pix",
 "stargazers": 10000,
-"forks": 1012,
-"openIssues": 89,
-"watchers": 321,
-"contributors": 13
+"title": "PaddleDetection",
+"watchers": 198
 },
-"pytorch/examples": {
-"title": "examples",
+"aigc-audio/audiogpt": {
+"contributors": 11,
+"forks": 270,
+"openIssues": 41,
 "stargazers": 10000,
-"forks": 1052,
-"openIssues": 187,
-"watchers": 395,
-"contributors": 238
+"title": "audiogpt",
+"watchers": 134
 },
-"pytorch/pytorch": {
-"title": "pytorch",
+"apple/ml-stable-diffusion": {
+"contributors": 37,
+"forks": 612,
+"openIssues": 165,
 "stargazers": 10000,
-"forks": 1013,
-"openIssues": 6819,
-"watchers": 1764,
-"contributors": 332
+"title": "ml-stable-diffusion",
+"watchers": 141
 },
-"qwenlm/qwen1.5": {
-"title": "qwen1.5",
+"bradyfu/awesome-multimodal-large-language-models": {
+"contributors": 11,
+"forks": 207,
+"openIssues": 34,
 "stargazers": 10000,
-"forks": 189,
-"openIssues": 28,
-"watchers": 96,
-"contributors": 34
+"title": "awesome-multimodal-large-language-models",
+"watchers": 268
 },
-"ray-project/ray": {
-"title": "ray",
+"compvis/latent-diffusion": {
+"contributors": 4,
+"forks": 1008,
+"openIssues": 266,
 "stargazers": 10000,
-"forks": 1009,
-"openIssues": 3719,
-"watchers": 482,
-"contributors": 411
+"title": "latent-diffusion",
+"watchers": 98
 },
-"rwightman/pytorch-image-models": {
-"title": "pytorch-image-models",
+"d2l-ai/d2l-en": {
+"contributors": 297,
+"forks": 1021,
+"openIssues": 101,
 "stargazers": 10000,
+"title": "d2l-en",
+"watchers": 421
+},
+"deepinsight/insightface": {
+"contributors": 57,
+"forks": 1053,
+"openIssues": 1146,
+"stargazers": 10000,
+"title": "insightface",
+"watchers": 519
+},
+"dmlc/dgl": {
+"contributors": 288,
+"forks": 1010,
+"openIssues": 432,
+"stargazers": 10000,
+"title": "dgl",
+"watchers": 173
+},
+"facebookresearch/animateddrawings": {
+"contributors": 17,
+"forks": 534,
+"openIssues": 15,
+"stargazers": 10000,
+"title": "animateddrawings",
+"watchers": 95
+},
+"facebookresearch/faiss": {
+"contributors": 169,
+"forks": 1081,
+"openIssues": 225,
+"stargazers": 10000,
+"title": "faiss",
+"watchers": 480
+},
+"facebookresearch/seamless_communication": {
+"contributors": 36,
+"forks": 279,
+"openIssues": 218,
+"stargazers": 10000,
+"title": "seamless_communication",
+"watchers": 145
+},
+"flagalpha/llama2-chinese": {
+"contributors": 15,
+"forks": 263,
+"openIssues": 194,
+"stargazers": 10000,
+"title": "llama2-chinese",
+"watchers": 147
+},
+"google-ai-edge/mediapipe": {
+"contributors": 80,
+"forks": 1039,
+"openIssues": 373,
+"stargazers": 10000,
+"title": "mediapipe",
+"watchers": 519
+},
+"google/sentencepiece": {
+"contributors": 85,
+"forks": 970,
+"openIssues": 38,
+"stargazers": 10000,
+"title": "sentencepiece",
+"watchers": 128
+},
+"guidance-ai/guidance": {
+"contributors": 74,
+"forks": 501,
+"openIssues": 254,
+"stargazers": 10000,
+"title": "guidance",
+"watchers": 121
+},
+"h2oai/h2ogpt": {
+"contributors": 69,
+"forks": 433,
+"openIssues": 280,
+"stargazers": 10000,
+"title": "h2ogpt",
+"watchers": 156
+},
+"hpcaitech/colossalai": {
+"contributors": 188,
+"forks": 1005,
+"openIssues": 400,
+"stargazers": 10000,
+"title": "colossalai",
+"watchers": 385
+},
+"huggingface/pytorch-image-models": {
+"contributors": 146,
 "forks": 1094,
 "openIssues": 46,
-"watchers": 319,
-"contributors": 146
+"stargazers": 10000,
+"title": "pytorch-image-models",
+"watchers": 318
+},
+"isl-org/open3d": {
+"contributors": 216,
+"forks": 1042,
+"openIssues": 1217,
+"stargazers": 10000,
+"title": "open3d",
+"watchers": 197
+},
+"jetbrains/intellij-community": {
+"contributors": 273,
+"forks": 1068,
+"openIssues": null,
+"stargazers": 10000,
+"title": "intellij-community",
+"watchers": 541
+},
+"kanaries/pygwalker": {
+"contributors": 22,
+"forks": 290,
+"openIssues": 57,
+"stargazers": 10000,
+"title": "pygwalker",
+"watchers": 82
+},
+"labmlai/annotated_deep_learning_paper_implementations": {
+"contributors": 37,
+"forks": 1057,
+"openIssues": 29,
+"stargazers": 10000,
+"title": "annotated_deep_learning_paper_implementations",
+"watchers": 465
+},
+"langchain-ai/langchain": {
+"contributors": 481,
+"forks": 23575,
+"openIssues": 424,
+"stargazers": 141857,
+"title": "langchain",
+"watchers": 893
+},
+"lllyasviel/controlnet": {
+"contributors": 6,
+"forks": 1026,
+"openIssues": 426,
+"stargazers": 10000,
+"title": "controlnet",
+"watchers": 219
+},
+"ludwig-ai/ludwig": {
+"contributors": 148,
+"forks": 1030,
+"openIssues": 38,
+"stargazers": 10000,
+"title": "ludwig",
+"watchers": 193
+},
+"magenta/magenta": {
+"contributors": 144,
+"forks": 1043,
+"openIssues": 373,
+"stargazers": 10000,
+"title": "magenta",
+"watchers": 753
+},
+"microsoft/airsim": {
+"contributors": 198,
+"forks": 1016,
+"openIssues": 660,
+"stargazers": 10000,
+"title": "airsim",
+"watchers": 592
+},
+"microsoft/swin-transformer": {
+"contributors": 14,
+"forks": 1032,
+"openIssues": 180,
+"stargazers": 10000,
+"title": "swin-transformer",
+"watchers": 126
+},
+"mlc-ai/web-llm": {
+"contributors": 45,
+"forks": 368,
+"openIssues": 84,
+"stargazers": 10000,
+"title": "web-llm",
+"watchers": 132
+},
+"myshell-ai/openvoice": {
+"contributors": 13,
+"forks": 643,
+"openIssues": 213,
+"stargazers": 10000,
+"title": "openvoice",
+"watchers": 229
+},
+"nvidia/deeplearningexamples": {
+"contributors": 102,
+"forks": 1035,
+"openIssues": 280,
+"stargazers": 10000,
+"title": "deeplearningexamples",
+"watchers": 297
+},
+"nvlabs/stylegan2": {
+"contributors": 3,
+"forks": 1067,
+"openIssues": null,
+"stargazers": 10000,
+"title": "stylegan2",
+"watchers": 370
+},
+"openai/gpt-3": {
+"contributors": 3,
+"forks": 1069,
+"openIssues": 3,
+"stargazers": 10000,
+"title": "gpt-3",
+"watchers": 893
+},
+"openbmb/chatdev": {
+"contributors": 56,
+"forks": 934,
+"openIssues": 23,
+"stargazers": 10000,
+"title": "chatdev",
+"watchers": 316
+},
+"openmoss/moss": {
+"contributors": 16,
+"forks": 1065,
+"openIssues": 234,
+"stargazers": 10000,
+"title": "moss",
+"watchers": 121
+},
+"phillipi/pix2pix": {
+"contributors": 13,
+"forks": 1012,
+"openIssues": 89,
+"stargazers": 10000,
+"title": "pix2pix",
+"watchers": 321
+},
+"pytorch/examples": {
+"contributors": 238,
+"forks": 1052,
+"openIssues": 187,
+"stargazers": 10000,
+"title": "examples",
+"watchers": 395
+},
+"pytorch/pytorch": {
+"contributors": 332,
+"forks": 1013,
+"openIssues": 6819,
+"stargazers": 10000,
+"title": "pytorch",
+"watchers": 1764
+},
+"qwenlm/qwen1.5": {
+"contributors": 34,
+"forks": 189,
+"openIssues": 28,
+"stargazers": 10000,
+"title": "qwen1.5",
+"watchers": 96
+},
+"ray-project/ray": {
+"contributors": 411,
+"forks": 1009,
+"openIssues": 3719,
+"stargazers": 10000,
+"title": "ray",
+"watchers": 482
 },
 "seemoo-lab/openhaystack": {
-"title": "openhaystack",
-"stargazers": 10000,
+"contributors": 13,
 "forks": 348,
 "openIssues": 119,
-"watchers": 134,
-"contributors": 13
+"stargazers": 10000,
+"title": "openhaystack",
+"watchers": 134
 },
 "slundberg/shap": {
-"title": "shap",
-"stargazers": 10000,
+"contributors": 209,
 "forks": 1089,
 "openIssues": 694,
-"watchers": 245,
-"contributors": 209
+"stargazers": 10000,
+"title": "shap",
+"watchers": 245
 },
 "state-spaces/mamba": {
-"title": "mamba",
-"stargazers": 10000,
+"contributors": 35,
 "forks": 355,
 "openIssues": 408,
-"watchers": 104,
-"contributors": 35
-},
-"tensorflow/magenta": {
-"title": "magenta",
 "stargazers": 10000,
-"forks": 1035,
-"openIssues": 374,
-"watchers": 749,
-"contributors": 144
-},
-"thudm/chatglm-6b": {
-"title": "chatglm-6b",
-"stargazers": 10000,
-"forks": 1071,
-"openIssues": 556,
-"watchers": 394,
-"contributors": 46
+"title": "mamba",
+"watchers": 104
 },
 "torvalds/linux": {
-"title": "linux",
-"stargazers": 10000,
+"contributors": null,
 "forks": 1004,
 "openIssues": null,
-"watchers": 7795,
-"contributors": null
+"stargazers": 10000,
+"title": "linux",
+"watchers": 7795
 },
 "ultralytics/ultralytics": {
-"title": "ultralytics",
-"stargazers": 10000,
+"contributors": 225,
 "forks": 1021,
 "openIssues": 745,
-"watchers": 187,
-"contributors": 225
+"stargazers": 10000,
+"title": "ultralytics",
+"watchers": 187
 },
 "vision-cair/minigpt-4": {
-"title": "minigpt-4",
-"stargazers": 10000,
+"contributors": 13,
 "forks": 1061,
 "openIssues": 349,
-"watchers": 216,
-"contributors": 13
+"stargazers": 10000,
+"title": "minigpt-4",
+"watchers": 216
 },
 "ymcui/chinese-llama-alpaca": {
-"title": "chinese-llama-alpaca",
-"stargazers": 10000,
+"contributors": 10,
 "forks": 837,
 "openIssues": 1,
-"watchers": 183,
-"contributors": 10
+"stargazers": 10000,
+"title": "chinese-llama-alpaca",
+"watchers": 183
+},
+"zai-org/ChatGLM-6B": {
+"contributors": 46,
+"forks": 5132,
+"openIssues": 609,
+"stargazers": 41029,
+"title": "ChatGLM-6B",
+"watchers": 383
 }
 }
