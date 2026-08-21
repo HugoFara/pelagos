@@ -638,11 +638,23 @@ edge) stopped improving fast enough to justify the extra grep cost
   (`palette.edgeIssueAuthor` reuses `--n-issue`, the existing color for
   individual "issue" nodes, same dual-purpose convention `--n-contrib`
   already established). 137 edges over 59/74 covered repos after the same
-  min-2-shared/top-4-pruned shape the contributor tier uses. Top real
-  edge: `rwightman/pytorch-image-models` ↔ `huggingface/pytorch-image-models`
-  (106 shared issue posters) — the real `timm` library rename, not a
-  coincidence. Included in Compare mode, six-degrees pathfinding, and
-  hover tooltips exactly like the other four tiers.
+  min-2-shared/top-4-pruned shape the contributor tier uses. Included in
+  Compare mode, six-degrees pathfinding, and hover tooltips exactly like
+  the other four tiers.
+  - **Correction (Phase 20).** This phase reported its top edge as
+    `rwightman/pytorch-image-models` ↔ `huggingface/pytorch-image-models`,
+    106 shared issue posters, "the real `timm` library rename, not a
+    coincidence." The rename was real; reading it as an edge was not.
+    Those are two slugs of **one repository**, so the edge was that repo
+    linked to itself and the 106 shared posters were just its own issue
+    filers counted twice. The same pair also led the shared-stargazer tier
+    (at the maximum weight the cohort can express) and the semantic tier.
+    Phase 20 collapses it, along with 24 other duplicate slugs. The tier
+    itself is unaffected: re-measured, its strongest real edge is
+    `flashlight/wav2letter` ↔ `flashlight/flashlight` at 26 shared issue
+    posters — two genuinely distinct repos in one org, which is the kind of
+    relationship this tier was meant to surface. Three self-loops were
+    removed from the tier in total.
 - **A real, checked finding from wiring this into pathfinding:** exhaustive
   search over every repo touched by this tier confirms real cohort data
   never actually routes a six-degrees shortest path through it — every
@@ -686,3 +698,110 @@ edge) stopped improving fast enough to justify the extra grep cost
   the changed file — all pass. Visual judgment of the new edge tier's
   color/rendering is, same as Phases 16/18, a manual real-browser check
   rather than something jsdom can confirm.
+
+## Phase 20 — One repo, many ecosystems; one node, many origins (done)
+
+Two limits that had been baked in since the cohort was first collected, both
+in the same place: what the pipeline thinks a repo *is*.
+
+**A repo is not one language.** Six dependency sources each read one
+`{lang}_ecosystem_repos.txt` and probed one fixed manifest path at repo root.
+That list came from GitHub's `language:` facet, which reports a repo's
+dominant language by bytes — one value per repo. Measured on a random 240-repo
+sample by reading full git trees: 20% carry a root manifest for an ecosystem
+other than their own, 41% carry one at some depth, 11% have their own
+ecosystem's manifest only nested, and 10% have no root manifest at all while
+shipping real nested ones — reported as dependency-free when they were not.
+`scripts/42_scan_repo_manifests.py` replaces the six blind probes with one
+tree read per repo; `scripts/manifests.py` is the shared read side all six
+edge scripts now use. Vendored trees and byte-identical copies of other
+projects' manifests are excluded at read time, the second by content hash
+because a directory-name rule cannot see a checked-in `transformers/`.
+
+**A node is a repository, not a GitHub slug.** The shipped 7,051-slug cohort
+held 5 rename pairs as separate nodes and 62 fork nodes, 18 shadowing an
+upstream that was also a node. Identity is decided by intrinsic git object ids
+(`scripts/43_repo_refs.py`, `scripts/44_repo_identity.py`) — a hash of an
+object's content, so two origins serving one repository agree by construction
+— layered over GitHub's own rename and fork metadata.
+`scripts/45_apply_identity.py` collapses the duplicates out of
+`data/processed/`. 7,051 slugs → **7,026 repositories**.
+
+### Measured outcome
+
+The multi-ecosystem sweep found **1,936 repos (32.1% of those with any
+manifest) declaring dependencies in more than one ecosystem** — 17 of them in
+all six — and 3,021 repos whose manifests live only below the root, where no
+fixed-path probe could reach. Per ecosystem, edges before → after:
+
+| | edges | source repos |
+|---|---|---|
+| python | 372 → **21,085** | 37 → **1,805** |
+| js | 2,233 → **16,026** | 366 → **1,524** |
+| rust | 7,905 → **15,484** | 676 → **1,163** |
+| go | 7,140 → **9,532** | 741 → **954** |
+| java | 3,376 → **3,527** | 579 → **680** |
+| cpp | 407 → **622** | 150 → **247** |
+
+Combined: **42,846 → 80,792** dependency edges (24,812 after pruning), and
+repos with a real trophic height went from 72% to **84.8%** of the cohort.
+
+Python's 57× is not a fluke of method: PyPI dependencies were supposed to
+arrive from the SemRepo dump's `usedPackage` triples, so the GitHub-search
+stream never grew a real Python cohort — its language list had 68 repos in it.
+2,335 repos turn out to carry a Python manifest.
+
+**The number this was actually aimed at: dependency edges crossing an
+ecosystem boundary went from 3.2% to 18.6%** (1,368 → 15,038). And the trophic
+axis stopped being one band per ecosystem — Rust's median height was 0.365
+against Java's 0.684, each ecosystem floating in its own disconnected
+component; every ecosystem now lands between 0.57 and 0.67, on a shared scale.
+Python's 1,626 repos had been pinned at a single flat height (p10 0.5654, p90
+0.5685) and now have real spread.
+
+Spot-checked rather than assumed, with the declaring file identified for each:
+`jupyter/notebook` → `jupyterlab/jupyterlab` via 76 `@jupyterlab/*` packages in
+`app/package.json`; `react/react-native` → `babel/babel` (React Native's
+dominant language is C++ by bytes, so it could never contribute npm edges);
+`halo-dev/halo` (Java) → `ueberdosis/tiptap` via `ui/packages/editor/package.json`.
+
+76 non-GitHub origins verified and recorded, so `torvalds/linux` is now marked
+as a mirror of git.kernel.org rather than presented as the kernel's origin —
+the point being that the bottom of the trophic axis was populated by mirrors
+standing in for repositories this dataset does not contain. The repo panel
+shows both facts: which slugs a node absorbed, and which other forges serve
+it, with the shared-object-id count behind each claim.
+
+- Software Heritage's argument is right and its API is the wrong tool for it.
+  SWHIDs for a git origin *are* the git object ids (verified: 940/940 of
+  kernel.org's Linux tags), so `git ls-remote` gets the same identifiers with
+  no rate limit and no crawl-coverage dependency. What SWH could uniquely add
+  is *discovery* of sibling origins, which its public REST API does not
+  expose — that needs the graph dataset on AWS Open Data, a separate project.
+  Until then candidate upstreams are curated and **verified**: 8 of 84 were
+  rejected on the evidence, including `golang/go` against go.googlesource.com
+  at 0.087 containment.
+- Merging uses containment, not Jaccard. The Linux pair is 1,881 shared ids
+  at containment 1.000 and Jaccard 0.42 — a mirror is *expected* to be a
+  strict subset, and Jaccard punishes exactly that.
+- Layer 3 found two merges GitHub's metadata structurally could not:
+  `Rust-GPU/rust-gpu` ← `EmbarkStudios/rust-gpu` (845 shared ids, an
+  unrecorded project transfer) and `catboost/catboost` ← `vj-thakur/catboost`.
+- Phase 19's headline finding is corrected above: its top shared-issue-poster
+  edge was one repository linked to itself.
+- Two bugs caught by disbelieving a number rather than by a test: a transient
+  GitHub throttle cached as a permanent "no refs" for 45% of the cohort, and
+  a duplicate's stats overwriting the real repo's across the two aggregate
+  files. Both are written up in `NOTES.md`.
+
+**Still open, and worth naming.** Fixing the *identity* of the bottom of the
+trophic axis is not the same as filling it. The most-depended-on repos in this
+cohort are still all language-level libraries — `pytorch/pytorch`, `tqdm/tqdm`,
+`python-pillow/Pillow`, `psf/requests` — because no language registry crosses
+the C boundary: `Pillow` has in-degree 1239 and `madler/zlib`, which it
+actually depends on, has effectively none. The cross-language edges that would
+fix that exist only in distro package sets (Nixpkgs derivations being the
+cleanest to evaluate), and seeding real nodes from kernel.org, sourceware,
+freedesktop and Savannah is the other half. Both are deliberately out of scope
+here: this phase makes those additions a data change rather than a schema
+change, which is what had to come first.

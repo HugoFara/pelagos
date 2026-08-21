@@ -3910,3 +3910,267 @@ stamps every node with its band membership is below timer resolution; with
 every cluster force-expanded to the full 7051 nodes — more than any real view
 reaches — it is 0.5 ms. With no band narrowed the whole thing is one
 short-circuited boolean per edge.
+
+## Phase 20, part one: a repo is not one language
+
+Six of the dependency sources were built the same way -- read
+`data/repo-lists/{lang}_ecosystem_repos.txt`, probe one fixed manifest path at
+repo root, parse. The list came from GitHub's `language:` search facet, which
+reports a repo's *dominant* language by bytes: one value per repo.
+
+That ties together two facts with no reason to agree. "GitHub calls this repo
+Rust" and "this repo declares its dependencies in Cargo.toml, at the root" are
+different claims, and the second one is often false while the first is true.
+
+Measured before writing anything, on a random 240-repo sample (40 per
+ecosystem list), by reading each repo's full git tree rather than probing:
+
+    49/240 (20%)  have a ROOT manifest for an ecosystem other than their own
+    99/240 (41%)  have one at any depth
+    27/240 (11%)  have their OWN ecosystem's manifest only nested, never at root
+    25/240 (10%)  have NO root manifest at all, but do have nested ones
+
+The last row is the one that stings: those repos ship a real, declared
+dependency list and were reported as dependency-free. Biggest single miss is
+Rust repos carrying a `package.json` -- 12 of 40 sampled.
+
+One `git/trees/HEAD?recursive=1` read returns every manifest path at once, so
+the replacement costs one request per repo instead of six blind probes, and
+finds nested manifests no fixed path can reach. 240 sample trees took 19s
+threaded; the full cohort is ~1h. The blob fetch reuses the aliased-GraphQL
+batching `32_fetch_java_manifests.py` already established (50 paths per query,
+1 rate-limit point).
+
+### Two things a wider net catches that you do not want
+
+**Vendored trees.** A manifest under `node_modules/` or `third_party/` is
+another project's dependency list. Attributing it to whoever vendored it
+invents edges nobody declared. A directory-name list catches most of this and
+is visibly working -- protobuf's POMs inside TensorRT, msgpack's package.json
+inside matterbridge.
+
+**Copies a directory name cannot catch.** `0-KaiKai-0/SH2` carries a whole
+checked-in copy of huggingface/transformers under a plain `transformers/`
+directory: 68 requirements.txt files declaring huggingface's dependencies, not
+SH2's. No exclusion list of directory names finds that, and guessing at
+project names would be exactly the heuristic this pipeline avoids everywhere
+else.
+
+Content hashes settle it without guessing. A manifest whose exact bytes appear
+in more than one repository, and which sits nested rather than at that repo's
+own root, is a copy -- two independent projects do not write byte-identical
+dependency lists deep in their trees by accident. Measured: ~4% of
+non-vendored manifests, catching the `transformers/` tree, a fairseq tree
+copied into 13 repos, and a `TeViT-main/` tree copied into 31.
+
+Root manifests are deliberately exempt. Ten research repos really do share one
+byte-identical root `requirements.txt` -- copied from a common ancestor, but
+each of them is genuinely declaring it as their own.
+
+Both exclusions run at **read** time (`scripts/manifests.py`), following the
+convention 32 set for `buildSrc/`: the cache records every path the tree held,
+so either rule can be re-argued and re-measured without re-fetching a file.
+
+### A cap that was quietly picking the wrong files
+
+The fetch budget (300 manifests/repo) was first applied to an alphabetically
+sorted path list, which is not a neutral order. `TanStack/router` spent 139
+slots on `e2e/` and 131 on `examples/` and truncated away all but a few of the
+24 manifests in `packages/` -- the only ones describing the project itself.
+Fixed by sorting root-first, then by depth, then peripheral trees
+(examples/tests/docs/e2e) last within a depth. Nothing is *excluded* by that
+ordering; it only decides what a monorepo spends its budget on. Repos already
+cached with a nonzero `capped` count were invalidated and re-fetched.
+
+## Phase 20, part two: a node is a repository, not a GitHub slug
+
+Every node id here was an `owner/name` slug, and the pipeline assumed one slug
+was one repository. The shipped 7,051-slug cohort disproved that from data
+already sitting in `data/raw/github_cache/`, at zero cost:
+
+    5 rename pairs where BOTH slugs were separate nodes
+    62 nodes GitHub marks as forks, 18 shadowing an upstream that was also a node
+
+### What that was doing to the numbers
+
+Sorted by weight, the strongest shared-stargazer edge in the dataset was
+
+    ["huggingface/pytorch-image-models", "rwightman/pytorch-image-models", 9999]
+
+one repository linked to itself at the maximum overlap the cohort can express.
+The same pair led the semantic tier (20 shared tags) and was written up in
+Phase 19 as the shared-issue-poster tier's headline finding -- "the real `timm`
+library rename, not a coincidence". The rename was real. Reading it as an edge
+was not, and it had been read that way three times in three different tiers.
+
+Collapsing the 25 duplicate slugs removed 5 self-loops from the shared-
+stargazer tier, 15 from the contributor tier, 6 from the semantic tier and 3
+from the issue-poster tier. It also merged 1,329 further edge pairs across
+those four tiers that had been split across two names for one repo -- merged
+by taking the **maximum** weight, never the sum: these weights are overlap
+counts over sets of people, and two slugs of one repository share very nearly
+the same stargazers, so adding their overlaps with some third repo would
+roughly double a real number.
+
+### Three layers, because three different things break slug identity
+
+Each uses the cheapest evidence that can settle its own case:
+
+1. **Renames** -- GitHub's own `full_name`, already cached. Free.
+2. **Forks** -- GitHub's `fork` flag and `source`. Free.
+3. **Mirrors and unlinked copies** -- intrinsic git object ids. Nothing on
+   GitHub links a mirror to its upstream and no name heuristic can:
+   `torvalds/linux` and the kernel.org origin share no owner, no host, no
+   metadata field. They share 1,881 byte-identical object ids.
+
+Layer 3 found two merges the first two layers structurally could not:
+`Rust-GPU/rust-gpu` ← `EmbarkStudios/rust-gpu` (845 shared ids, 0.969
+containment) and `catboost/catboost` ← `vj-thakur/catboost`. The first is a
+real project transfer that GitHub records neither as a rename nor as a fork.
+
+### Software Heritage: right idea, wrong API
+
+The obvious way to do cross-forge identity is SWHIDs, and the reasoning behind
+them is exactly right -- intrinsic, content-derived ids merge mirrors exactly
+where URL heuristics fail completely. But checked directly:
+
+    git.kernel.org linux, via `git ls-remote`     941 tag ids
+    the same origin's SWH snapshot targets        942
+    overlap                                       940 (100% of the ls-remote tags)
+
+SWH's `swh:1:rev:` / `swh:1:rel:` ids for a git origin **are** the git object
+ids. So `ls-remote` yields the same intrinsic identifiers, for any forge, with
+no crawl-coverage dependency and no rate limit -- against SWH's 700
+requests/hour anonymous quota, which would be ~20h for this cohort. The whole
+merge mechanism therefore needs no SWH integration at all.
+
+What SWH could genuinely add is *discovery*: ls-remote verifies an origin, it
+cannot find one. But the public REST API does not expose "which origins
+contain this revision" -- only a substring search over origin URLs, and that
+search does not surface `git.kernel.org/.../linux.git` for the query "linux"
+at all (checked; the top 40 results are npm packages and unrelated GitLab
+repos). Real discovery means the SWH graph dataset on AWS Open Data, which is
+its own ingestion project.
+
+So candidate upstreams come from a curated file and are *verified* by the same
+ref-overlap rule. A wrong line produces a printed rejection, not a wrong
+merge, and 8 of 84 candidates were rejected -- `golang/go` vs
+go.googlesource.com at 0.087 containment (a genuinely partial mirror),
+`freebsd/freebsd-src` at 0.158, and three origins that turned out not to be
+git at all (hg.nginx.org, sqlite.org's Fossil repo).
+
+### Containment, not Jaccard
+
+    github.com/torvalds/linux              2259 intrinsic ref ids
+    git.kernel.org .../torvalds/linux.git  1881 shared -> containment 1.000
+
+Jaccard on that pair is 0.42. A mirror legitimately carries fewer refs than
+what it mirrors -- it lags, or mirrors only branches, or only tags -- so being
+a strict subset is the *expected* shape, and Jaccard punishes exactly that. A
+hard fork that became its own project is what the high threshold excludes: it
+keeps developing, so its own refs outgrow the inherited ones and containment
+falls away from 1.
+
+### Two bugs worth recording, both caught by disbelieving a number
+
+**3160 of 7051 origins "unreadable".** The first full `ls-remote` pass reported
+45% failure, essentially all `fatal: expected flush after ref listing` -- which
+is what GitHub answers when too many anonymous git connections arrive at once.
+Retrying any one of them by hand succeeded immediately. The script had cached
+a transient throttle as a permanent answer, which would have silently removed
+45% of the cohort from the identity pass. Fixed by classifying retryable
+errors, retrying with backoff, never caching a non-terminal failure, and
+authenticating through the `gh` token. Re-run: 7,050 readable, 0 deferred.
+
+**Duplicate stats overwriting real ones.** The cohort lives in two files (the
+51-repo SemRepo cohort and the dependency expansion) and `build_web_explorer.py`
+merges them with the expansion last. A rename normally leaves the old slug in
+one file and the new one in the other, so renaming an alias entry to its
+canonical id *within* one file promoted the duplicate's data over the real
+repo's: `lllyasviel/controlnet` came out with the 101 stars of
+`clintonjwang/ControlNet`, and `openbmb/chatdev` with the 4 stars and the title
+"simulation" of `sumedhrasal/simulation`. Caught by checking the merged output
+rather than the per-file counts. The two aggregate files are now merged as one
+unit, field by field: the later file's record wins and the earlier fills only
+gaps, so `langchain-ai/langchain` keeps its live 141,857 stars *and* recovers
+the 481 contributors that were sitting under `hwchase17/langchain` -- a real
+number the SemRepo side had and the GitHub side does not expose.
+
+### What the id is, and why it stayed a slug
+
+The identity is decided intrinsically; the *label* stayed `owner/name`. Every
+downstream file, avatar and shared permalink in this project is keyed by slug,
+and a content hash as the primary key would break all of them, make every data
+file unreadable by eye, and need its own cross-run stabilization pass (the
+problem `21_stabilize_cluster_ids.py` already exists to solve once). What each
+record carries instead is `anchor` -- the repository's root commit, fetched for
+merged groups only. That is the genuinely forge-independent, time-stable
+identifier: identical across every mirror, fork and rename of a repository,
+and unlike a ref-set digest it does not change when someone pushes a tag.
+
+### Phase 20 results, measured against the run it replaced
+
+The sweep found **1,936 repos (32.1% of those with any manifest) declaring
+dependencies in more than one ecosystem**, 17 of them in all six, and 3,021
+repos whose manifests sit only below the root.
+
+    ecosystem   edges before -> after     source repos before -> after
+    python           372 ->  21,085              37 -> 1,805
+    js             2,233 ->  16,026             366 -> 1,524
+    rust           7,905 ->  15,484             676 -> 1,163
+    go             7,140 ->   9,532             741 ->   954
+    java           3,376 ->   3,527             579 ->   680
+    cpp              407 ->     622             150 ->   247
+    combined      42,846 ->  80,792
+
+Python's 57× is the measurement that most vindicates the change, and it is not
+a quirk of method: PyPI dependencies were supposed to come from the SemRepo
+dump's `usedPackage` triples, so the GitHub-search stream never grew a real
+Python cohort -- `python_ecosystem_repos.txt` has 68 lines in it. 2,335 repos
+actually carry a Python manifest. The gap was never a resolution failure;
+nothing had ever looked.
+
+Java moved least (+4% edges, +17% source repos), which is the expected shape:
+Java was the one ecosystem already reading nested manifests, via 32's Java-only
+submodule sweep. What it gained is the repos whose dominant language is not
+Java.
+
+**The number the change was aimed at: cross-ecosystem dependency edges went
+from 1,368 (3.2%) to 15,038 (18.6%).** The top pairs are now `rust->js` 1,859,
+`go->js` 1,800, `cpp->python` 1,630, `python->cpp` 1,366, `java->js` 1,185 --
+which is mostly the real shape of modern projects, backends with JS frontends
+and Python bindings over C++ cores.
+
+Trophic height stopped being one band per ecosystem. Before, Rust's median was
+0.365 against Java's 0.684 and Go's 0.659 -- not a stack, just disconnected
+components each solved on its own scale. After, every ecosystem lands between
+0.57 and 0.67. Python's 1,626 repos had been pinned at a single flat value
+(p10 0.5654, p90 0.5685, i.e. no spread at all) and now have real range
+(0.5807-0.6804). Repos with a real height: 72% -> 84.8%.
+
+Spot-checked before believing any of it, with the declaring file identified:
+
+    jupyter/notebook   -> jupyterlab/jupyterlab   76 @jupyterlab/* in app/package.json
+    react/react-native -> babel/babel             dominant language C++ by bytes
+    halo-dev/halo      -> ueberdosis/tiptap       ui/packages/editor/package.json
+    diggerhq/digger    -> radix-ui/primitives     ui/package.json (Go backend, React UI)
+
+Every one is a real declared dependency that no single-language root probe
+could have reached.
+
+**Identity held through the regeneration**, which is the property that matters
+for a change like this: after re-running all six edge scripts and the
+combiner, every edge file has 0 alias endpoints and 0 self-loops. That is
+`canonical_lookup()` doing its job in each script rather than 45 having to
+clean up afterwards -- 45 re-run on the finished tree reports "collapsed 0
+duplicate entries", so it is genuinely idempotent.
+
+Phase 19's tier, re-measured after the collapse: its strongest real edge is
+`flashlight/wav2letter` <-> `flashlight/flashlight` at 26 shared issue posters
+-- two genuinely distinct repos in one org, which is what the tier was for.
+
+One small thing worth doing right: 45 originally rewrote the repo-lists with
+`sorted()`, which reordered files that had been sorted case-insensitively and
+buried the handful of real changes under hundreds of moved lines. It now
+preserves input order, so the diff shows only what identity changed -- 16
+insertions and 35 deletions across four files instead of a wholesale rewrite.

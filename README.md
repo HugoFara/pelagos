@@ -1,12 +1,12 @@
 # Pelagos
 
-**A 3D view of the open-source dependency ecosystem.** 7,051 GitHub
-repositories, placed by what they actually depend on and what they are
-actually about — then you fly through it.
+**A 3D view of the open-source dependency ecosystem.** 7,026 repositories,
+placed by what they actually depend on and what they are actually about —
+then you fly through it.
 
 ### [→ Explore it live](https://hugofara.github.io/pelagos/)
 
-![The Pelagos explorer: a 3D graph of 7,051 GitHub repositories, with cluster
+![The Pelagos explorer: a 3D graph of 7,026 repositories, with cluster
 volumes, repo labels and a sidebar listing auto-detected clusters](docs/img/pelagos.png)
 
 ## What you're looking at
@@ -25,6 +25,22 @@ Repos are linked by five kinds of relationship, each measured, none inferred:
 **dependencies** (parsed from real manifests), **shared topics**, **shared
 stargazers**, **shared contributors**, and **shared issue posters**. Dependency
 and topic edges are on by default; the rest you switch on in the legend.
+
+Two things that are easy to get wrong, and that this deliberately does not:
+
+- **A repo is not one language.** Dependencies are read from every manifest in
+  a repo's git tree — `package.json`, `Cargo.toml`, `pom.xml`, `go.mod`,
+  `pyproject.toml`, `.gitmodules` and the rest — at any depth, not from the
+  one file at the root of whatever language GitHub labelled it. Nearly a third
+  of the repos here declare dependencies in more than one ecosystem, and
+  before this they could only ever contribute the one. It is why 18.6% of the
+  dependency edges now cross an ecosystem boundary rather than 3.2%.
+- **A node is a repository, not a GitHub slug.** `hwchase17/langchain` and
+  `langchain-ai/langchain` are one repo, and so are a repo and its mirror.
+  Which slugs mean the same thing is settled by intrinsic git object ids —
+  content hashes, so two origins serving one repository agree exactly — not by
+  matching names. `torvalds/linux` is labelled here as what it is: a mirror of
+  git.kernel.org.
 
 ## Things to try
 
@@ -47,21 +63,25 @@ with a plain-language reading of each](docs/img/panel.png)
 
 ## What's in it, honestly
 
-7,051 repositories — a **curated cohort, not all of GitHub**. It was grown per
+7,026 repositories — a **curated cohort, not all of GitHub**. It was grown per
 language with quotas, so it holds roughly a thousand each of Java, Rust and Go,
-1,701 Python, and exactly one C#. Treat it as a large sample of well-known
-open source, not a census.
+1,683 Python, and exactly one C#. Treat it as a large sample of well-known
+open source, not a census. (Those are *dominant* languages, and a third of
+these repos declare dependencies in more than one ecosystem — the quotas
+shaped what was collected, not what each repo contributes.)
 
 Coverage is uneven and the explorer doesn't hide it. A repo whose dependencies
 couldn't be resolved has no height and floats at the mid-plane, and the panel
 says so in as many words rather than showing a number that looks measured.
-Roughly 72% of the cohort has a real height; the rest is honest absence.
+84.8% of the cohort has a real height; the rest is honest absence.
 
 Built from the **GitHub API** and **[SemRepo](https://semrepo.org)**, a large
-RDF dump of GitHub activity released under CC0. SemRepo supplies 31% of the
-drawn edges and is the only source for the three person-based tiers; the cohort
-itself, descriptions, topics, READMEs, avatars and five of the six
-dependency-manifest ecosystems come from the GitHub API.
+RDF dump of GitHub activity released under CC0. SemRepo is the only source for
+the three person-based tiers; the cohort itself, descriptions, topics, READMEs,
+avatars and the dependency manifests come from the GitHub API. Repo *identity*
+comes from neither — it is read off the origins themselves with `git ls-remote`,
+because a git object id is a content hash and therefore agrees across forges by
+construction.
 
 **Privacy.** The two person-based edge tiers are built from overlap *counts*.
 Every person identifier is replaced with a salted pseudonym before anything is

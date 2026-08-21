@@ -60,9 +60,13 @@ are SemRepo-derived, and it is the *only* source for three of the five edge
 tiers (shared-stargazer, shared-contributor, shared-issue-author) -- those
 need per-person stargazer/contributor lists across the whole cohort, which is
 tens of millions of calls via the GitHub API but a single grep pass here.
-Everything else -- the 7000-repo cohort itself, descriptions, topics, READMEs,
-avatars, and five of the six dependency-manifest ecosystems -- comes from the
-GitHub API.
+Everything else -- the ~7000-repo cohort itself, descriptions, topics,
+READMEs, avatars, and five of the six dependency-manifest ecosystems -- comes
+from the GitHub API. Repo *identity* (which slugs name the same repository,
+and which other forges serve it) comes from neither: it is read straight off
+the origins themselves with `git ls-remote`, since a git object id is a hash
+of the object's content and therefore agrees across forges by construction.
+See "One repository, many origins" below.
 
 ### People in this dataset
 
@@ -91,7 +95,13 @@ data/
                 output of the pipeline
   raw/          gitignored; holds the source SemRepo_2025-05-11.nt dump itself
                 plus cached grep/awk extraction output -- regenerate the
-                latter via scripts/ + SEMREPO_NT rather than committing it
+                latter via scripts/ + SEMREPO_NT rather than committing it.
+                Two of its caches are the fetch halves of the multi-ecosystem
+                and repo-identity work: repo_manifest_cache/ (one JSON per
+                repo, every manifest path its git tree holds plus the text of
+                the ones downloaded) and repo_refs_cache/ (one JSON per
+                origin, its intrinsic git object ids). Both are large and both
+                are resumable -- an interrupted sweep just continues.
 web/        the interactive graph explorer -- web/index.html renders a real
             3D scene (three.js/WebGL for node fills/avatars/edges, a Canvas-2D
             overlay for rings/badges/labels -- see ROADMAP.md Phase 18) plus
@@ -129,6 +139,139 @@ web/        the interactive graph explorer -- web/index.html renders a real
             the flat node color, and build_web_explorer.py ships that list so
             the renderer skips the request instead of 404ing for it.
 ```
+
+## One repo, many ecosystems
+
+Six of the pipeline's dependency sources were each built the same way: take
+`data/repo-lists/{lang}_ecosystem_repos.txt`, probe one fixed manifest path at
+each repo's root, parse whatever comes back. That works, and it quietly
+encodes an assumption that is simply false — that a repo belongs to one
+ecosystem, the one GitHub's `language:` search facet named when the cohort was
+collected.
+
+That facet reports a repo's *dominant* language by bytes. One value per repo.
+Real repos are routinely several ecosystems at once: a Rust crate with a
+`package.json` for its wasm bindings or docs site, a C++ library with a
+`pyproject.toml` for its Python wheel, a Go service with a JS frontend. Under
+the old scheme every one of those dependency lists was unreachable, not
+because resolution failed but because nothing ever looked.
+
+Measured on a random 240-repo sample of the cohort (40 from each ecosystem
+list), by reading each repo's full git tree:
+
+| | repos | share |
+|---|---|---|
+| have a **root** manifest for an ecosystem other than their own | 49 | 20% |
+| have one at **any depth** | 99 | 41% |
+| have **no root manifest at all**, but do have nested ones | 25 | 10% |
+| own ecosystem's manifest exists only nested, never at root | 27 | 11% |
+
+The largest single miss was Rust repos carrying a `package.json` — 12 of the
+40 sampled.
+
+`scripts/42_scan_repo_manifests.py` replaces the six root probes with one
+`git/trees/HEAD?recursive=1` read per repo, which returns every manifest path
+in the repo at once, and then fetches the blobs through aliased GraphQL.
+`scripts/manifests.py` is the read side that the six `*_dependency_edges.py`
+scripts now share.
+
+**Two things a wider net catches that you do not want.** A manifest under
+`node_modules/` or `third_party/` is another project's dependency list, and
+attributing it to whoever vendored it would invent edges nobody declared.
+Directory names catch most of that. They cannot catch the rest: `0-KaiKai-0/SH2`
+carries a whole checked-in copy of huggingface/transformers under a plain
+`transformers/` directory, contributing 68 `requirements.txt` files that
+declare huggingface's dependencies. Content hashes settle that without
+guessing — a manifest whose exact bytes appear in more than one repository,
+nested rather than at that repo's own root, is a copy. Around 4% of
+non-vendored manifests, and it catches the `transformers/` tree, a fairseq
+tree copied into 13 repos, and a `TeViT-main/` tree copied into 31. Root
+manifests are exempt: ten research repos really do share one byte-identical
+root `requirements.txt`, and it is each of their own declaration.
+
+Both exclusions happen at **read** time, following the convention
+`32_fetch_java_manifests.py` set for `buildSrc/`: the cache records every path
+the tree contained, so either rule can be re-measured and changed without
+re-fetching anything.
+
+## One repository, many origins
+
+Every node id in this pipeline was an `owner/name` GitHub slug, and the
+pipeline assumed one slug was one repository. It is not, and the shipped
+7,051-slug cohort proved it from data already cached:
+
+- **5 rename pairs where both slugs were separate nodes** —
+  `hwchase17/langchain` + `langchain-ai/langchain`, `microsoft/guidance` +
+  `guidance-ai/guidance`, `tensorflow/magenta` + `magenta/magenta`,
+  `thudm/chatglm-6b` + `zai-org/ChatGLM-6B`, and `rwightman/pytorch-image-models`
+  + `huggingface/pytorch-image-models`.
+- **62 nodes GitHub itself marks as forks**, 18 shadowing an upstream that was
+  also a node (5 separate forks of `facebookresearch/fairseq`, 3 of
+  `OpenNMT/OpenNMT-py`, 2 of `huggingface/transformers`).
+
+The cost of that was not cosmetic. Sorted by weight, the single strongest
+shared-stargazer edge in the dataset was `huggingface/pytorch-image-models` ↔
+`rwightman/pytorch-image-models` at 9999 — one repository linked to itself
+with the largest overlap count the cohort can express. The same pair led the
+semantic tier at 20 shared topics, and `ROADMAP.md` Phase 19 recorded it a
+third time as the shared-issue-poster tier's headline finding, "the real
+`timm` library rename, not a coincidence". It was a rename, and it was being
+read as a relationship.
+
+**What settles it.** A git object id is a hash of the object's content, so two
+origins serving the same repository publish byte-identical ids for every ref
+they have in common — no name, URL or heuristic involved. That is the property
+Software Heritage's SWHIDs are built on, and it is exact rather than
+approximate.
+
+It is also why Software Heritage is not in this path. SWH's `swh:1:rev:` /
+`swh:1:rel:` ids *are* the git object ids — verified directly against the
+kernel.org Linux origin, where all 940 of its `ls-remote` tag ids matched
+SWH's snapshot targets exactly. So `git ls-remote` yields the same intrinsic
+identifiers for any forge, with no crawl-coverage dependency and no rate limit
+(SWH's anonymous quota is 700 requests/hour, roughly 20 hours for this
+cohort). `scripts/43_repo_refs.py` reads them; `scripts/44_repo_identity.py`
+groups on them.
+
+Merging uses **containment**, not Jaccard, and the Linux pair shows why:
+
+```
+github.com/torvalds/linux              2259 intrinsic ref ids
+git.kernel.org .../torvalds/linux.git  1881 shared, containment 1.000
+```
+
+Jaccard on that is 0.42. A mirror legitimately carries fewer refs than what it
+mirrors — it lags, or mirrors only branches, or only tags — so being a strict
+subset is the *expected* shape of a mirror, and Jaccard punishes exactly that.
+The threshold is high on purpose: a hard fork that became its own project
+keeps developing, so its own refs quickly outnumber the inherited ones and its
+containment falls away from 1.
+
+`torvalds/linux` is a mirror. Under slug identity it was a node in its own
+right, at the bottom of the trophic axis, standing in for a repository whose
+real origin this dataset does not contain.
+
+**Cross-forge origins are verified, never trusted.** `ls-remote` can verify an
+origin but cannot discover one, and Software Heritage's public REST API — the
+natural place to ask "what else serves this revision" — does not expose that
+query, only a substring search over origin URLs that does not surface
+`git.kernel.org/.../linux.git` for the query "linux" at all. Doing discovery
+properly means the SWH graph dataset on AWS Open Data, which is its own
+ingestion project. So candidates come from `data/repo-lists/upstream_origins.txt`,
+a curated list, and each is checked by the same ref-overlap rule before it is
+recorded. A wrong line there produces a printed rejection, not a wrong merge —
+and 8 of 84 candidates were rejected, including `golang/go` against
+go.googlesource.com (0.087 containment: a genuinely partial mirror) and three
+origins that turned out not to be git at all.
+
+**What the id is.** The record key stays the canonical origin's `owner/name`.
+That is deliberate: identity is decided intrinsically, but the *label* has to
+stay readable and permalink-stable, and every downstream file, avatar and
+shared URL here is keyed by slug. Each record also carries `anchor` — the
+repository's root commit, fetched for merged groups only — which is the
+genuinely forge-independent, time-stable identifier: identical across every
+mirror, fork and rename, and unlike a ref-set digest it does not change when
+someone pushes a tag.
 
 ## Pipeline (reproducing `data/processed/`)
 
@@ -231,6 +374,63 @@ python3 scripts/32_fetch_java_manifests.py && python3 scripts/33_java_dependency
 python3 scripts/35_fetch_cargo_toml.py     && python3 scripts/36_rust_dependency_edges.py
 python3 scripts/37_fetch_python_manifests.py && python3 scripts/38_python_dependency_edges.py
 python3 scripts/40_fetch_cpp_manifests.py  && python3 scripts/41_cpp_dependency_edges.py
+
+# One repo, several ecosystems. Everything above pairs one language list with
+# one fixed manifest path at repo root, which ties two facts together that
+# have no reason to agree: "GitHub's `language:` facet calls this repo Rust"
+# and "this repo declares its dependencies in Cargo.toml, at the root". The
+# facet reports a repo's dominant language by bytes, one value per repo, and
+# real repos are routinely several ecosystems at once.
+#
+# This sweeps every cohort repo's git tree for every ecosystem's manifests at
+# any depth -- one `git/trees/HEAD?recursive=1` read per repo, then aliased
+# GraphQL for the blobs (50 paths per query, 1 rate-limit point, the same
+# mechanics 32's Java-only submodule pass already used). Measured on a random
+# 240-repo sample before it was written: 20% of repos carry a ROOT manifest
+# for an ecosystem other than their own, 41% carry one at some depth, 11%
+# have their own ecosystem's manifest only nested, and 10% have no root
+# manifest at all while shipping real nested ones -- silently edge-less until
+# now. Idempotent and resumable; a full cohort sweep is ~1h.
+#
+# After this, each *_dependency_edges.py script above reads
+# scripts/manifests.py instead of its own language list, which also drops
+# vendored trees (node_modules/, third_party/) and manifests that are
+# byte-identical copies of another repo's file -- someone else's dependency
+# list, not this repo's own declaration. Re-run the six edge scripts (they
+# need no fetch step of their own any more) and then 11 to recombine.
+python3 scripts/42_scan_repo_manifests.py
+for s in 29_go 31_js 33_java 36_rust 38_python 41_cpp; do
+  python3 scripts/${s}_dependency_edges.py
+done
+
+# A node is a repository, not a GitHub slug. 43 reads every cohort origin's
+# intrinsic git object ids (`git ls-remote`; an object id is a hash of the
+# object's content, so two origins serving the same repository publish
+# byte-identical ids for every ref they share), and 44 turns that plus
+# GitHub's own rename/fork metadata into one record per repository with a set
+# of origins. 45 then collapses the duplicates out of data/processed/.
+#
+# This is not hypothetical cleanup: the shipped 7,051-slug cohort contained 5
+# rename pairs where both slugs were separate nodes and 18 fork nodes
+# shadowing an upstream that was also a node. The strongest shared-stargazer
+# edge in the dataset -- and the shared-issue-poster tier's headline finding
+# in ROADMAP.md Phase 19 -- was `huggingface/pytorch-image-models` linked to
+# `rwightman/pytorch-image-models`, which is one repository linked to itself.
+#
+# 44 also verifies candidate non-GitHub origins from
+# data/repo-lists/upstream_origins.txt by the same ref-overlap rule, so
+# `torvalds/linux` is recorded as a mirror of git.kernel.org rather than as
+# the origin of the kernel. That file is a candidate generator, never
+# evidence: a wrong line in it produces a printed rejection, not a wrong
+# merge. Software Heritage is deliberately not in this path -- its SWHIDs for
+# git origins *are* these object ids (verified: 940/940 of the kernel.org
+# tags), so ls-remote gets the same identifiers with no crawl-coverage
+# dependency and no 700-request/hour quota. What SWH could add is
+# *discovery* of sibling origins, which its public REST API does not expose;
+# that needs the SWH graph dataset on AWS Open Data.
+python3 scripts/43_repo_refs.py
+python3 scripts/44_repo_identity.py
+python3 scripts/45_apply_identity.py
 
 # backfill: now that the full cohort (top50 + dependency-expansion repos)
 # is known, re-run the shared-stargazer/shared-contributor extraction above
