@@ -124,6 +124,9 @@ import time
 from collections import Counter, defaultdict
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from identity import is_forge_node  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 GITHUB_CACHE = ROOT / "data/raw/github_cache"
 REFS_CACHE = ROOT / "data/raw/repo_refs_cache"
@@ -415,6 +418,13 @@ def main():
             rejected.append((slug, url, f"only {shared} shared ids, {cover:.3f} containment"))
 
     # Assemble.
+    forge_origins = {
+        repo: row["origin"]
+        for repo, row in json.loads(
+            (ROOT / "data/processed/dependency_repo_aggregates.json").read_text()).items()
+        if isinstance(row, dict) and row.get("origin")
+    }
+
     groups = union.groups()
     identity = {}
     alias = {}
@@ -423,6 +433,18 @@ def main():
         canonical, why = pick_canonical(members, github)
         origins = []
         for m in sorted(members):
+            if is_forge_node(m):
+                # A node that lives on a forge other than GitHub. Its origin is
+                # the URL it was resolved from, not a github.com address that
+                # would 404 -- the whole point of admitting these ids.
+                host = m.split("/", 1)[0]
+                origins.append({
+                    "url": forge_origins.get(m, f"https://{m}"),
+                    "forge": host,
+                    "slug": m,
+                    "role": "canonical" if m == canonical else "duplicate",
+                })
+                continue
             data = github.get(m) or {}
             origins.append({
                 "url": f"https://github.com/{data.get('full_name', m)}",

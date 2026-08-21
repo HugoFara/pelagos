@@ -55,6 +55,30 @@ def canonical(repo):
     return alias_map().get(repo.lower(), repo)
 
 
+def is_forge_node(repo):
+    """True if this node id names a non-GitHub forge rather than a GitHub owner.
+
+    A first segment containing a dot is a hostname. That is unambiguous rather
+    than a convention: GitHub owner names are [A-Za-z0-9-]+ and cannot contain
+    a dot, checked against every node in the cohort. Scripts that talk to the
+    GitHub API use this to skip the nodes it could only 404 on."""
+    return "." in repo.split("/", 1)[0]
+
+
+def origin_url(repo, aggregates=None):
+    """Where a node actually lives -- its forge origin if it has one, else its
+    GitHub URL."""
+    if aggregates and repo in aggregates and aggregates[repo].get("origin"):
+        return aggregates[repo]["origin"]
+    record = repositories().get(repo) or {}
+    for origin in record.get("origins", []):
+        if origin.get("role") == "canonical":
+            return origin.get("url")
+    if is_forge_node(repo):
+        return f"https://{repo}"
+    return f"https://github.com/{repo}"
+
+
 def canonical_lookup(node_ids):
     """{lowercased slug -> canonical node id} over a node set.
 

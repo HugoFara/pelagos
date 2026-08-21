@@ -172,3 +172,39 @@ fmtlib	fmtlib/fmt
 spdlog	gabime/spdlog
 catch2	catchorg/Catch2
 googletest	google/googletest
+
+# NOT mapped, deliberately: gcc-N-cross, gcc-N-cross-ports and
+# gcc-N-cross-mipsen. They looked like the largest remaining prize (~7,700
+# reverse-dependencies between them) and they are Debian packaging wrappers
+# around GCC, so mapping them to gcc-mirror/gcc is factually right. But they
+# carry Debian's own packaging version ("21", "5+c1") rather than GCC's, so
+# nothing corroborates them -- and checking what actually depends on them
+# settles it: 800 of gcc-14-cross-mipsen's 800 reverse-dependencies are
+# themselves cross-toolchain packaging (gcc-14-cross-mipsen,
+# gcc-13-cross-mipsen, gcc-defaults-mipsen). It is a closed loop of Debian
+# cross-compilation plumbing, not ecosystem structure, and the
+# reverse-dependency mass that made it look important is counting that loop.
+
+
+# More KDE frameworks, mirrored to GitHub under KDE/.
+kf6-kxmlgui	KDE/kxmlgui
+kf6-kcrash	KDE/kcrash
+kf6-kconfigwidgets	KDE/kconfigwidgets
+kf6-kservice	KDE/kservice
+kf6-kcmutils	KDE/kcmutils
+kf6-kiconthemes	KDE/kiconthemes
+kf6-kglobalaccel	KDE/kglobalaccel
+kf6-knotifications	KDE/knotifications
+kf6-kjobwidgets	KDE/kjobwidgets
+kf6-kbookmarks	KDE/kbookmarks
+kf6-solid	KDE/solid
+kf6-sonnet	KDE/sonnet
+kf6-ktextwidgets	KDE/ktextwidgets
+kf6-kitemviews	KDE/kitemviews
+kf6-karchive	KDE/karchive
+kf6-kguiaddons	KDE/kguiaddons
+kf6-kwindowsystem	KDE/kwindowsystem
+kf6-kcolorscheme	KDE/kcolorscheme
+
+# Other real GitHub homes missed by the URL regex.
+libxkbcommon	xkbcommon/libxkbcommon

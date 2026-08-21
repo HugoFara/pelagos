@@ -25,6 +25,9 @@ import sys
 import time
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from identity import is_forge_node  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 README_CACHE = ROOT / "data/raw/readme_cache"
 GH_API_THROTTLE_S = 0.4  # see scripts/10_fetch_new_repo_stats.py -- an unthrottled
@@ -64,6 +67,8 @@ def main():
     fetched = 0
     empty = 0
     for repo in cohort:
+        if is_forge_node(repo):
+            continue  # no GitHub README endpoint for a forge-hosted project
         owner, name = repo.split("/", 1)
         was_cached = (README_CACHE / f"{owner}__{name}.md").exists()
         text, did_fetch = fetch_readme(owner, name)

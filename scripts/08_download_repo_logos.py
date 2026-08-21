@@ -38,6 +38,9 @@ from pathlib import Path
 
 from PIL import Image
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from identity import is_forge_node  # noqa: E402
+
 AVATAR_URL = "https://github.com/{owner}.png?size=64"
 
 
@@ -60,7 +63,12 @@ def main(repo_list_path, out_dir="web/logos"):
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    repos = [l.strip() for l in Path(repo_list_path).read_text().splitlines() if l.strip()]
+    # Non-GitHub forge nodes have no GitHub owner and therefore no avatar --
+    # `gitlab.freedesktop.org` is a hostname, not a user the API can answer
+    # for. They fall back to the flat node colour, which build_web_explorer.py
+    # already ships a list for.
+    repos = [l.strip() for l in Path(repo_list_path).read_text().splitlines()
+             if l.strip() and not is_forge_node(l.strip())]
     # One repo per owner is enough to follow a rename; any of them resolves.
     owner_repo = {}
     for repo in repos:

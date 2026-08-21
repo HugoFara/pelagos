@@ -1043,7 +1043,28 @@
   // they share the "repos" endpoint prefix with a different render shape).
   var SHAPE_FIELD = { repo: "description", user: "bio", issue: "title" };
 
+  // A node id whose first segment contains a dot is a forge host, not a
+  // GitHub owner (GitHub owner names are [A-Za-z0-9-]+ and cannot contain a
+  // dot). Those projects live on gitlab.freedesktop.org, gitlab.gnome.org or
+  // sourceware and have no GitHub resource at all, so asking api.github.com
+  // about them would spend part of the 60/hour unauthenticated budget to
+  // receive a 404.
+  function isForgeNode(id) {
+    return typeof id === "string" && id.indexOf("/") > 0
+      && id.slice(0, id.indexOf("/")).indexOf(".") !== -1;
+  }
+
+  // Where a node actually lives. Forge nodes carry their origin in the
+  // aggregate row; everything else is a GitHub slug.
+  function repoUrl(id) {
+    var agg = AGGREGATES[id];
+    if (agg && agg.origin) return agg.origin.replace(/\.git$/, "");
+    if (isForgeNode(id)) return "https://" + id;
+    return "https://github.com/" + id;
+  }
+
   function githubTarget(n) {
+    if ((n.type === "repository" || n.type === "forkedRepo") && isForgeNode(n.label)) return null;
     if (n.type === "repository" || n.type === "forkedRepo") return { endpoint: "repos", path: n.label, shape: "repo" };
     if (n.type === "person") return { endpoint: "users", path: n.label, shape: "user" };
     if (n.type === "issue") {
@@ -1123,7 +1144,19 @@
     var target = githubTarget(n);
     var body;
     if (!target) {
-      body = '<div class="t-uri mono">' + escapeHtml(n.uri) + '</div>';
+      // A forge-hosted repo has no GitHub resource to fetch, but it does have
+      // a real description from its own forge's API, shipped in the aggregate
+      // row. Falling through to the raw node URI would show a semrepo.org
+      // address that says nothing about the project.
+      if (n.id in descCache) {
+        body = '<div class="t-desc">' + (descCache[n.id]
+          ? escapeHtml(descCache[n.id])
+          : '<span class="muted">(no description)</span>') + '</div>';
+      } else if (isForgeNode(n.label)) {
+        body = '<div class="t-uri mono">' + escapeHtml(repoUrl(n.label)) + '</div>';
+      } else {
+        body = '<div class="t-uri mono">' + escapeHtml(n.uri) + '</div>';
+      }
     } else {
       var field = SHAPE_FIELD[target.shape];
       var c = liveCache[n.id];
@@ -1293,7 +1326,7 @@
     // and a leading "/" means "from the repo root" to a README author even
     // though a browser would read it as the github.com root -- github.com
     // rewrites it the same way, so strip the slash before resolving.
-    var linkBase = "https://github.com/" + slug + "/blob/HEAD/";
+    var linkBase = repoUrl(slug) + "/blob/HEAD/";
     var imgBase = "https://raw.githubusercontent.com/" + slug + "/HEAD/";
     function absolutize(el, attr, base) {
       var raw = el.getAttribute(attr);
@@ -1411,7 +1444,7 @@
   function openReadme(n) {
     readmeNode = n;
     document.getElementById("readmeTitle").textContent = n.label;
-    document.getElementById("readmeOpenGh").href = "https://github.com/" + n.label;
+    document.getElementById("readmeOpenGh").href = repoUrl(n.label);
     readmeOverlay.hidden = false;
     renderReadme();
     fetchReadme(n);
@@ -5484,8 +5517,8 @@
   // GitHub URL on screen is a mirror of somewhere else -- which matters most
   // for exactly the low-trophic system projects this axis puts at the bottom.
   function repoIdentityHtml(id) {
-    var record = REPO_IDENTITY[id];
-    if (!record) return "";
+    var record = REPO_IDENTITY[id] || {};
+    if (!REPO_IDENTITY[id] && !isForgeNode(id)) return "";
     var html = "";
     var aliases = record.aliases || [];
     if (aliases.length) {
@@ -5494,6 +5527,13 @@
           return '<a href="https://github.com/' + encodePath(slug) + '" target="_blank" rel="noopener">' +
             escapeHtml(slug) + '</a>';
         }).join(", ") + '</span></div>';
+    }
+    if (isForgeNode(id)) {
+      html += '<div class="detail-row"><span class="k">Hosted on</span><span class="v" style="text-align:left">' +
+        '<a href="' + escapeHtml(repoUrl(id)) + '" target="_blank" rel="noopener">' +
+        escapeHtml(id.slice(0, id.indexOf("/"))) + '</a>' +
+        '<span class="detail-axis-note"> not on GitHub — no stars, forks or README are shown for it ' +
+        'because there is nothing there to read, not because it has none</span></span></div>';
     }
     var elsewhere = (record.origins || []).filter(function (o) { return o.forge !== "github"; });
     if (elsewhere.length) {

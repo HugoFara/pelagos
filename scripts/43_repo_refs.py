@@ -79,6 +79,9 @@ from collections import Counter
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from identity import is_forge_node  # noqa: E402
+
 ROOT = Path(__file__).resolve().parent.parent
 REFS_CACHE = ROOT / "data/raw/repo_refs_cache"
 GITHUB_CACHE = ROOT / "data/raw/github_cache"
@@ -111,6 +114,18 @@ def gh_token():
 TOKEN = gh_token()
 
 
+def load_forge_origins():
+    """{node id: origin url} for the non-GitHub nodes, from their aggregate rows."""
+    path = ROOT / "data/processed/dependency_repo_aggregates.json"
+    if not path.exists():
+        return {}
+    return {repo: row["origin"] for repo, row in json.loads(path.read_text()).items()
+            if isinstance(row, dict) and row.get("origin")}
+
+
+FORGE_ORIGINS = load_forge_origins()
+
+
 def load_cohort():
     top50 = json.loads((ROOT / "data/processed/repo_aggregates.json").read_text())
     extra = json.loads((ROOT / "data/processed/dependency_repo_aggregates.json").read_text())
@@ -118,10 +133,19 @@ def load_cohort():
 
 
 def canonical_url(repo):
-    """The URL to probe. Prefers the current `full_name` from the cached
-    GitHub response, so a renamed repo is read at the name it actually has
-    rather than 301-redirecting (which git follows, but which would also make
-    the cache key disagree with the origin it describes)."""
+    """The URL to probe.
+
+    A non-GitHub forge node is probed at its own origin, read from the
+    aggregate row 48_fetch_forge_repo_stats.py wrote. Building a github.com
+    URL for `gitlab.freedesktop.org/cairo/cairo` would probe a repository that
+    does not exist and cache the 404 as though the project had no refs.
+
+    For a GitHub node this prefers the current `full_name` from the cached
+    API response, so a renamed repo is read at the name it actually has rather
+    than 301-redirecting (which git follows, but which would also make the
+    cache key disagree with the origin it describes)."""
+    if is_forge_node(repo):
+        return FORGE_ORIGINS.get(repo) or f"https://{repo}.git"
     owner, name = repo.split("/", 1)
     cached = GITHUB_CACHE / f"{owner}__{name}.json"
     if cached.exists():
@@ -185,8 +209,13 @@ def ls_remote(url):
 
 
 def cache_path(repo):
-    owner, name = repo.split("/", 1)
-    return REFS_CACHE / f"{owner}__{name}.json"
+    """One cache file per node id.
+
+    Every path separator becomes `__`, not just the first: a forge node id
+    like `gitlab.freedesktop.org/xorg/lib/libx11` has three of them, and
+    splitting only on the first left the rest in the filename as real
+    directories that do not exist."""
+    return REFS_CACHE / f"{repo.replace('/', '__')}.json"
 
 
 def fetch_refs(repo):

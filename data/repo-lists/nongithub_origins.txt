@@ -1,0 +1,75 @@
+# Debian source package -> upstream origin, for projects with no GitHub
+# repository at all. Read by scripts/46_debian_dependency_edges.py.
+#
+# These are the repositories that ROADMAP Phase 21 had to leave out. They are
+# not obscure -- libX11, cairo, dbus, mesa, wayland and fontconfig sit under
+# most of a Linux desktop -- but every one of them publishes on
+# gitlab.freedesktop.org, gitlab.gnome.org or sourceware, and the GitHub
+# mirrors that exist for them are stale forks whose tags do not match what
+# Debian ships. Under a node id that had to be an `owner/name` GitHub slug
+# they were unreachable, so the most load-bearing region of the graph was
+# missing its actual occupants.
+#
+# The node id for these is `host/path`, derived from the URL: a first segment
+# containing a dot means a forge host rather than a GitHub owner. That is
+# unambiguous rather than a convention -- GitHub owner names are
+# [A-Za-z0-9-]+ and cannot contain a dot, checked against all 8,251 existing
+# nodes.
+#
+# Corroborated exactly like every other candidate file here: the upstream
+# version Debian ships must appear among the origin's own git tags. That check
+# is forge-independent by construction, because `git ls-remote` is.
+#
+# Format: <debian source package><TAB><origin URL>
+
+# X.Org client libraries. libX11 alone has 1,501 reverse-dependencies.
+libx11	https://gitlab.freedesktop.org/xorg/lib/libx11.git
+libxcb	https://gitlab.freedesktop.org/xorg/lib/libxcb.git
+libxext	https://gitlab.freedesktop.org/xorg/lib/libxext.git
+libxt	https://gitlab.freedesktop.org/xorg/lib/libxt.git
+libxrandr	https://gitlab.freedesktop.org/xorg/lib/libxrandr.git
+libxrender	https://gitlab.freedesktop.org/xorg/lib/libxrender.git
+libxfixes	https://gitlab.freedesktop.org/xorg/lib/libxfixes.git
+libxi	https://gitlab.freedesktop.org/xorg/lib/libxi.git
+libxcursor	https://gitlab.freedesktop.org/xorg/lib/libxcursor.git
+libxinerama	https://gitlab.freedesktop.org/xorg/lib/libxinerama.git
+libxdamage	https://gitlab.freedesktop.org/xorg/lib/libxdamage.git
+libxxf86vm	https://gitlab.freedesktop.org/xorg/lib/libxxf86vm.git
+libxtst	https://gitlab.freedesktop.org/xorg/lib/libxtst.git
+libxmu	https://gitlab.freedesktop.org/xorg/lib/libxmu.git
+libxpm	https://gitlab.freedesktop.org/xorg/lib/libxpm.git
+libxau	https://gitlab.freedesktop.org/xorg/lib/libxau.git
+libxdmcp	https://gitlab.freedesktop.org/xorg/lib/libxdmcp.git
+libice	https://gitlab.freedesktop.org/xorg/lib/libice.git
+libsm	https://gitlab.freedesktop.org/xorg/lib/libsm.git
+
+# The rest of the freedesktop stack.
+cairo	https://gitlab.freedesktop.org/cairo/cairo.git
+pixman	https://gitlab.freedesktop.org/pixman/pixman.git
+fontconfig	https://gitlab.freedesktop.org/fontconfig/fontconfig.git
+dbus	https://gitlab.freedesktop.org/dbus/dbus.git
+wayland	https://gitlab.freedesktop.org/wayland/wayland.git
+wayland-protocols	https://gitlab.freedesktop.org/wayland/wayland-protocols.git
+mesa	https://gitlab.freedesktop.org/mesa/mesa.git
+libdrm	https://gitlab.freedesktop.org/mesa/drm.git
+libbsd	https://gitlab.freedesktop.org/libbsd/libbsd.git
+libinput	https://gitlab.freedesktop.org/libinput/libinput.git
+poppler	https://gitlab.freedesktop.org/poppler/poppler.git
+gstreamer1.0	https://gitlab.freedesktop.org/gstreamer/gstreamer.git
+shared-mime-info	https://gitlab.freedesktop.org/xdg/shared-mime-info.git
+
+# GNOME projects that are not mirrored to GitHub.
+dconf	https://gitlab.gnome.org/GNOME/dconf.git
+at-spi2-core	https://gitlab.gnome.org/GNOME/at-spi2-core.git
+json-glib	https://gitlab.gnome.org/GNOME/json-glib.git
+librsvg	https://gitlab.gnome.org/GNOME/librsvg.git
+libsoup3	https://gitlab.gnome.org/GNOME/libsoup.git
+libadwaita-1	https://gitlab.gnome.org/GNOME/libadwaita.git
+gsettings-desktop-schemas	https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas.git
+glib-networking	https://gitlab.gnome.org/GNOME/glib-networking.git
+gcr4	https://gitlab.gnome.org/GNOME/gcr.git
+gobject-introspection	https://gitlab.gnome.org/GNOME/gobject-introspection.git
+
+# Elsewhere.
+mpfr4	https://gitlab.inria.fr/mpfr/mpfr.git
+elfutils	https://sourceware.org/git/elfutils.git

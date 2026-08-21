@@ -117,6 +117,8 @@ ROOT = Path(__file__).resolve().parent.parent
 DEBIAN_CACHE = ROOT / "data/raw/debian_cache"
 TAG_CACHE = ROOT / "data/raw/debian_tag_cache"
 CURATED_PATH = ROOT / "data/repo-lists/distro_upstreams.txt"
+FORGE_PATH = ROOT / "data/repo-lists/nongithub_origins.txt"
+OUT_FORGE = ROOT / "data/repo-lists/forge_extra_nodes.txt"
 OUT_EDGES = ROOT / "data/processed/repo_debian_dependency_edges.json"
 OUT_MAP = ROOT / "data/processed/debian_source_to_repo.json"
 OUT_EXTRA = ROOT / "data/repo-lists/distro_extra_repos.txt"
@@ -261,6 +263,42 @@ def auto_resolve(source):
     return None
 
 
+def github_url(repo):
+    return f"https://github.com/{repo}.git"
+
+
+def forge_node_id(url):
+    """The node id for a non-GitHub origin: `host/path`.
+
+    A first segment containing a dot means a forge host rather than a GitHub
+    owner, which is unambiguous rather than a convention -- GitHub owner names
+    are [A-Za-z0-9-]+ and cannot contain a dot (checked against every node in
+    the cohort). The full path is kept rather than the last segment alone, so
+    `xorg/lib/libx11` and `mesa/drm` stay distinguishable from anything else
+    on the same host.
+
+    A leading `git/` path segment is dropped: sourceware serves
+    sourceware.org/git/elfutils.git, where `git` is the cgit mount point and
+    not part of the project's name."""
+    rest = url.removeprefix("https://").removeprefix("http://").removesuffix(".git")
+    host, _, path = rest.partition("/")
+    path = re.sub(r"^git/", "", path).strip("/")
+    return f"{host}/{path}" if path else host
+
+
+def load_forge_origins():
+    """{debian source package: origin URL} for projects with no GitHub repo."""
+    if not FORGE_PATH.exists():
+        return {}
+    out = {}
+    for line in FORGE_PATH.read_text().splitlines():
+        line = line.split("#", 1)[0].strip()
+        parts = line.split()
+        if len(parts) == 2:
+            out[parts[0]] = parts[1]
+    return out
+
+
 def cohort_name_index(canon):
     """{bare repo name: canonical id} for unambiguous names only.
 
@@ -302,13 +340,17 @@ def load_curated():
     return out
 
 
-def repo_tags(repo):
-    """Every tag name the repo publishes, cached. `git ls-remote --tags` is
-    unauthenticated, unlimited and works against any forge -- see
-    43_repo_refs.py for why this project reads origins directly rather than
-    through an API."""
+def origin_tags(url):
+    """Every tag name an origin publishes, cached.
+
+    Takes a URL rather than a GitHub slug, which is the whole reason
+    non-GitHub nodes are possible at all: `git ls-remote` is forge-independent
+    and unauthenticated, so gitlab.freedesktop.org, gitlab.gnome.org and
+    sourceware answer it exactly as github.com does. The corroboration rule
+    below therefore needs no special case for where a project lives."""
     TAG_CACHE.mkdir(parents=True, exist_ok=True)
-    cache_path = TAG_CACHE / f"{repo.replace('/', '__')}.json"
+    key = re.sub(r"[^A-Za-z0-9]+", "_", url.removeprefix("https://").removesuffix(".git"))
+    cache_path = TAG_CACHE / f"{key}.json"
     if cache_path.exists():
         try:
             return json.loads(cache_path.read_text())
@@ -316,7 +358,7 @@ def repo_tags(repo):
             pass
     try:
         out = subprocess.run(
-            ["git", "ls-remote", "--tags", f"https://github.com/{repo}.git"],
+            ["git", "ls-remote", "--tags", url],
             capture_output=True, text=True, timeout=LS_REMOTE_TIMEOUT_S,
             env={"GIT_TERMINAL_PROMPT": "0", "GIT_ASKPASS": "true", "PATH": "/usr/bin:/bin"},
         )
@@ -332,16 +374,20 @@ def repo_tags(repo):
     return tags
 
 
-def corroborate(package, repo, version):
+def corroborate(package, url, version):
     """(ok, reason). The upstream version Debian ships must appear in one of
-    the repository's own tags."""
+    the origin's own tags.
+
+    Takes an origin URL rather than a GitHub slug, which is what lets one rule
+    cover github.com, gitlab.freedesktop.org, gitlab.gnome.org and sourceware
+    alike: `git ls-remote` does not care which forge answers it."""
     if not version:
         return False, "no upstream version in the Debian index"
-    tags = repo_tags(repo)
+    tags = origin_tags(url)
     if tags is None:
-        return False, "could not read the repo's tags"
+        return False, "could not read the origin's tags"
     if not tags:
-        return False, "repo publishes no tags"
+        return False, "origin publishes no tags"
     # Debian may ship an older release than HEAD, so any tag may match, not
     # just the newest.
     #
@@ -361,7 +407,7 @@ def corroborate(package, repo, version):
             if candidate == core or candidate.startswith(core + ".") \
                     or core.startswith(candidate + "."):
                 return True, ""
-    return False, f"version {version} matches none of the repo's {len(tags)} tags"
+    return False, f"version {version} matches none of the origin's {len(tags)} tags"
 
 
 def main(min_reverse_deps=MIN_REVERSE_DEPS):
@@ -397,7 +443,7 @@ def main(min_reverse_deps=MIN_REVERSE_DEPS):
 
     def check(item):
         package, repo = item
-        ok, reason = corroborate(package, repo, sources[package]["version"])
+        ok, reason = corroborate(package, github_url(repo), sources[package]["version"])
         return package, repo, ok, reason
 
     with ThreadPoolExecutor(max_workers=LS_REMOTE_WORKERS) as pool:
@@ -430,7 +476,7 @@ def main(min_reverse_deps=MIN_REVERSE_DEPS):
 
     def check_name(item):
         package, repo = item
-        ok, reason = corroborate(package, repo, sources[package]["version"])
+        ok, reason = corroborate(package, github_url(repo), sources[package]["version"])
         return package, repo, ok, reason
 
     name_count = 0
@@ -443,11 +489,35 @@ def main(min_reverse_deps=MIN_REVERSE_DEPS):
             else:
                 name_rejected += 1
 
+    # Fourth layer: projects with no GitHub repository at all. These get a
+    # forge-host node id rather than an owner/name slug -- see forge_node_id.
+    forge_candidates = [(pkg, url) for pkg, url in sorted(load_forge_origins().items())
+                        if pkg in sources and pkg not in resolved]
+    print(f"corroborating {len(forge_candidates)} non-GitHub origins...", file=sys.stderr)
+
+    def check_forge(item):
+        package, url = item
+        ok, reason = corroborate(package, url, sources[package]["version"])
+        return package, url, ok, reason
+
+    forge_origins = {}  # node id -> origin url
+    forge_count = 0
+    with ThreadPoolExecutor(max_workers=LS_REMOTE_WORKERS) as pool:
+        for package, url, ok, reason in pool.map(check_forge, forge_candidates):
+            if ok:
+                node = forge_node_id(url)
+                resolved[package] = node
+                forge_origins[node] = url
+                forge_count += 1
+            else:
+                rejected.append((package, url, reason))
+
     print(f"resolved {len(resolved)} source packages "
           f"({curated_count} curated + corroborated, {auto_count} from the package's own "
           f"Homepage/Vcs, {name_count} by corroborated name match against the cohort -- "
-          f"{name_rejected} name matches refused by the version check), "
-          f"{len(rejected)} curated candidates rejected", file=sys.stderr)
+          f"{name_rejected} name matches refused by the version check, "
+          f"{forge_count} on non-GitHub forges), "
+          f"{len(rejected)} candidates rejected", file=sys.stderr)
 
     # Which resolved repos are allowed to be nodes.
     repo_rdeps = Counter()
@@ -464,11 +534,19 @@ def main(min_reverse_deps=MIN_REVERSE_DEPS):
     # aggregates. build_web_explorer.py caught it -- those endpoints could not
     # be interned and it said so -- but they would have rendered as edges
     # pointing at nothing.
-    admitted, added = {}, []
+    admitted, added, forge_added = {}, [], []
     for repo, count in repo_rdeps.items():
         node = canon.get(repo.lower())
         if node:
             admitted[repo] = node
+        elif repo in forge_origins:
+            # A corroborated non-GitHub project. Nothing else in the dataset
+            # can stand in for it -- there is no mirror to fall back to, which
+            # is exactly why it was missing -- so it is admitted on the same
+            # reverse-dependency threshold and carries edges immediately.
+            if count >= min_reverse_deps:
+                admitted[repo] = repo
+                forge_added.append(repo)
         elif count >= min_reverse_deps:
             added.append(repo)
     print(f"{len(admitted)} resolved repos are cohort nodes and can carry edges; "
@@ -498,11 +576,15 @@ def main(min_reverse_deps=MIN_REVERSE_DEPS):
     OUT_MAP.write_text(json.dumps(
         {p: r for p, r in sorted(resolved.items()) if r in admitted}, indent=0, sort_keys=True))
     OUT_EXTRA.write_text("\n".join(sorted(added)) + "\n")
+    OUT_FORGE.write_text("".join(
+        f"{node}\t{forge_origins[node]}\n" for node in sorted(forge_added)))
 
     touched = {n for e in edges for n in (e[0], e[1])}
     print(f"\n{len(edges)} Debian-derived dependency edges over {len(touched)} nodes "
           f"-> {OUT_EDGES.relative_to(ROOT)}", file=sys.stderr)
     print(f"{len(added)} repos to add to the cohort -> {OUT_EXTRA.relative_to(ROOT)}",
+          file=sys.stderr)
+    print(f"{len(forge_added)} non-GitHub forge nodes -> {OUT_FORGE.relative_to(ROOT)}",
           file=sys.stderr)
 
     in_degree = Counter(e[1] for e in edges)
