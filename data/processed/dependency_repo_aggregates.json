@@ -6040,6 +6040,42 @@
 "title": "hotspot",
 "watchers": 90
 },
+"KDE/karchive": {
+"contributors": null,
+"description": "Qt addon providing access to numerous types of archives",
+"forks": 24,
+"openIssues": 0,
+"stargazers": 61,
+"title": "karchive",
+"watchers": 2
+},
+"KDE/kbookmarks": {
+"contributors": null,
+"description": "KBookmarks",
+"forks": 3,
+"openIssues": 0,
+"stargazers": 8,
+"title": "kbookmarks",
+"watchers": 0
+},
+"KDE/kcmutils": {
+"contributors": null,
+"description": "Utilities for interacting with KCModules",
+"forks": 5,
+"openIssues": 0,
+"stargazers": 13,
+"title": "kcmutils",
+"watchers": 0
+},
+"KDE/kcolorscheme": {
+"contributors": null,
+"description": "Classes to read and interact with KColorScheme",
+"forks": 4,
+"openIssues": 0,
+"stargazers": 6,
+"title": "kcolorscheme",
+"watchers": 2
+},
 "KDE/kcompletion": {
 "contributors": null,
 "description": "KCompletion",
@@ -6058,6 +6094,15 @@
 "title": "kconfig",
 "watchers": 0
 },
+"KDE/kconfigwidgets": {
+"contributors": null,
+"description": "Widgets for KConfig",
+"forks": 10,
+"openIssues": 0,
+"stargazers": 20,
+"title": "kconfigwidgets",
+"watchers": 0
+},
 "KDE/kcoreaddons": {
 "contributors": null,
 "description": "KCoreAddons",
@@ -6065,6 +6110,15 @@
 "openIssues": 0,
 "stargazers": 29,
 "title": "kcoreaddons",
+"watchers": 1
+},
+"KDE/kcrash": {
+"contributors": null,
+"description": "KCrash",
+"forks": 6,
+"openIssues": 0,
+"stargazers": 21,
+"title": "kcrash",
 "watchers": 1
 },
 "KDE/kdenlive": {
@@ -6075,6 +6129,24 @@
 "title": "kdenlive",
 "watchers": 77
 },
+"KDE/kglobalaccel": {
+"contributors": null,
+"description": "KGlobalAccel",
+"forks": 9,
+"openIssues": 0,
+"stargazers": 16,
+"title": "kglobalaccel",
+"watchers": 1
+},
+"KDE/kguiaddons": {
+"contributors": null,
+"description": "KGuiAddons",
+"forks": 8,
+"openIssues": 0,
+"stargazers": 29,
+"title": "kguiaddons",
+"watchers": 2
+},
 "KDE/ki18n": {
 "contributors": null,
 "description": "Ki18n",
@@ -6082,6 +6154,15 @@
 "openIssues": 0,
 "stargazers": 12,
 "title": "ki18n",
+"watchers": 0
+},
+"KDE/kiconthemes": {
+"contributors": null,
+"description": "KIconThemes",
+"forks": 5,
+"openIssues": 0,
+"stargazers": 18,
+"title": "kiconthemes",
 "watchers": 0
 },
 "KDE/kio": {
@@ -6093,6 +6174,33 @@
 "title": "kio",
 "watchers": 3
 },
+"KDE/kitemviews": {
+"contributors": null,
+"description": "KItemViews",
+"forks": 4,
+"openIssues": 0,
+"stargazers": 12,
+"title": "kitemviews",
+"watchers": 0
+},
+"KDE/kjobwidgets": {
+"contributors": null,
+"description": "KJobWidgets",
+"forks": 4,
+"openIssues": 0,
+"stargazers": 12,
+"title": "kjobwidgets",
+"watchers": 1
+},
+"KDE/knotifications": {
+"contributors": null,
+"description": "KNotifications",
+"forks": 9,
+"openIssues": 0,
+"stargazers": 32,
+"title": "knotifications",
+"watchers": 2
+},
 "KDE/krita": {
 "contributors": null,
 "forks": 824,
@@ -6101,6 +6209,24 @@
 "title": "krita",
 "watchers": 198
 },
+"KDE/kservice": {
+"contributors": null,
+"description": "KService",
+"forks": 10,
+"openIssues": 0,
+"stargazers": 14,
+"title": "kservice",
+"watchers": 1
+},
+"KDE/ktextwidgets": {
+"contributors": null,
+"description": "KTextWidgets",
+"forks": 7,
+"openIssues": 0,
+"stargazers": 10,
+"title": "ktextwidgets",
+"watchers": 0
+},
 "KDE/kwidgetsaddons": {
 "contributors": null,
 "description": "KWidgetsAddons",
@@ -6108,6 +6234,42 @@
 "openIssues": 0,
 "stargazers": 30,
 "title": "kwidgetsaddons",
+"watchers": 2
+},
+"KDE/kwindowsystem": {
+"contributors": null,
+"description": "KWindowSystem",
+"forks": 15,
+"openIssues": 0,
+"stargazers": 32,
+"title": "kwindowsystem",
+"watchers": 1
+},
+"KDE/kxmlgui": {
+"contributors": null,
+"description": "KXMLGUI",
+"forks": 5,
+"openIssues": 0,
+"stargazers": 22,
+"title": "kxmlgui",
+"watchers": 1
+},
+"KDE/solid": {
+"contributors": null,
+"description": "Solid",
+"forks": 13,
+"openIssues": 0,
+"stargazers": 21,
+"title": "solid",
+"watchers": 0
+},
+"KDE/sonnet": {
+"contributors": null,
+"description": "Spelling framework for Qt.",
+"forks": 14,
+"openIssues": 0,
+"stargazers": 43,
+"title": "sonnet",
 "watchers": 2
 },
 "KU-VGI/GUIDE": {
@@ -29123,6 +29285,468 @@
 "stargazers": 121586,
 "title": "spec-kit",
 "watchers": 613
+},
+"gitlab.freedesktop.org/cairo/cairo": {
+"contributors": null,
+"description": "",
+"forge": "gitlab.freedesktop.org",
+"forks": 144,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/cairo/cairo.git",
+"stargazers": 41,
+"title": "cairo",
+"watchers": null
+},
+"gitlab.freedesktop.org/dbus/dbus": {
+"contributors": null,
+"description": "D-Bus specification and reference implementation, including libdbus and dbus-daemon https://www.freedesktop.org/wiki/Software/dbus/",
+"forge": "gitlab.freedesktop.org",
+"forks": 123,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/dbus/dbus.git",
+"stargazers": 35,
+"title": "dbus",
+"watchers": null
+},
+"gitlab.freedesktop.org/fontconfig/fontconfig": {
+"contributors": null,
+"description": "Font configuration and customization library",
+"forge": "gitlab.freedesktop.org",
+"forks": 118,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/fontconfig/fontconfig.git",
+"stargazers": 21,
+"title": "fontconfig",
+"watchers": null
+},
+"gitlab.freedesktop.org/gstreamer/gstreamer": {
+"contributors": null,
+"description": "GStreamer multimedia framework",
+"forge": "gitlab.freedesktop.org",
+"forks": 904,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/gstreamer/gstreamer.git",
+"stargazers": 256,
+"title": "gstreamer",
+"watchers": null
+},
+"gitlab.freedesktop.org/libbsd/libbsd": {
+"contributors": null,
+"description": "Utility functions from BSD systems",
+"forge": "gitlab.freedesktop.org",
+"forks": 29,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/libbsd/libbsd.git",
+"stargazers": 8,
+"title": "libbsd",
+"watchers": null
+},
+"gitlab.freedesktop.org/libinput/libinput": {
+"contributors": null,
+"description": "Input device management and event handling library",
+"forge": "gitlab.freedesktop.org",
+"forks": 325,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/libinput/libinput.git",
+"stargazers": 110,
+"title": "libinput",
+"watchers": null
+},
+"gitlab.freedesktop.org/mesa/drm": {
+"contributors": null,
+"description": "libdrm Direct Rendering Manager library and headers",
+"forge": "gitlab.freedesktop.org",
+"forks": 254,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/mesa/drm.git",
+"stargazers": 77,
+"title": "libdrm",
+"watchers": null
+},
+"gitlab.freedesktop.org/mesa/mesa": {
+"contributors": null,
+"description": "Mesa 3D graphics library",
+"forge": "gitlab.freedesktop.org",
+"forks": 1529,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/mesa/mesa.git",
+"stargazers": 641,
+"title": "mesa",
+"watchers": null
+},
+"gitlab.freedesktop.org/pixman/pixman": {
+"contributors": null,
+"description": "Image processing and manipulation library",
+"forge": "gitlab.freedesktop.org",
+"forks": 81,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/pixman/pixman.git",
+"stargazers": 29,
+"title": "pixman",
+"watchers": null
+},
+"gitlab.freedesktop.org/poppler/poppler": {
+"contributors": null,
+"description": "",
+"forge": "gitlab.freedesktop.org",
+"forks": 256,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/poppler/poppler.git",
+"stargazers": 72,
+"title": "poppler",
+"watchers": null
+},
+"gitlab.freedesktop.org/wayland/wayland": {
+"contributors": null,
+"description": "Core Wayland window system code and protocol",
+"forge": "gitlab.freedesktop.org",
+"forks": 224,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/wayland/wayland.git",
+"stargazers": 226,
+"title": "wayland",
+"watchers": null
+},
+"gitlab.freedesktop.org/wayland/wayland-protocols": {
+"contributors": null,
+"description": "Additional standard Wayland protocols",
+"forge": "gitlab.freedesktop.org",
+"forks": 161,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/wayland/wayland-protocols.git",
+"stargazers": 94,
+"title": "wayland-protocols",
+"watchers": null
+},
+"gitlab.freedesktop.org/xdg/shared-mime-info": {
+"contributors": null,
+"description": "",
+"forge": "gitlab.freedesktop.org",
+"forks": 125,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xdg/shared-mime-info.git",
+"stargazers": 13,
+"title": "shared-mime-info",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libsm": {
+"contributors": null,
+"description": "X Session Management Library",
+"forge": "gitlab.freedesktop.org",
+"forks": 3,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libsm.git",
+"stargazers": 0,
+"title": "libSM",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libx11": {
+"contributors": null,
+"description": "Core X11 protocol client library (aka \"Xlib\")",
+"forge": "gitlab.freedesktop.org",
+"forks": 93,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libx11.git",
+"stargazers": 28,
+"title": "libX11",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxau": {
+"contributors": null,
+"description": "Functions for handling Xauthority files and entries.",
+"forge": "gitlab.freedesktop.org",
+"forks": 7,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxau.git",
+"stargazers": 1,
+"title": "libXau",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxcb": {
+"contributors": null,
+"description": "C interface to the X Window System protocol, which replaces the traditional Xlib interface.",
+"forge": "gitlab.freedesktop.org",
+"forks": 54,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxcb.git",
+"stargazers": 16,
+"title": "libxcb",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxcursor": {
+"contributors": null,
+"description": "Xlib-based Cursor management library",
+"forge": "gitlab.freedesktop.org",
+"forks": 13,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxcursor.git",
+"stargazers": 0,
+"title": "libXcursor",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxdamage": {
+"contributors": null,
+"description": "X Damage Extension library",
+"forge": "gitlab.freedesktop.org",
+"forks": 1,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxdamage.git",
+"stargazers": 2,
+"title": "libXdamage",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxdmcp": {
+"contributors": null,
+"description": "X Display Manager Control Protocol library",
+"forge": "gitlab.freedesktop.org",
+"forks": 2,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxdmcp.git",
+"stargazers": 1,
+"title": "libXdmcp",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxext": {
+"contributors": null,
+"description": "Xlib-based library for common extensions to the X11 protocol",
+"forge": "gitlab.freedesktop.org",
+"forks": 2,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxext.git",
+"stargazers": 5,
+"title": "libXext",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxfixes": {
+"contributors": null,
+"description": "Xlib-based library for the XFIXES Extension",
+"forge": "gitlab.freedesktop.org",
+"forks": 3,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxfixes.git",
+"stargazers": 1,
+"title": "libXfixes",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxi": {
+"contributors": null,
+"description": "Xlib library for the X Input Extension\r\n",
+"forge": "gitlab.freedesktop.org",
+"forks": 8,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxi.git",
+"stargazers": 2,
+"title": "libXi",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxinerama": {
+"contributors": null,
+"description": "Xlib API for Xinerama extension to X11 Protocol",
+"forge": "gitlab.freedesktop.org",
+"forks": 3,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxinerama.git",
+"stargazers": 0,
+"title": "libXinerama",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxmu": {
+"contributors": null,
+"description": "X miscellaneous utility routines library",
+"forge": "gitlab.freedesktop.org",
+"forks": 4,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxmu.git",
+"stargazers": 0,
+"title": "libXmu",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxpm": {
+"contributors": null,
+"description": "X Pixmap (XPM) image file format library",
+"forge": "gitlab.freedesktop.org",
+"forks": 8,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxpm.git",
+"stargazers": 3,
+"title": "libXpm",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxrandr": {
+"contributors": null,
+"description": "Xlib Resize, Rotate and Reflection (RandR) extension library\r\n",
+"forge": "gitlab.freedesktop.org",
+"forks": 4,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxrandr.git",
+"stargazers": 4,
+"title": "libXrandr",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxrender": {
+"contributors": null,
+"description": "Xlib library for the Render Extension to the X11 protocol",
+"forge": "gitlab.freedesktop.org",
+"forks": 7,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxrender.git",
+"stargazers": 2,
+"title": "libXrender",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxt": {
+"contributors": null,
+"description": "X Toolkit Intrinsics library",
+"forge": "gitlab.freedesktop.org",
+"forks": 18,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxt.git",
+"stargazers": 2,
+"title": "libXt",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxtst": {
+"contributors": null,
+"description": "Xlib-based library for XTEST & RECORD extensions",
+"forge": "gitlab.freedesktop.org",
+"forks": 2,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxtst.git",
+"stargazers": 0,
+"title": "libXtst",
+"watchers": null
+},
+"gitlab.freedesktop.org/xorg/lib/libxxf86vm": {
+"contributors": null,
+"description": "Xlib-based library for the XFree86-VidMode X extension",
+"forge": "gitlab.freedesktop.org",
+"forks": 2,
+"openIssues": null,
+"origin": "https://gitlab.freedesktop.org/xorg/lib/libxxf86vm.git",
+"stargazers": 0,
+"title": "libXxf86vm",
+"watchers": null
+},
+"gitlab.gnome.org/GNOME/at-spi2-core": {
+"contributors": null,
+"description": "Base DBus XML interfaces for accessibility, the accessibility registry daemon, and atspi library.",
+"forge": "gitlab.gnome.org",
+"forks": 55,
+"openIssues": null,
+"origin": "https://gitlab.gnome.org/GNOME/at-spi2-core.git",
+"stargazers": 15,
+"title": "at-spi2-core",
+"watchers": null
+},
+"gitlab.gnome.org/GNOME/dconf": {
+"contributors": null,
+"description": "dconf is a simple key/value storage system that is heavily optimised for reading.  This makes it an ideal system for storing user preferences (which are often read but rarely changed).  It was created with this use  case in mind.",
+"forge": "gitlab.gnome.org",
+"forks": 22,
+"openIssues": null,
+"origin": "https://gitlab.gnome.org/GNOME/dconf.git",
+"stargazers": 6,
+"title": "dconf",
+"watchers": null
+},
+"gitlab.gnome.org/GNOME/gcr": {
+"contributors": null,
+"description": "",
+"forge": "gitlab.gnome.org",
+"forks": 34,
+"openIssues": null,
+"origin": "https://gitlab.gnome.org/GNOME/gcr.git",
+"stargazers": 7,
+"title": "gcr",
+"watchers": null
+},
+"gitlab.gnome.org/GNOME/glib-networking": {
+"contributors": null,
+"description": "Network extensions for GLib",
+"forge": "gitlab.gnome.org",
+"forks": 40,
+"openIssues": null,
+"origin": "https://gitlab.gnome.org/GNOME/glib-networking.git",
+"stargazers": 7,
+"title": "glib-networking",
+"watchers": null
+},
+"gitlab.gnome.org/GNOME/gobject-introspection": {
+"contributors": null,
+"description": "\ud83d\udcd8 https://gi.readthedocs.io\r\n\r\n\ud83d\udcd7 [libgirepository API docs](https://gnome.pages.gitlab.gnome.org/gobject-introspection/girepository)",
+"forge": "gitlab.gnome.org",
+"forks": 115,
+"openIssues": null,
+"origin": "https://gitlab.gnome.org/GNOME/gobject-introspection.git",
+"stargazers": 29,
+"title": "gobject-introspection",
+"watchers": null
+},
+"gitlab.gnome.org/GNOME/gsettings-desktop-schemas": {
+"contributors": null,
+"description": "",
+"forge": "gitlab.gnome.org",
+"forks": 62,
+"openIssues": null,
+"origin": "https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas.git",
+"stargazers": 3,
+"title": "gsettings-desktop-schemas",
+"watchers": null
+},
+"gitlab.gnome.org/GNOME/json-glib": {
+"contributors": null,
+"description": "JSON-GLib implements a full JSON parser and generator using GLib and GObject, and integrates JSON with GLib data types.",
+"forge": "gitlab.gnome.org",
+"forks": 38,
+"openIssues": null,
+"origin": "https://gitlab.gnome.org/GNOME/json-glib.git",
+"stargazers": 13,
+"title": "json-glib",
+"watchers": null
+},
+"gitlab.gnome.org/GNOME/libadwaita": {
+"contributors": null,
+"description": "Building blocks for modern GNOME applications",
+"forge": "gitlab.gnome.org",
+"forks": 167,
+"openIssues": null,
+"origin": "https://gitlab.gnome.org/GNOME/libadwaita.git",
+"stargazers": 156,
+"title": "libadwaita",
+"watchers": null
+},
+"gitlab.gnome.org/GNOME/librsvg": {
+"contributors": null,
+"description": "A library to render SVG images to Cairo surfaces.  GNOME uses this to render SVG icons.  Outside of GNOME, other desktop environments use it for similar purposes.  Wikimedia uses it for Wikipedia's SVG diagrams.",
+"forge": "gitlab.gnome.org",
+"forks": 130,
+"openIssues": null,
+"origin": "https://gitlab.gnome.org/GNOME/librsvg.git",
+"stargazers": 49,
+"title": "librsvg",
+"watchers": null
+},
+"gitlab.gnome.org/GNOME/libsoup": {
+"contributors": null,
+"description": "HTTP Library for GLib - https://libsoup.gnome.org/",
+"forge": "gitlab.gnome.org",
+"forks": 101,
+"openIssues": null,
+"origin": "https://gitlab.gnome.org/GNOME/libsoup.git",
+"stargazers": 22,
+"title": "libsoup",
+"watchers": null
+},
+"gitlab.inria.fr/mpfr/mpfr": {
+"contributors": null,
+"description": "GNU MPFR is an efficient arbitrary-precision floating-point library with well-defined semantics (copying the good ideas from the IEEE 754 standard), in particular correct rounding in 5 rounding modes.",
+"forge": "gitlab.inria.fr",
+"forks": 0,
+"openIssues": null,
+"origin": "https://gitlab.inria.fr/mpfr/mpfr.git",
+"stargazers": 3,
+"title": "mpfr",
+"watchers": null
 },
 "gitleaks/gitleaks": {
 "contributors": null,
@@ -57295,6 +57919,17 @@
 "title": "sourcegraph-public-snapshot",
 "watchers": 15
 },
+"sourceware.org/elfutils": {
+"contributors": null,
+"description": "",
+"forge": "sourceware.org",
+"forks": null,
+"openIssues": null,
+"origin": "https://sourceware.org/git/elfutils.git",
+"stargazers": null,
+"title": "elfutils",
+"watchers": null
+},
 "soybeanjs/soybean-admin": {
 "contributors": null,
 "forks": 2478,
@@ -64817,6 +65452,15 @@
 "stargazers": 5401,
 "title": "tun2socks",
 "watchers": 34
+},
+"xkbcommon/libxkbcommon": {
+"contributors": null,
+"description": "keymap handling library for toolkits and window systems",
+"forks": 147,
+"openIssues": 51,
+"stargazers": 368,
+"title": "libxkbcommon",
+"watchers": 17
 },
 "xkcoding/spring-boot-demo": {
 "contributors": null,

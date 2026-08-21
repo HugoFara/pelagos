@@ -10522,6 +10522,62 @@
 }
 ]
 },
+"KDE/karchive": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/karchive",
+"url": "https://github.com/KDE/karchive"
+}
+]
+},
+"KDE/kbookmarks": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/kbookmarks",
+"url": "https://github.com/KDE/kbookmarks"
+}
+]
+},
+"KDE/kcmutils": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/kcmutils",
+"url": "https://github.com/KDE/kcmutils"
+}
+]
+},
+"KDE/kcolorscheme": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/kcolorscheme",
+"url": "https://github.com/KDE/kcolorscheme"
+}
+]
+},
 "KDE/kcompletion": {
 "aliases": [],
 "anchor": null,
@@ -10550,6 +10606,20 @@
 }
 ]
 },
+"KDE/kconfigwidgets": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/kconfigwidgets",
+"url": "https://github.com/KDE/kconfigwidgets"
+}
+]
+},
 "KDE/kcoreaddons": {
 "aliases": [],
 "anchor": null,
@@ -10561,6 +10631,20 @@
 "role": "canonical",
 "slug": "KDE/kcoreaddons",
 "url": "https://github.com/KDE/kcoreaddons"
+}
+]
+},
+"KDE/kcrash": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/kcrash",
+"url": "https://github.com/KDE/kcrash"
 }
 ]
 },
@@ -10585,6 +10669,34 @@
 }
 ]
 },
+"KDE/kglobalaccel": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/kglobalaccel",
+"url": "https://github.com/KDE/kglobalaccel"
+}
+]
+},
+"KDE/kguiaddons": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/kguiaddons",
+"url": "https://github.com/KDE/kguiaddons"
+}
+]
+},
 "KDE/ki18n": {
 "aliases": [],
 "anchor": null,
@@ -10599,6 +10711,20 @@
 }
 ]
 },
+"KDE/kiconthemes": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/kiconthemes",
+"url": "https://github.com/KDE/kiconthemes"
+}
+]
+},
 "KDE/kio": {
 "aliases": [],
 "anchor": null,
@@ -10610,6 +10736,48 @@
 "role": "canonical",
 "slug": "KDE/kio",
 "url": "https://github.com/KDE/kio"
+}
+]
+},
+"KDE/kitemviews": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/kitemviews",
+"url": "https://github.com/KDE/kitemviews"
+}
+]
+},
+"KDE/kjobwidgets": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/kjobwidgets",
+"url": "https://github.com/KDE/kjobwidgets"
+}
+]
+},
+"KDE/knotifications": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/knotifications",
+"url": "https://github.com/KDE/knotifications"
 }
 ]
 },
@@ -10634,6 +10802,34 @@
 }
 ]
 },
+"KDE/kservice": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/kservice",
+"url": "https://github.com/KDE/kservice"
+}
+]
+},
+"KDE/ktextwidgets": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/ktextwidgets",
+"url": "https://github.com/KDE/ktextwidgets"
+}
+]
+},
 "KDE/kwidgetsaddons": {
 "aliases": [],
 "anchor": null,
@@ -10645,6 +10841,62 @@
 "role": "canonical",
 "slug": "KDE/kwidgetsaddons",
 "url": "https://github.com/KDE/kwidgetsaddons"
+}
+]
+},
+"KDE/kwindowsystem": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/kwindowsystem",
+"url": "https://github.com/KDE/kwindowsystem"
+}
+]
+},
+"KDE/kxmlgui": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/kxmlgui",
+"url": "https://github.com/KDE/kxmlgui"
+}
+]
+},
+"KDE/solid": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/solid",
+"url": "https://github.com/KDE/solid"
+}
+]
+},
+"KDE/sonnet": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "KDE/sonnet",
+"url": "https://github.com/KDE/sonnet"
 }
 ]
 },
@@ -28312,10 +28564,10 @@
 "url": "https://github.com/apache/arrow"
 },
 {
-"containment": 0.9996,
+"containment": 0.9986,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 24862,
+"shared_refs": 24839,
 "url": "https://gitbox.apache.org/repos/asf/arrow.git"
 }
 ]
@@ -28333,10 +28585,10 @@
 "url": "https://github.com/apache/arrow-rs"
 },
 {
-"containment": 0.9985,
+"containment": 0.996,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 6695,
+"shared_refs": 6678,
 "url": "https://gitbox.apache.org/repos/asf/arrow-rs.git"
 }
 ]
@@ -28354,10 +28606,10 @@
 "url": "https://github.com/apache/beam"
 },
 {
-"containment": 0.9995,
+"containment": 0.9989,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 35809,
+"shared_refs": 35788,
 "url": "https://gitbox.apache.org/repos/asf/beam.git"
 }
 ]
@@ -28396,10 +28648,10 @@
 "url": "https://github.com/apache/calcite"
 },
 {
-"containment": 0.9991,
+"containment": 0.9997,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 6461,
+"shared_refs": 6467,
 "url": "https://gitbox.apache.org/repos/asf/calcite.git"
 }
 ]
@@ -28417,10 +28669,10 @@
 "url": "https://github.com/apache/camel"
 },
 {
-"containment": 0.9999,
+"containment": 0.999,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 28047,
+"shared_refs": 28025,
 "url": "https://gitbox.apache.org/repos/asf/camel.git"
 }
 ]
@@ -28494,10 +28746,10 @@
 "url": "https://github.com/apache/datafusion"
 },
 {
-"containment": 0.9982,
+"containment": 0.9947,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 15755,
+"shared_refs": 15699,
 "url": "https://gitbox.apache.org/repos/asf/datafusion.git"
 }
 ]
@@ -28557,10 +28809,10 @@
 "url": "https://github.com/apache/doris"
 },
 {
-"containment": 0.9992,
+"containment": 0.9988,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 58031,
+"shared_refs": 58005,
 "url": "https://gitbox.apache.org/repos/asf/doris.git"
 }
 ]
@@ -28578,10 +28830,10 @@
 "url": "https://github.com/apache/druid"
 },
 {
-"containment": 0.9996,
+"containment": 0.9989,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 16540,
+"shared_refs": 16527,
 "url": "https://gitbox.apache.org/repos/asf/druid.git"
 }
 ]
@@ -28893,10 +29145,10 @@
 "url": "https://github.com/apache/hudi"
 },
 {
-"containment": 0.999,
+"containment": 0.9983,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 13007,
+"shared_refs": 13002,
 "url": "https://gitbox.apache.org/repos/asf/hudi.git"
 }
 ]
@@ -28914,10 +29166,10 @@
 "url": "https://github.com/apache/iceberg"
 },
 {
-"containment": 0.9992,
+"containment": 0.9963,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 13319,
+"shared_refs": 13282,
 "url": "https://gitbox.apache.org/repos/asf/iceberg.git"
 }
 ]
@@ -28935,10 +29187,10 @@
 "url": "https://github.com/apache/iggy"
 },
 {
-"containment": 0.9956,
+"containment": 0.9945,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 3625,
+"shared_refs": 3621,
 "url": "https://gitbox.apache.org/repos/asf/iggy.git"
 }
 ]
@@ -29117,10 +29369,10 @@
 "url": "https://github.com/apache/kafka"
 },
 {
-"containment": 0.9961,
+"containment": 0.9945,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 28440,
+"shared_refs": 28395,
 "url": "https://gitbox.apache.org/repos/asf/kafka.git"
 }
 ]
@@ -29159,10 +29411,10 @@
 "url": "https://github.com/apache/logging-log4j2"
 },
 {
-"containment": 0.9982,
+"containment": 0.9962,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 3914,
+"shared_refs": 3906,
 "url": "https://gitbox.apache.org/repos/asf/logging-log4j2.git"
 }
 ]
@@ -29264,10 +29516,10 @@
 "url": "https://github.com/apache/nifi"
 },
 {
-"containment": 0.9989,
+"containment": 0.9986,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 14912,
+"shared_refs": 14908,
 "url": "https://gitbox.apache.org/repos/asf/nifi.git"
 }
 ]
@@ -29306,10 +29558,10 @@
 "url": "https://github.com/apache/pinot"
 },
 {
-"containment": 1.0,
+"containment": 0.9976,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 16483,
+"shared_refs": 16443,
 "url": "https://gitbox.apache.org/repos/asf/pinot.git"
 }
 ]
@@ -29579,10 +29831,10 @@
 "url": "https://github.com/apache/superset"
 },
 {
-"containment": 0.9953,
+"containment": 0.9935,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 27377,
+"shared_refs": 27327,
 "url": "https://gitbox.apache.org/repos/asf/superset.git"
 }
 ]
@@ -29600,10 +29852,10 @@
 "url": "https://github.com/apache/thrift"
 },
 {
-"containment": 0.9998,
+"containment": 0.9996,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 5290,
+"shared_refs": 5287,
 "url": "https://gitbox.apache.org/repos/asf/thrift.git"
 }
 ]
@@ -29642,10 +29894,10 @@
 "url": "https://github.com/apache/tomcat"
 },
 {
-"containment": 1.0,
+"containment": 0.9961,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 1781,
+"shared_refs": 1774,
 "url": "https://gitbox.apache.org/repos/asf/tomcat.git"
 }
 ]
@@ -51117,6 +51369,594 @@
 }
 ]
 },
+"gitlab.freedesktop.org/cairo/cairo": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/cairo/cairo",
+"url": "https://gitlab.freedesktop.org/cairo/cairo.git"
+}
+]
+},
+"gitlab.freedesktop.org/dbus/dbus": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/dbus/dbus",
+"url": "https://gitlab.freedesktop.org/dbus/dbus.git"
+}
+]
+},
+"gitlab.freedesktop.org/fontconfig/fontconfig": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/fontconfig/fontconfig",
+"url": "https://gitlab.freedesktop.org/fontconfig/fontconfig.git"
+}
+]
+},
+"gitlab.freedesktop.org/gstreamer/gstreamer": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/gstreamer/gstreamer",
+"url": "https://gitlab.freedesktop.org/gstreamer/gstreamer.git"
+}
+]
+},
+"gitlab.freedesktop.org/libbsd/libbsd": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/libbsd/libbsd",
+"url": "https://gitlab.freedesktop.org/libbsd/libbsd.git"
+}
+]
+},
+"gitlab.freedesktop.org/libinput/libinput": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/libinput/libinput",
+"url": "https://gitlab.freedesktop.org/libinput/libinput.git"
+}
+]
+},
+"gitlab.freedesktop.org/mesa/drm": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/mesa/drm",
+"url": "https://gitlab.freedesktop.org/mesa/drm.git"
+}
+]
+},
+"gitlab.freedesktop.org/mesa/mesa": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/mesa/mesa",
+"url": "https://gitlab.freedesktop.org/mesa/mesa.git"
+}
+]
+},
+"gitlab.freedesktop.org/pixman/pixman": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/pixman/pixman",
+"url": "https://gitlab.freedesktop.org/pixman/pixman.git"
+}
+]
+},
+"gitlab.freedesktop.org/poppler/poppler": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/poppler/poppler",
+"url": "https://gitlab.freedesktop.org/poppler/poppler.git"
+}
+]
+},
+"gitlab.freedesktop.org/wayland/wayland": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/wayland/wayland",
+"url": "https://gitlab.freedesktop.org/wayland/wayland.git"
+}
+]
+},
+"gitlab.freedesktop.org/wayland/wayland-protocols": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/wayland/wayland-protocols",
+"url": "https://gitlab.freedesktop.org/wayland/wayland-protocols.git"
+}
+]
+},
+"gitlab.freedesktop.org/xdg/shared-mime-info": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xdg/shared-mime-info",
+"url": "https://gitlab.freedesktop.org/xdg/shared-mime-info.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libsm": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libsm",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libsm.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libx11": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libx11",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libx11.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxau": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxau",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxau.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxcb": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxcb",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxcb.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxcursor": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxcursor",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxcursor.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxdamage": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxdamage",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxdamage.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxdmcp": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxdmcp",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxdmcp.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxext": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxext",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxext.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxfixes": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxfixes",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxfixes.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxi": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxi",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxi.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxinerama": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxinerama",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxinerama.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxmu": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxmu",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxmu.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxpm": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxpm",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxpm.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxrandr": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxrandr",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxrandr.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxrender": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxrender",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxrender.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxt": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxt",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxt.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxtst": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxtst",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxtst.git"
+}
+]
+},
+"gitlab.freedesktop.org/xorg/lib/libxxf86vm": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.freedesktop.org",
+"role": "canonical",
+"slug": "gitlab.freedesktop.org/xorg/lib/libxxf86vm",
+"url": "https://gitlab.freedesktop.org/xorg/lib/libxxf86vm.git"
+}
+]
+},
+"gitlab.gnome.org/GNOME/at-spi2-core": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.gnome.org",
+"role": "canonical",
+"slug": "gitlab.gnome.org/GNOME/at-spi2-core",
+"url": "https://gitlab.gnome.org/GNOME/at-spi2-core.git"
+}
+]
+},
+"gitlab.gnome.org/GNOME/dconf": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.gnome.org",
+"role": "canonical",
+"slug": "gitlab.gnome.org/GNOME/dconf",
+"url": "https://gitlab.gnome.org/GNOME/dconf.git"
+}
+]
+},
+"gitlab.gnome.org/GNOME/gcr": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.gnome.org",
+"role": "canonical",
+"slug": "gitlab.gnome.org/GNOME/gcr",
+"url": "https://gitlab.gnome.org/GNOME/gcr.git"
+}
+]
+},
+"gitlab.gnome.org/GNOME/glib-networking": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.gnome.org",
+"role": "canonical",
+"slug": "gitlab.gnome.org/GNOME/glib-networking",
+"url": "https://gitlab.gnome.org/GNOME/glib-networking.git"
+}
+]
+},
+"gitlab.gnome.org/GNOME/gobject-introspection": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.gnome.org",
+"role": "canonical",
+"slug": "gitlab.gnome.org/GNOME/gobject-introspection",
+"url": "https://gitlab.gnome.org/GNOME/gobject-introspection.git"
+}
+]
+},
+"gitlab.gnome.org/GNOME/gsettings-desktop-schemas": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.gnome.org",
+"role": "canonical",
+"slug": "gitlab.gnome.org/GNOME/gsettings-desktop-schemas",
+"url": "https://gitlab.gnome.org/GNOME/gsettings-desktop-schemas.git"
+}
+]
+},
+"gitlab.gnome.org/GNOME/json-glib": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.gnome.org",
+"role": "canonical",
+"slug": "gitlab.gnome.org/GNOME/json-glib",
+"url": "https://gitlab.gnome.org/GNOME/json-glib.git"
+}
+]
+},
+"gitlab.gnome.org/GNOME/libadwaita": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.gnome.org",
+"role": "canonical",
+"slug": "gitlab.gnome.org/GNOME/libadwaita",
+"url": "https://gitlab.gnome.org/GNOME/libadwaita.git"
+}
+]
+},
+"gitlab.gnome.org/GNOME/librsvg": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.gnome.org",
+"role": "canonical",
+"slug": "gitlab.gnome.org/GNOME/librsvg",
+"url": "https://gitlab.gnome.org/GNOME/librsvg.git"
+}
+]
+},
+"gitlab.gnome.org/GNOME/libsoup": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.gnome.org",
+"role": "canonical",
+"slug": "gitlab.gnome.org/GNOME/libsoup",
+"url": "https://gitlab.gnome.org/GNOME/libsoup.git"
+}
+]
+},
+"gitlab.inria.fr/mpfr/mpfr": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "gitlab.inria.fr",
+"role": "canonical",
+"slug": "gitlab.inria.fr/mpfr/mpfr",
+"url": "https://gitlab.inria.fr/mpfr/mpfr.git"
+}
+]
+},
 "gitleaks/gitleaks": {
 "aliases": [],
 "anchor": null,
@@ -52453,9 +53293,7 @@
 ],
 "anchor": "2d42ba6cf5d66a0098e7ba07a69cd5ab6232e199",
 "canonical_by": "github full_name",
-"merged_by": [
-"fork of cohort node"
-],
+"merged_by": [],
 "origins": [
 {
 "forge": "github",
@@ -56364,7 +57202,7 @@
 "url": "https://github.com/haproxy/haproxy"
 },
 {
-"containment": 0.9986,
+"containment": 0.9972,
 "forge": "other",
 "role": "mirrored-from",
 "shared_refs": 718,
@@ -57974,21 +58812,19 @@
 ],
 "anchor": "2276310eb1a4cb6ec99bd7be43170a9edfbba111",
 "canonical_by": "github full_name",
-"merged_by": [
-"fork of cohort node"
-],
+"merged_by": [],
 "origins": [
-{
-"forge": "github",
-"role": "fork",
-"slug": "ashleysommer/html5lib-modern",
-"url": "https://github.com/ashleysommer/html5lib-modern"
-},
 {
 "forge": "github",
 "role": "canonical",
 "slug": "html5lib/html5lib-python",
 "url": "https://github.com/html5lib/html5lib-python"
+},
+{
+"forge": "github",
+"role": "fork",
+"slug": "ashleysommer/html5lib-modern",
+"url": "https://github.com/ashleysommer/html5lib-modern"
 }
 ]
 },
@@ -89591,10 +90427,10 @@
 "url": "https://github.com/qemu/qemu"
 },
 {
-"containment": 0.9843,
+"containment": 0.9831,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 816,
+"shared_refs": 815,
 "url": "https://gitlab.com/qemu-project/qemu.git"
 }
 ]
@@ -99623,6 +100459,20 @@
 }
 ]
 },
+"sourceware.org/elfutils": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "ranked (fork/archived/stars/age)",
+"merged_by": [],
+"origins": [
+{
+"forge": "sourceware.org",
+"role": "canonical",
+"slug": "sourceware.org/elfutils",
+"url": "https://sourceware.org/git/elfutils.git"
+}
+]
+},
 "soybeanjs/soybean-admin": {
 "aliases": [],
 "anchor": null,
@@ -105328,10 +106178,10 @@
 "url": "https://github.com/torvalds/linux"
 },
 {
-"containment": 1.0,
+"containment": 0.9995,
 "forge": "other",
 "role": "mirrored-from",
-"shared_refs": 1881,
+"shared_refs": 1880,
 "url": "https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git"
 }
 ]
@@ -112655,6 +113505,20 @@
 "role": "canonical",
 "slug": "xjasonlyu/tun2socks",
 "url": "https://github.com/xjasonlyu/tun2socks"
+}
+]
+},
+"xkbcommon/libxkbcommon": {
+"aliases": [],
+"anchor": null,
+"canonical_by": "github full_name",
+"merged_by": [],
+"origins": [
+{
+"forge": "github",
+"role": "canonical",
+"slug": "xkbcommon/libxkbcommon",
+"url": "https://github.com/xkbcommon/libxkbcommon"
 }
 ]
 },
