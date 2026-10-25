@@ -13,10 +13,10 @@
   },
   "dependencies": {
     "fix-webm-duration": "1.0.6",
-    "three": "0.169.0"
+    "three": "0.186.1"
   },
   "devDependencies": {
-    "esbuild": "0.28.1",
-    "playwright": "1.61.1"
+    "esbuild": "0.28.2",
+    "playwright": "1.64.1"
   }
 }
